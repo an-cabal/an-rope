@@ -55,6 +55,32 @@ impl Rope {
     pub fn length(&self) -> usize {
         unimplemented!()
     }
+
+    /// Appends a rope to the end of this Rope
+    ///
+    /// # Examples
+    /// ```
+    /// use an_rope::Rope;
+    /// let mut an_rope = Rope::from(String::from("abcd"));
+    /// an_rope.append(Rope::from(String::from("efgh")))
+    /// assert_eq!(an_rope, Rope::from(String::from("abcdefgh")));
+    /// ```
+    pub fn append(&mut self, other: Rope) {
+        unimplemented!()
+    }
+
+    /// Prepends a rope to the front of this Rope
+    ///
+    /// # Examples
+    /// ```
+    /// use an_rope::Rope;
+    /// let mut an_rope = Rope::from(String::from("efgh"));
+    /// an_rope.preend(Rope::from(String::from("abcd")))
+    /// assert_eq!(an_rope, Rope::from(String::from("abcdefgh")));
+    /// ```
+    pub fn prepend(&mut self, other: Rope) {
+        unimplemented!()
+    }
 }
 
 #[derive(Debug)]
