@@ -10,6 +10,7 @@
 
 #![feature(const_fn)]
 
+use std::cmp;
 use std::ops;
 use std::convert;
 
@@ -81,6 +82,22 @@ impl Rope {
     pub fn prepend(&mut self, other: Rope) {
         unimplemented!()
     }
+
+    /// Splits the rope into two ropes at the given index.
+    ///
+    /// Consumes this rope.
+    ///
+    /// # Examples
+    /// ```
+    /// use an_rope::Rope;
+    /// let mut an_rope = Rope::from(String::from("abcd"));
+    /// let (ab, cd) = an_rope.split(2);
+    /// assert_eq!(ab, Rope::from(String::from("ab")));
+    /// assert_eq!(cd, Rope::from(String::from("cd")));
+    /// ```
+    pub fn split(self, index: usize) -> (Rope, Rope) {
+        unimplemented!()
+    }
 }
 
 #[derive(Debug)]
@@ -107,6 +124,20 @@ impl convert::From<String> for Rope {
     }
 }
 
+//-- comparisons ----------------------------------------------------
+impl cmp::PartialEq for Rope {
+    fn eq(&self, other: &Rope) -> bool {
+        unimplemented!()
+    }
+}
+
+impl cmp::PartialEq<str> for Rope {
+    fn eq(&self, other: &str) -> bool {
+        unimplemented!()
+    }
+}
+
+//-- concatenation --------------------------------------------------
 impl ops::Add for Rope {
     type Output = Rope;
 
@@ -125,7 +156,7 @@ impl ops::Index<usize> for Rope {
     }
 }
 
-// slicing operators -----------------------------------------
+//-- slicing operators ----------------------------------------------
 impl ops::Index<ops::Range<usize>> for Rope {
     type Output = str;
 
