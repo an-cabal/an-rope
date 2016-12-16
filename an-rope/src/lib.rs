@@ -9,10 +9,13 @@
 //! + http://citeseer.ist.psu.edu/viewdoc/download?doi=10.1.1.14.9450&rep=rep1&type=pdf
 
 #![feature(const_fn)]
+#![feature(box_patterns)]
 
 use std::cmp;
 use std::ops;
 use std::convert;
+
+use self::Node::*;
 
 #[derive(Debug)]
 pub struct Rope {
@@ -29,7 +32,7 @@ impl Rope {
     /// ```
     /// use an_rope::Rope;
     /// let mut an_rope = Rope::new();
-    /// assert_eq!(an_rope.length(), 0);
+    /// assert_eq!(an_rope.len(), 0);
     /// ```
     pub const fn new() -> Rope {
         Rope { root: Node::None }
@@ -41,20 +44,20 @@ impl Rope {
     /// ```
     /// use an_rope::Rope;
     /// let mut an_empty_rope = Rope::new();
-    /// assert_eq!(an_empty_rope.length(), 0);
+    /// assert_eq!(an_empty_rope.len(), 0);
     /// ```
     /// ```
     /// use an_rope::Rope;
     /// let mut an_empty_rope = Rope::from(String::from(""));
-    /// assert_eq!(an_empty_rope.length(), 0);
+    /// assert_eq!(an_empty_rope.len(), 0);
     /// ```
     /// ```
     /// use an_rope::Rope;
     /// let mut an_rope = Rope::from(String::from("a string"));
-    /// assert_eq!(an_rope.length(), "a string".len());
+    /// assert_eq!(an_rope.len(), "a string".len());
     /// ```
-    pub fn length(&self) -> usize {
-        unimplemented!()
+    pub fn len(&self) -> usize {
+        self.root.len()
     }
 
     /// Appends a rope to the end of this Rope
@@ -112,9 +115,12 @@ enum Node { /// A leaf node
 
 impl Node {
 
-    /// Computes the weight of a node
-    fn weight(&self) -> usize {
-        unimplemented!()
+    /// Returns the length of a node
+    fn len(&self) -> usize {
+        match *self { Leaf(box ref s) => s.len()
+                    , Branch { box ref l, box ref r} => l.len() + r.len()
+                    , None => 0
+                    }
     }
 }
 
