@@ -120,7 +120,10 @@ impl Node {
 
 impl convert::From<String> for Rope {
     fn from(string: String) -> Rope {
-        unimplemented!()
+        Rope {
+            root: if string.len() == 0 { Node::None }
+                  else { Node::Leaf(string.into_boxed_str()) }
+        }
     }
 }
 
