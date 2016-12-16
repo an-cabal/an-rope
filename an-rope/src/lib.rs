@@ -6,6 +6,7 @@
 //! For more information, see the following resources:
 //! + http://scienceblogs.com/goodmath/2009/01/26/ropes-twining-together-strings/
 //! + https://www.ibm.com/developerworks/library/j-ropes/
+//! + http://citeseer.ist.psu.edu/viewdoc/download?doi=10.1.1.14.9450&rep=rep1&type=pdf
 
 use std::ops;
 
@@ -87,6 +88,8 @@ impl ops::IndexMut<ops::RangeFrom<usize>> for Rope {
         unimplemented!()
     }
 }
+
+
 #[cfg(test)]
 mod tests {
     #[test]
