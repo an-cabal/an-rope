@@ -122,6 +122,20 @@ impl Node {
                     , None => 0
                     }
     }
+
+}
+
+trait Take {
+    fn take(&mut self) -> Node;
+}
+
+impl Take for Box<Node> {
+
+    /// Take the value out of a `Node`, replacing it with `None`
+    #[inline]
+    fn take(&mut self) -> Node {
+        std::mem::replace(self, None)
+    }
 }
 
 impl convert::From<String> for Rope {
