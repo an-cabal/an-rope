@@ -8,13 +8,53 @@
 //! + https://www.ibm.com/developerworks/library/j-ropes/
 //! + http://citeseer.ist.psu.edu/viewdoc/download?doi=10.1.1.14.9450&rep=rep1&type=pdf
 
+#![feature(const_fn)]
+
 use std::ops;
+use std::convert;
 
 #[derive(Debug)]
-pub struct Rope{
+pub struct Rope {
     // can we get away with having these be of &str or will they need
     // to be string?
     root: Node
+}
+
+impl Rope {
+
+    /// Returns a new empty Rope
+    ///
+    /// # Examples
+    /// ```
+    /// use an_rope::Rope;
+    /// let mut an_rope = Rope::new();
+    /// assert_eq!(an_rope.length(), 0);
+    /// ```
+    pub const fn new() -> Rope {
+        Rope { root: Node::None }
+    }
+
+    /// Returns the length of this Rope
+    ///
+    /// # Examples
+    /// ```
+    /// use an_rope::Rope;
+    /// let mut an_empty_rope = Rope::new();
+    /// assert_eq!(an_empty_rope.length(), 0);
+    /// ```
+    /// ```
+    /// use an_rope::Rope;
+    /// let mut an_empty_rope = Rope::from(String::from(""));
+    /// assert_eq!(an_empty_rope.length(), 0);
+    /// ```
+    /// ```
+    /// use an_rope::Rope;
+    /// let mut an_rope = Rope::from(String::from("a string"));
+    /// assert_eq!(an_rope.length(), "a string".len());
+    /// ```
+    pub fn length(&self) -> usize {
+        unimplemented!()
+    }
 }
 
 #[derive(Debug)]
@@ -25,6 +65,20 @@ enum Node { /// A leaf node
             Branch { l: Box<Node>, r: Box<Node> }
           , /// Nothing
             None
+}
+
+impl Node {
+
+    /// Computes the weight of a node
+    fn weight(&self) -> usize {
+        unimplemented!()
+    }
+}
+
+impl convert::From<String> for Rope {
+    fn from(string: String) -> Rope {
+        unimplemented!()
+    }
 }
 
 impl ops::Add for Rope {
