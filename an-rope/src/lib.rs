@@ -193,6 +193,11 @@ impl<T> Rope<T> {
     pub fn split(self, index: usize) -> (Rope<T>, Rope<T>) {
         unimplemented!()
     }
+
+    /// Rebalances this entire `Rope`, returning a balanced `Rope`.
+    fn rebalance(self) -> Self {
+        unimplemented!()
+    }
 }
 
 
