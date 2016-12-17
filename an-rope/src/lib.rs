@@ -279,7 +279,7 @@ impl Rope {
     /// ```
     /// use an_rope::Rope;
     /// let an_rope = Rope::from(String::from("abcd"));
-    /// let another_rope = an_rope.merge(Rope::from(String::from("efgh")))
+    /// let another_rope = an_rope.merge(Rope::from(String::from("efgh")));
     /// assert_eq!(another_rope, Rope::from(String::from("abcdefgh")));
     /// ```
     pub fn merge(&self, other: &Rope) -> Rope {
@@ -397,6 +397,7 @@ impl<'a> ops::Add for &'a Rope {
     ///
     /// # Examples
     /// ```
+    /// use an_rope::Rope;
     /// let rope = Rope::from(String::from("ab"));
     /// assert_eq!( &rope + &Rope::from(String::from("cd"))
     ///           , Rope::from(String::from("abcd")));
@@ -411,6 +412,7 @@ impl ops::Add for Rope {
     ///
     /// # Examples
     /// ```
+    /// use an_rope::Rope;
     /// let rope = Rope::from(String::from("ab"));
     /// assert_eq!( rope + Rope::from(String::from("cd"))
     ///           , Rope::from(String::from("abcd")));
@@ -426,6 +428,7 @@ impl ops::Add<String> for Rope {
     ///
     /// # Examples
     /// ```
+    /// use an_rope::Rope;
     /// let rope = Rope::from(String::from("ab"));
     /// assert_eq!( rope + String::from("cd"))
     ///           , Rope::from(String::from("abcd")));
@@ -444,6 +447,7 @@ impl<'a, 'b> ops::Add<&'b str> for &'a Rope {
     ///
     /// # Examples
     /// ```
+    /// use an_rope::Rope;
     /// let rope = Rope::from(String::from("ab"));
     /// assert_eq!( &rope + "cd")
     ///           , Rope::from(String::from("abcd")));
@@ -462,6 +466,7 @@ impl<'a> ops::Add<&'a str> for Rope {
     ///
     /// # Examples
     /// ```
+    /// use an_rope::Rope;
     /// let rope = Rope::from(String::from("ab"));
     /// assert_eq!( rope + "cd")
     ///           , Rope::from(String::from("abcd")));
@@ -479,6 +484,7 @@ impl ops::AddAssign for Rope {
     ///
     /// # Examples
     /// ```
+    /// use an_rope::Rope;
     /// let mut rope = Rope::from(String::from("ab"));
     /// rope += Rope::from(String::from("cd"));
     /// assert_eq!(rope, Rope::from(String::from("abcd")));
@@ -495,6 +501,7 @@ impl ops::AddAssign<String> for Rope {
     ///
     /// # Examples
     /// ```
+    /// use an_rope::Rope;
     /// let mut rope = Rope::from(String::from("ab"));
     /// rope += String::from("cd");
     /// assert_eq!(rope, Rope::from(String::from("abcd")));
@@ -511,6 +518,7 @@ impl<'a> ops::AddAssign<&'a str> for Rope {
     ///
     /// # Examples
     /// ```
+    /// use an_rope::Rope;
     /// let mut rope = Rope::from(String::from("ab"));
     /// rope += String::from("cd");
     /// assert_eq!(rope, Rope::from(String::from("abcd")));
