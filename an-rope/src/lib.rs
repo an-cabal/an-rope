@@ -46,6 +46,15 @@ enum Node {
     }
 }
 
+/// Returns the _n_th fibonacci number.
+// TODO: replace with an iterative implementation and/or lookup table?
+fn fibonacci(n: usize) -> usize {
+    match n { 1 => 1
+            , 2 => 1
+            , _ => fibonacci(n - 1) + fibonacci(n - 2)
+            }
+}
+
 
 impl Node {
     const fn none() -> Self {
@@ -71,9 +80,17 @@ impl Node {
     }
 
     /// Returns true if this node is balanced
+    ///
+    /// "We define the depth of a leaf to be 0, and the depth of a
+    /// concatenation to be one plus the maximum depth of its children. Let
+    /// _Fn_ be the _n_th Fibonacci number. A rope of depth _n_ is balanced if
+    /// its length is at least _Fn_+2, e.g. a balanced rope of depth 1 must
+    /// have length at least 2. Note that balanced ropes may contain unbalanced
+    /// subropes."
+    /// – from "Ropes: An Alternative to Strings"
     #[inline]
     fn is_balanced(&self) -> bool {
-        unimplemented!()
+        self.len() >= (fibonacci(self.depth()) + 2)
     }
 
 
