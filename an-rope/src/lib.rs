@@ -91,7 +91,7 @@ impl Node {
     /// – from "Ropes: An Alternative to Strings"
     #[inline]
     fn is_balanced(&self) -> bool {
-        self.len() >= (fibonacci(self.depth()) + 2)
+        self.len() >= fibonacci(self.depth() + 2)
     }
 
 
