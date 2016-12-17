@@ -91,7 +91,7 @@ impl Node {
     /// – from "Ropes: An Alternative to Strings"
     #[inline]
     fn is_balanced(&self) -> bool {
-        self.len() >= (fibonacci(self.depth()) + 2)
+        self.len() >= fibonacci(self.depth() + 2)
     }
 
 
@@ -585,6 +585,48 @@ impl ops::IndexMut<ops::RangeFrom<usize>> for Rope {
         unimplemented!()
     }
 }
+
+#[test]
+fn rebalance_test_1() {
+    let r = Rope::from("This is a large string \
+                        that will need to be rebalanced.".to_string());
+    let r = r.rebalance();
+    assert!(r.is_balanced());
+}
+
+#[test]
+fn rebalance_test_2() {
+    let r = Rope::from("Lorem ipsum dolor sit amet, consectetur adipiscing eli\
+                        t, sed do eiusmod tempor incididunt ut labore et dolor\
+                        e magna aliqua. Ut enim ad minim veniam, quis nostrud \
+                        exercitation ullamco laboris nisi ut aliquip ex ea com\
+                        modo consequat. Duis aute irure dolor in reprehenderit\
+                         in voluptate velit esse cillum dolore eu fugiat nulla\
+                         pariatur. Excepteur sint occaecat cupidatat non proid\
+                        ent, sunt in culpa qui officia deserunt mollit anim id\
+                         est laborum.".to_string());
+    let r = r.rebalance();
+    assert!(r.is_balanced());
+}
+
+#[test]
+fn merge_rebalance_test() {
+    let s = "Lorem ipsum dolor sit amet, consectetur adipiscing eli\
+             t, sed do eiusmod tempor incididunt ut labore et dolor\
+             e magna aliqua. Ut enim ad minim veniam, quis nostrud \
+             exercitation ullamco laboris nisi ut aliquip ex ea com\
+             modo consequat. Duis aute irure dolor in reprehenderit\
+              in voluptate velit esse cillum dolore eu fugiat nulla\
+              pariatur. Excepteur sint occaecat cupidatat non proid\
+             ent, sunt in culpa qui officia deserunt mollit anim id\
+              est laborum.";
+
+     let t = Rope::from(s.to_owned());
+     let u = t + s;
+     let u = u.rebalance();
+     assert!(u.is_balanced());
+}
+
 
 
 #[cfg(test)]
