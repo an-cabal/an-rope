@@ -58,22 +58,18 @@ impl<T> Node<T> {
 
     /// Concatenate two `Node`s to return a new `Branch` node.
     fn branch(left: Self, right: Self) -> Self {
-        unimplemented!()
+        Branch { len: left.len() + right.len()
+               , weight: left.weight()
+               , left: Some(box left)
+               , right: Some(box right)
+        }
     }
 
     #[inline]
     fn leaf(data: Vec<T>) -> Self {
         Leaf(data)
     }
-}
 
-
-impl<T> Node<T> {
-
-    /// Concatenate together two nodes, returning a new `Branch` node
-    pub fn branch(self, other: Node<T>) -> Node<T> {
-        unimplemented!()
-    }
 
     /// Returns the height in the tree of a node
     #[inline]
