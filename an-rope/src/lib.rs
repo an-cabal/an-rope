@@ -610,6 +610,14 @@ fn rebalance_test_2() {
 }
 
 #[test]
+fn big_rebalance() {
+    let s: String = iter::repeat('a').take(10_000).collect();
+    let r = Rope::from(s);
+    let r = r.rebalance();
+    assert!(r.is_balanced());
+}
+
+#[test]
 fn merge_rebalance_test() {
     let s = "Lorem ipsum dolor sit amet, consectetur adipiscing eli\
              t, sed do eiusmod tempor incididunt ut labore et dolor\
