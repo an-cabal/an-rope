@@ -618,6 +618,27 @@ fn big_rebalance() {
 }
 
 #[test]
+fn repeated_concat_left_rebalance() {
+    let s: String = iter::repeat('a').take(10_000).collect();
+    let mut r = Rope::from(s);
+    for _ in 1..1000 {
+        r = r + iter::repeat('a').take(100).collect::<String>();
+    }
+    assert!(r.is_balanced());
+}
+
+#[test]
+fn repeated_concat_right_rebalance() {
+    let s: String = iter::repeat('a').take(10_000).collect();
+    let mut r = Rope::from(s);
+    for _ in 1..1000 {
+        let s2 = iter::repeat('a').take(100).collect::<String>();
+        r = Rope::from(s2) + r;
+    }
+    assert!(r.is_balanced());
+}
+
+#[test]
 fn merge_rebalance_test() {
     let s = "Lorem ipsum dolor sit amet, consectetur adipiscing eli\
              t, sed do eiusmod tempor incididunt ut labore et dolor\
