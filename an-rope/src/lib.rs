@@ -58,7 +58,7 @@ fn fibonacci(n: usize) -> usize {
 
 
 impl Node {
-    const fn none() -> Self {
+    const fn new() -> Self {
         Branch { len: 0
                , weight: 0
                , left: None
@@ -67,7 +67,7 @@ impl Node {
     }
 
     /// Concatenate two `Node`s to return a new `Branch` node.
-    fn branch(left: Self, right: Self) -> Self {
+    fn new_branch(left: Self, right: Self) -> Self {
         Branch { len: left.len() + right.len()
                , weight: left.len()
                , left: Some(box left)
@@ -76,7 +76,7 @@ impl Node {
     }
 
     #[inline]
-    fn leaf(string: String) -> Self {
+    fn new_leaf(string: String) -> Self {
         Leaf(string)
     }
 
@@ -211,7 +211,7 @@ impl iter::Iterator for IntoLeaves {
 impl ops::Add for Node {
     type Output = Self;
     /// Concatenate two `Node`s, returning a `Branch` node.
-    fn add(self, right: Self) -> Self { Node::branch(self, right) }
+    fn add(self, right: Self) -> Self { Node::new_branch(self, right) }
 }
 
 impl Rope {
@@ -225,7 +225,7 @@ impl Rope {
     /// assert_eq!(an_rope.len(), 0);
     /// ```
     pub const fn new() -> Rope {
-        Rope { root: Node::none() }
+        Rope { root: Node::new() }
     }
 
     /// Returns the length of this Rope
@@ -345,8 +345,8 @@ impl convert::Into<Vec<u8>> for Rope {
 impl convert::From<String> for Rope {
     fn from(string: String) -> Rope {
         Rope {
-            root: if string.len() == 0 { Node::none() }
-                  else { Node::Leaf(string) }
+            root: if string.len() == 0 { Node::new() }
+                  else { Node::new_leaf(string) }
         }
     }
 }
