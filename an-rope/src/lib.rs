@@ -105,6 +105,12 @@ impl<T> Node<T> {
     }
 }
 
+impl<T> ops::Add for Node<T> {
+    type Output = Self;
+    /// Concatenate two `Node`s, returning a `Branch` node.
+    fn add(self, right: Self) -> Self { Node::branch(self, right) }
+}
+
 impl<T> Rope<T> {
 
     /// Returns a new empty Rope
@@ -142,29 +148,33 @@ impl<T> Rope<T> {
         unimplemented!()
     }
 
-    /// Appends a rope to the end of this Rope
+    /// Appends a `Rope` to the end of this `Rope`, returning a new `Rope`
+    ///
+    /// Note that this is equivalent to using the `+` operator.
+    ///
+    /// # Examples
+    /// ```
+    /// use an_rope::Rope;
+    /// let an_rope = Rope::from(String::from("abcd"));
+    /// let another_rope = an_rope.merge(Rope::from(String::from("efgh")))
+    /// assert_eq!(another_rope, Rope::from(String::from("abcdefgh")));
+    /// ```
+    pub fn merge(&self, other: &Rope<T>) -> Rope<T> {
+        unimplemented!()
+    }
+
+    /// Appends a `Rope` to the end of this `Rope`, updating it in place.
+    ///
+    /// Note that this is equivalent to using the `+=` operator.
     ///
     /// # Examples
     /// ```
     /// use an_rope::Rope;
     /// let mut an_rope = Rope::from(String::from("abcd"));
-    /// an_rope.append(Rope::from(String::from("efgh")))
+    /// an_rope.update(Rope::from(String::from("efgh")))
     /// assert_eq!(an_rope, Rope::from(String::from("abcdefgh")));
     /// ```
-    pub fn append(&mut self, other: Rope<T>) {
-        unimplemented!()
-    }
-
-    /// Prepends a rope to the front of this Rope
-    ///
-    /// # Examples
-    /// ```
-    /// use an_rope::Rope;
-    /// let mut an_rope = Rope::from(String::from("efgh"));
-    /// an_rope.preend(Rope::from(String::from("abcd")))
-    /// assert_eq!(an_rope, Rope::from(String::from("abcdefgh")));
-    /// ```
-    pub fn prepend(&mut self, other: Rope<T>) {
+    pub fn update(&mut self, other: Rope<T>) {
         unimplemented!()
     }
 
@@ -232,9 +242,91 @@ impl<T> cmp::PartialEq<str> for Rope<T> {
 }
 
 //-- concatenation --------------------------------------------------
-impl ops::AddAssign for Rope<u8> {
+impl<'a, T> ops::Add for &'a Rope<T> {
+    type Output = Rope<T>;
+    /// Non-destructively concatenate two `Rope`s, returning a new `Rope`.
+    ///
+    /// # Examples
+    /// ```
+    /// let rope = Rope::from(String::from("ab"));
+    /// assert_eq!( &rope + &Rope::from(String::from("cd"))
+    ///           , Rope::from(String::from("abcd")));
+    /// ```
+    #[inline] fn add(self, other: Self) -> Rope<T> { self.merge(other) }
 
-    /// Concatenate two `Rope`s.
+}
+
+impl<T> ops::Add for Rope<T> {
+    type Output = Rope<T>;
+    /// Non-destructively concatenate two `Rope`s, returning a new `Rope`.
+    ///
+    /// # Examples
+    /// ```
+    /// let rope = Rope::from(String::from("ab"));
+    /// assert_eq!( rope + Rope::from(String::from("cd"))
+    ///           , Rope::from(String::from("abcd")));
+    /// ```
+    #[inline] fn add(self, other: Self) -> Rope<T> { self.merge(&other) }
+}
+
+impl ops::Add<String> for Rope<u8> {
+    type Output = Rope<u8>;
+    /// Non-destructively concatenate a `Rope` and a `String`.
+    ///
+    /// Returns a new `Rope`
+    ///
+    /// # Examples
+    /// ```
+    /// let rope = Rope::from(String::from("ab"));
+    /// assert_eq!( rope + String::from("cd"))
+    ///           , Rope::from(String::from("abcd")));
+    /// ```
+    #[inline] fn add(self, other: String) -> Rope<u8> {
+         self.merge(&Rope::from(other))
+    }
+}
+
+
+impl<'a, 'b> ops::Add<&'b str> for &'a Rope<u8> {
+    type Output = Rope<u8>;
+    /// Non-destructively concatenate a `Rope` and an `&str`.
+    ///
+    /// Returns a new `Rope`
+    ///
+    /// # Examples
+    /// ```
+    /// let rope = Rope::from(String::from("ab"));
+    /// assert_eq!( &rope + "cd")
+    ///           , Rope::from(String::from("abcd")));
+    /// ```
+    #[inline] fn add(self, other: &'b str) -> Rope<u8> {
+         self.merge(&Rope::from(other.to_owned()))
+     }
+
+}
+
+impl<'a> ops::Add<&'a str> for Rope<u8> {
+    type Output = Rope<u8>;
+    /// Non-destructively concatenate a `Rope` and an `&str`.
+    ///
+    /// Returns a new `Rope`
+    ///
+    /// # Examples
+    /// ```
+    /// let rope = Rope::from(String::from("ab"));
+    /// assert_eq!( rope + "cd")
+    ///           , Rope::from(String::from("abcd")));
+    /// ```
+    #[inline] fn add(self, other: &'a str) -> Rope<u8> {
+         self.merge(&Rope::from(other.to_owned()))
+     }
+
+}
+
+
+impl<T> ops::AddAssign for Rope<T> {
+
+    /// Concatenate two `Rope`s mutably.
     ///
     /// # Examples
     /// ```
@@ -243,14 +335,14 @@ impl ops::AddAssign for Rope<u8> {
     /// assert_eq!(rope, Rope::from(String::from("abcd")));
     /// ```
     #[inline]
-    fn add_assign(&mut self, other: Rope<u8>) {
-        self.append(other)
+    fn add_assign(&mut self, other: Rope<T>) {
+        self.update(other)
     }
 }
 
 impl ops::AddAssign<String> for Rope<u8> {
 
-    /// Concatenate a `String` onto a `Rope`
+    /// Concatenate a `String` onto a `Rope` mutably.
     ///
     /// # Examples
     /// ```
@@ -260,13 +352,13 @@ impl ops::AddAssign<String> for Rope<u8> {
     /// ```
     #[inline]
     fn add_assign(&mut self, string: String) {
-        self.append(Rope::from(string))
+        self.update(Rope::from(string))
     }
 }
 
 impl<'a> ops::AddAssign<&'a str> for Rope<u8> {
 
-    /// Concatenate an `&str` onto a `Rope`
+    /// Concatenate an `&str` onto a `Rope` mutably.
     ///
     /// # Examples
     /// ```
@@ -276,7 +368,7 @@ impl<'a> ops::AddAssign<&'a str> for Rope<u8> {
     /// ```
     #[inline]
     fn add_assign(&mut self, string: &'a str) {
-        self.append(Rope::from(string.to_owned()))
+        self.update(Rope::from(string.to_owned()))
     }
 }
 
