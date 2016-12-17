@@ -269,10 +269,7 @@ impl Rope {
     /// let mut an_rope = Rope::from(String::from("a string"));
     /// assert_eq!(an_rope.len(), "a string".len());
     /// ```
-    pub fn len(&self) -> usize {
-        // self.root.len()
-        unimplemented!()
-    }
+    pub fn len(&self) -> usize { self.root.len() }
 
     /// Appends a `Rope` to the end of this `Rope`, returning a new `Rope`
     ///
