@@ -70,6 +70,12 @@ impl<T> Node<T> {
         Leaf(data)
     }
 
+    /// Returns true if this node is balanced
+    #[inline]
+    fn is_balanced(&self) -> bool {
+        unimplemented!()
+    }
+
 
     /// Returns the height in the tree of a node
     #[inline]
@@ -196,7 +202,19 @@ impl<T> Rope<T> {
 
     /// Rebalances this entire `Rope`, returning a balanced `Rope`.
     fn rebalance(self) -> Self {
-        unimplemented!()
+        if self.is_balanced() {
+            // the rope is already balanced, do nothing
+            self
+        } else {
+            // rebalance the rope
+            unimplemented!()
+        }
+    }
+
+    /// Returns true if this `Rope` is balanced.
+    #[inline]
+    fn is_balanced(&self) -> bool {
+        self.root.is_balanced()
     }
 }
 
