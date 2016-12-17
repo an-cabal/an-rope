@@ -77,16 +77,16 @@ impl Node {
     }
 
 
-    /// Returns the height in the tree of a node
+    /// Returns the depth in the tree of a node
     #[inline]
-    fn height(&self) -> usize {
+    fn depth(&self) -> usize {
         use std::cmp::max;
 
         match self {
-            &Node::Leaf(_) => 1
+            &Node::Leaf(_) => 0
           , &Node::Branch { ref left, ref right, ..} =>
-                max( left.as_ref().map(Box::as_ref).map_or(0, Node::height)
-                   , right.as_ref().map(Box::as_ref).map_or(0, Node::height)
+                max( left.as_ref().map(Box::as_ref).map_or(0, Node::depth)
+                   , right.as_ref().map(Box::as_ref).map_or(0, Node::depth)
                    ) + 1
             }
     }
