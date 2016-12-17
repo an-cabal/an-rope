@@ -113,12 +113,39 @@ enum Node { /// A leaf node
             None
 }
 
+impl ops::Index<usize> for Node {
+    type Output = str;
+
+    fn index(&self, i: usize) -> &str {
+        let len = self.len();
+        match self { &Leaf(box ref s) => {
+                        let slice: &str = s.as_ref();
+                        &slice[i..i+1]
+                    }
+                    , &Branch { box ref r, .. } if len < i => &r[i - len]
+                    , &Branch { box ref l, .. } => &l[i]
+                    , &None => panic!("Index out of bounds!")
+                    }
+    }
+}
+
 impl Node {
 
     /// Returns the length of a node
+    //  TODO: do we want to cache this?
     fn len(&self) -> usize {
         match *self { Leaf(box ref s) => s.len()
                     , Branch { box ref l, box ref r} => l.len() + r.len()
+                    , None => 0
+                    }
+    }
+
+    /// Returns the weight of a node
+    #[inline]
+    fn weight(&self) -> usize {
+        match *self { Leaf(_) => 1
+                    , Branch { box ref l, box ref r} =>
+                        cmp::max(r.weight(), l.weight()) + 1
                     , None => 0
                     }
     }
@@ -171,11 +198,26 @@ impl ops::Add for Rope {
 }
 
 impl ops::Index<usize> for Rope {
-    type Output = char;
+    type Output = str;
 
-    // Index a character
-    fn index(&self, i: usize) -> &char {
-        unimplemented!()
+    /// Recursively index the Rope to return the `i` th character.
+    ///
+    /// # Examples
+    /// ```
+    /// use an_rope::Rope;
+    /// let an_rope = Rope::from(String::from("abcd"));
+    /// assert_eq!(&an_rope[0], "a");
+    /// assert_eq!(&an_rope[1], "b");
+    /// assert_eq!(&an_rope[2], "c");
+    /// assert_eq!(&an_rope[3], "d");
+    /// ```
+    ///
+    /// # Time complexity
+    /// _O_(log _n_)
+    ///
+    #[inline]
+    fn index(&self, i: usize) -> &str {
+        &self.root[i]
     }
 }
 
