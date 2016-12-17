@@ -20,23 +20,25 @@ pub mod bintree;
 use bintree::Node;
 
 #[derive(Debug)]
-pub struct Rope {
+pub struct Rope<T> {
     // can we get away with having these be of &str or will they need
     // to be string?
-    root: Node<String>
+    root: RopeNode<T>
 }
 
-impl Rope {
+type RopeNode<T> = Node<Vec<T>>;
+
+impl<T> Rope<T> {
 
     /// Returns a new empty Rope
     ///
     /// # Examples
     /// ```
     /// use an_rope::Rope;
-    /// let mut an_rope = Rope::new();
+    /// let mut an_rope = Rope::<u8>::new();
     /// assert_eq!(an_rope.len(), 0);
     /// ```
-    pub const fn new() -> Rope {
+    pub const fn new() -> Rope<T> {
         Rope { root: Node::None }
     }
 
@@ -59,7 +61,8 @@ impl Rope {
     /// assert_eq!(an_rope.len(), "a string".len());
     /// ```
     pub fn len(&self) -> usize {
-        self.root.len()
+        // self.root.len()
+        unimplemented!()
     }
 
     /// Appends a rope to the end of this Rope
@@ -71,7 +74,7 @@ impl Rope {
     /// an_rope.append(Rope::from(String::from("efgh")))
     /// assert_eq!(an_rope, Rope::from(String::from("abcdefgh")));
     /// ```
-    pub fn append(&mut self, other: Rope) {
+    pub fn append(&mut self, other: Rope<T>) {
         unimplemented!()
     }
 
@@ -84,7 +87,7 @@ impl Rope {
     /// an_rope.preend(Rope::from(String::from("abcd")))
     /// assert_eq!(an_rope, Rope::from(String::from("abcdefgh")));
     /// ```
-    pub fn prepend(&mut self, other: Rope) {
+    pub fn prepend(&mut self, other: Rope<T>) {
         unimplemented!()
     }
 
@@ -100,18 +103,18 @@ impl Rope {
     /// assert_eq!(ab, Rope::from(String::from("ab")));
     /// assert_eq!(cd, Rope::from(String::from("cd")));
     /// ```
-    pub fn split(self, index: usize) -> (Rope, Rope) {
+    pub fn split(self, index: usize) -> (Rope<T>, Rope<T>) {
         unimplemented!()
     }
 }
 
 
-impl ops::Index<usize> for Node<String> {
-    type Output = str;
+impl<T> ops::Index<usize> for RopeNode<T> {
+    type Output = T;
 
-    fn index(&self, i: usize) -> &str {
+    fn index(&self, i: usize) -> &T {
         let len = self.len();
-        match self { &Node::Leaf(ref s) => { let slice: &str = s.as_ref();      &slice[i..i+1] }
+        match self { &Node::Leaf(ref vec) => { &vec[i] }
                     , &Node::Branch { box ref r, .. } if len < i => &r[i - len]
                     , &Node::Branch { box ref l, .. } => &l[i]
                     , &Node::None => panic!("Index out of bounds!")
@@ -119,12 +122,12 @@ impl ops::Index<usize> for Node<String> {
     }
 }
 
-impl Node<String> {
+impl<T> RopeNode<T> {
 
     /// Returns the length of a node
     //  TODO: do we want to cache this?
     fn len(&self) -> usize {
-        match *self { Node::Leaf(ref s) => s.len()
+        match *self { Node::Leaf(ref v) => v.len()
                     , Node::Branch { box ref l, box ref r} => l.len() + r.len()
                     , Node::None => 0
                     }
@@ -132,7 +135,7 @@ impl Node<String> {
 
     /// Returns the weight of a node
     fn weight (&self) -> usize {
-        match *self { Node::Leaf(ref s) => s.len()
+        match *self { Node::Leaf(ref v) => v.len()
                     , Node::Branch { box ref l, .. } => l.weight()
                     , Node::None => 0
                     }
@@ -142,30 +145,30 @@ impl Node<String> {
 }
 
 
-impl convert::From<String> for Rope {
-    fn from(string: String) -> Rope {
+impl convert::From<String> for Rope<u8> {
+    fn from(string: String) -> Rope<u8> {
         Rope {
             root: if string.len() == 0 { Node::None }
-                  else { Node::Leaf(string) }
+                  else { Node::Leaf(string.into_bytes()) }
         }
     }
 }
 
 //-- comparisons ----------------------------------------------------
-impl cmp::PartialEq for Rope {
-    fn eq(&self, other: &Rope) -> bool {
+impl<T> cmp::PartialEq for Rope<T> {
+    fn eq(&self, other: &Rope<T>) -> bool {
         unimplemented!()
     }
 }
 
-impl cmp::PartialEq<str> for Rope {
+impl<T> cmp::PartialEq<str> for Rope<T> {
     fn eq(&self, other: &str) -> bool {
         unimplemented!()
     }
 }
 
 //-- concatenation --------------------------------------------------
-impl ops::AddAssign for Rope {
+impl ops::AddAssign for Rope<u8> {
 
     /// Concatenate two `Rope`s.
     ///
@@ -176,12 +179,12 @@ impl ops::AddAssign for Rope {
     /// assert_eq!(rope, Rope::from(String::from("abcd")));
     /// ````
     #[inline]
-    fn add_assign(&mut self, other: Rope) {
+    fn add_assign(&mut self, other: Rope<u8>) {
         self.append(other)
     }
 }
 
-impl ops::AddAssign<String> for Rope {
+impl ops::AddAssign<String> for Rope<u8> {
 
     /// Concatenate a `String` onto a `Rope`
     ///
@@ -197,7 +200,7 @@ impl ops::AddAssign<String> for Rope {
     }
 }
 
-impl<'a> ops::AddAssign<&'a str> for Rope {
+impl<'a> ops::AddAssign<&'a str> for Rope<u8> {
 
     /// Concatenate an `&str` onto a `Rope`
     ///
@@ -213,8 +216,8 @@ impl<'a> ops::AddAssign<&'a str> for Rope {
     }
 }
 
-impl ops::Index<usize> for Rope {
-    type Output = str;
+impl<T> ops::Index<usize> for Rope<T> {
+    type Output = T;
 
     /// Recursively index the Rope to return the `i` th character.
     ///
@@ -232,51 +235,51 @@ impl ops::Index<usize> for Rope {
     /// _O_(log _n_)
     ///
     #[inline]
-    fn index(&self, i: usize) -> &str {
+    fn index(&self, i: usize) -> &T {
         &self.root[i]
     }
 }
 
 //-- slicing operators ----------------------------------------------
-impl ops::Index<ops::Range<usize>> for Rope {
-    type Output = str;
+impl<T> ops::Index<ops::Range<usize>> for Rope<T> {
+    type Output = [T];
 
     // Index a substring
-    fn index(&self, i: ops::Range<usize>) -> &str {
+    fn index(&self, i: ops::Range<usize>) -> &[T] {
         unimplemented!()
     }
 }
 
-impl ops::Index<ops::RangeTo<usize>> for Rope {
-    type Output = str;
+impl<T> ops::Index<ops::RangeTo<usize>> for Rope<T> {
+    type Output = [T];
 
-    fn index(&self, i: ops::RangeTo<usize>) -> &str {
+    fn index(&self, i: ops::RangeTo<usize>) -> &[T] {
         unimplemented!()
     }
 }
 
-impl ops::Index<ops::RangeFrom<usize>> for Rope {
-    type Output = str;
+impl<T> ops::Index<ops::RangeFrom<usize>> for Rope<T> {
+    type Output = [T];
 
-    fn index(&self, i: ops::RangeFrom<usize>) -> &str {
+    fn index(&self, i: ops::RangeFrom<usize>) -> &[T] {
         unimplemented!()
     }
 }
 
-impl ops::IndexMut<ops::Range<usize>> for Rope {
-    fn index_mut(&mut self, i: ops::Range<usize>) -> &mut str {
+impl<T> ops::IndexMut<ops::Range<usize>> for Rope<T> {
+    fn index_mut(&mut self, i: ops::Range<usize>) -> &mut [T] {
         unimplemented!()
     }
 }
 
-impl ops::IndexMut<ops::RangeTo<usize>> for Rope {
-    fn index_mut(&mut self, i: ops::RangeTo<usize>) -> &mut str {
+impl<T> ops::IndexMut<ops::RangeTo<usize>> for Rope<T> {
+    fn index_mut(&mut self, i: ops::RangeTo<usize>) -> &mut [T] {
         unimplemented!()
     }
 }
 
-impl ops::IndexMut<ops::RangeFrom<usize>> for Rope {
-    fn index_mut(&mut self, i: ops::RangeFrom<usize>) -> &mut str {
+impl<T> ops::IndexMut<ops::RangeFrom<usize>> for Rope<T> {
+    fn index_mut(&mut self, i: ops::RangeFrom<usize>) -> &mut [T] {
         unimplemented!()
     }
 }
