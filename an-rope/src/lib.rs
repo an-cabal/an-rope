@@ -84,6 +84,25 @@ impl<T> Node<T> {
                    ) + 1
             }
     }
+
+
+    /// Returns the length of a node
+    //  TODO: do we want to cache this?
+    fn len(&self) -> usize {
+        match self { &Node::Leaf(ref v) => v.len()
+                   , &Node::Branch { ref left, ref right, .. } =>
+                        left.as_ref().map(Box::as_ref).map_or(0, Node::len) +
+                        right.as_ref().map(Box::as_ref).map_or(0, Node::len)
+                    }
+    }
+
+    /// Returns the weight of a node
+    fn weight (&self) -> usize {
+        match self { &Node::Leaf(ref v) => v.len()
+                   , &Node::Branch { ref left, .. } =>
+                        left.as_ref().map(Box::as_ref).map_or(0, Node::weight)
+                    }
+    }
 }
 
 impl<T> Rope<T> {
@@ -181,29 +200,6 @@ impl<T> ops::Index<usize> for Node<T> {
         //             }
         unimplemented!()
     }
-}
-
-impl<T> Node<T> {
-
-    /// Returns the length of a node
-    //  TODO: do we want to cache this?
-    fn len(&self) -> usize {
-        match self { &Node::Leaf(ref v) => v.len()
-                   , &Node::Branch { ref left, ref right, .. } =>
-                        left.as_ref().map(Box::as_ref).map_or(0, Node::len) +
-                        right.as_ref().map(Box::as_ref).map_or(0, Node::len)
-                    }
-    }
-
-    /// Returns the weight of a node
-    fn weight (&self) -> usize {
-        match self { &Node::Leaf(ref v) => v.len()
-                   , &Node::Branch { ref left, .. } =>
-                        left.as_ref().map(Box::as_ref).map_or(0, Node::weight)
-                    }
-    }
-
-
 }
 
 impl<T> convert::Into<Vec<T>> for Rope<T> {
