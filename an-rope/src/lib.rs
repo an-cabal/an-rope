@@ -626,12 +626,3 @@ fn merge_rebalance_test() {
      let u = u.rebalance();
      assert!(u.is_balanced());
 }
-
-
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-    }
-}
