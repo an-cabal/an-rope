@@ -188,12 +188,51 @@ impl cmp::PartialEq<str> for Rope {
 }
 
 //-- concatenation --------------------------------------------------
-impl ops::Add for Rope {
-    type Output = Rope;
+impl ops::AddAssign for Rope {
 
-    // This is the concat operation.
-    fn add(self, other: Rope) -> Rope {
-        unimplemented!()
+    /// Concatenate two `Rope`s.
+    ///
+    /// # Examples
+    /// ```
+    /// let mut rope = Rope::from(String::from("ab"));
+    /// rope += Rope::from(String::from("cd"));
+    /// assert_eq!(rope, Rope::from(String::from("abcd")));
+    /// ````
+    #[inline]
+    fn add_assign(&mut self, other: Rope) {
+        self.append(other)
+    }
+}
+
+impl ops::AddAssign<String> for Rope {
+
+    /// Concatenate a `String` onto a `Rope`
+    ///
+    /// # Examples
+    /// ```
+    /// let mut rope = Rope::from(String::from("ab"));
+    /// rope += String::from("cd");
+    /// assert_eq!(rope, Rope::from(String::from("abcd")));
+    /// ````
+    #[inline]
+    fn add_assign(&mut self, string: String) {
+        self.append(Rope::from(string))
+    }
+}
+
+impl<'a> ops::AddAssign<&'a str> for Rope {
+
+    /// Concatenate an `&str` onto a `Rope`
+    ///
+    /// # Examples
+    /// ```
+    /// let mut rope = Rope::from(String::from("ab"));
+    /// rope += String::from("cd");
+    /// assert_eq!(rope, Rope::from(String::from("abcd")));
+    /// ````
+    #[inline]
+    fn add_assign(&mut self, string: &'a str) {
+        self.append(Rope::from(string.to_owned()))
     }
 }
 
