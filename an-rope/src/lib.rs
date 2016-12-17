@@ -30,7 +30,7 @@ use self::Node::*;
 ///
 /// A `Node` is either a `Leaf` holding a `String`, or a
 /// a `Branch` concatenating together two `Node`s.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum Node {
     /// A leaf node
     Leaf(String)
@@ -286,7 +286,13 @@ impl Rope {
     /// assert_eq!(another_rope, Rope::from(String::from("abcdefgh")));
     /// ```
     pub fn merge(&self, other: &Rope) -> Rope {
-        unimplemented!()
+        if other.len() == 0 {
+            Rope { root: self.root.clone() }
+        } else {
+            Rope {
+                root: Node::new_branch(self.root.clone(), other.root.clone())
+            }.rebalance()
+        }
     }
 
     /// Appends a `Rope` to the end of this `Rope`, updating it in place.
