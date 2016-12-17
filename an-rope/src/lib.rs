@@ -15,13 +15,15 @@ use std::cmp;
 use std::ops;
 use std::convert;
 
-use self::Node::*;
+
+pub mod bintree;
+use bintree::Node;
 
 #[derive(Debug)]
 pub struct Rope {
     // can we get away with having these be of &str or will they need
     // to be string?
-    root: Node
+    root: Node<String>
 }
 
 impl Rope {
@@ -103,73 +105,49 @@ impl Rope {
     }
 }
 
-#[derive(Debug)]
-enum Node { /// A leaf node
-            // todo: is box<str> the right choice?
-            Leaf(Box<str>)
-          , /// A branch node
-            Branch { l: Box<Node>, r: Box<Node> }
-          , /// Nothing
-            None
-}
 
-impl ops::Index<usize> for Node {
+impl ops::Index<usize> for Node<String> {
     type Output = str;
 
     fn index(&self, i: usize) -> &str {
         let len = self.len();
-        match self { &Leaf(box ref s) => {
-                        let slice: &str = s.as_ref();
-                        &slice[i..i+1]
-                    }
-                    , &Branch { box ref r, .. } if len < i => &r[i - len]
-                    , &Branch { box ref l, .. } => &l[i]
-                    , &None => panic!("Index out of bounds!")
+        match self { &Node::Leaf(ref s) => { let slice: &str = s.as_ref();      &slice[i..i+1] }
+                    , &Node::Branch { box ref r, .. } if len < i => &r[i - len]
+                    , &Node::Branch { box ref l, .. } => &l[i]
+                    , &Node::None => panic!("Index out of bounds!")
                     }
     }
 }
 
-impl Node {
+impl Node<String> {
 
     /// Returns the length of a node
     //  TODO: do we want to cache this?
     fn len(&self) -> usize {
-        match *self { Leaf(box ref s) => s.len()
-                    , Branch { box ref l, box ref r} => l.len() + r.len()
-                    , None => 0
+        match *self { Node::Leaf(ref s) => s.len()
+                    , Node::Branch { box ref l, box ref r} => l.len() + r.len()
+                    , Node::None => 0
                     }
     }
 
     /// Returns the weight of a node
     #[inline]
     fn weight(&self) -> usize {
-        match *self { Leaf(_) => 1
-                    , Branch { box ref l, box ref r} =>
+        match *self { Node::Leaf(_) => 1
+                    , Node::Branch { box ref l, box ref r} =>
                         cmp::max(r.weight(), l.weight()) + 1
-                    , None => 0
+                    , Node::None => 0
                     }
     }
 
 }
 
-trait Take {
-    fn take(&mut self) -> Node;
-}
-
-impl Take for Box<Node> {
-
-    /// Take the value out of a `Node`, replacing it with `None`
-    #[inline]
-    fn take(&mut self) -> Node {
-        std::mem::replace(self, None)
-    }
-}
 
 impl convert::From<String> for Rope {
     fn from(string: String) -> Rope {
         Rope {
             root: if string.len() == 0 { Node::None }
-                  else { Node::Leaf(string.into_boxed_str()) }
+                  else { Node::Leaf(string) }
         }
     }
 }
