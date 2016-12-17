@@ -69,7 +69,7 @@ impl Node {
     /// Concatenate two `Node`s to return a new `Branch` node.
     fn branch(left: Self, right: Self) -> Self {
         Branch { len: left.len() + right.len()
-               , weight: left.weight()
+               , weight: left.len()
                , left: Some(box left)
                , right: Some(box right)
         }
