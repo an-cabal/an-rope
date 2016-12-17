@@ -14,6 +14,7 @@
 use std::cmp;
 use std::ops;
 use std::convert;
+use std::iter;
 
 #[derive(Debug)]
 pub struct Rope {
@@ -150,7 +151,62 @@ impl Node {
     fn rebalance(self) -> Self {
         unimplemented!()
     }
+
+    /// Returns an iterator over all leaf nodes in this `Node`'s subrope
+    fn leaves<'a>(&'a self) -> Leaves<'a> {
+        Leaves(vec![self])
+    }
+
+    /// Returns a move iterator over all leaf nodes in this `Node`'s subrope
+    fn into_leaves(self) -> IntoLeaves {
+        IntoLeaves(vec![self])
+    }
+
+    fn strings<'a>(&'a self) -> Box<Iterator<Item=&'a str> + 'a> {
+        box self.leaves().map(|n| match n {
+            &Leaf(ref s) => s.as_ref()
+          , _ => panic!("Strings iterator found something that wasn't a leaf! \
+                        This never happens.")
+        })
+    }
 }
+
+/// An iterator over a series of leaf `Node`s
+struct Leaves<'a>(Vec<&'a Node>);
+
+impl<'a> iter::Iterator for Leaves<'a> {
+    type Item = &'a Node;
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.0.pop() {
+            None => None
+          , Some(leaf @ &Leaf(_)) => Some(leaf)
+          , Some(&Branch { ref left, ref right, .. }) => {
+                if let &Some(box ref r) = right { self.0.push(r); }
+                if let &Some(box ref l) = left { self.0.push(l); }
+                self.next()
+            }
+        }
+    }
+}
+
+/// A move iterator over a series of leaf `Node`s
+struct IntoLeaves(Vec<Node>);
+
+impl iter::Iterator for IntoLeaves {
+    type Item = Node;
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.0.pop() {
+            None => None
+          , Some(leaf @ Leaf(_)) => Some(leaf)
+          , Some(Branch { left, right, .. }) => {
+                if let Some(box r) = right { self.0.push(r); }
+                if let Some(box l) = left { self.0.push(l); }
+                self.next()
+            }
+        }
+    }
+}
+
 
 impl ops::Add for Node {
     type Output = Self;
