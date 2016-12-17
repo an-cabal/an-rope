@@ -149,7 +149,30 @@ impl Node {
     /// > of this result, until the result fits into an empty slot in the
     /// > sequence."
     fn rebalance(self) -> Self {
-        unimplemented!()
+        // TODO: this is a huge mess, I based it on the IBM Java implementation
+        //       please refactor until it stops being ugly!
+        //        - eliza, 12/17/2016
+
+        if self.is_balanced() {
+            // the subrope is already balanced, do nothing
+            self
+        } else {
+            let mut leaves: Vec<Option<Node>> =
+                self.into_leaves().map(Option::Some).collect();
+            let len = leaves.len();
+            fn _rebalance(l: &mut Vec<Option<Node>>, start: usize, end: usize) -> Node {
+                match end - start {
+                    1 => l[start].take().unwrap()
+                  , 2 => l[start].take().unwrap() + l[start + 1].take().unwrap()
+                  , n => {
+                        let mid = start + (n / 2);
+                        _rebalance(l, start, mid) + _rebalance(l, mid, end)
+
+                    }
+                }
+            };
+            _rebalance(&mut leaves, 0, len)
+        }
     }
 
     /// Returns an iterator over all leaf nodes in this `Node`'s subrope
