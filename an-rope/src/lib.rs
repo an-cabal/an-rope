@@ -9,7 +9,7 @@
 //! + http://citeseer.ist.psu.edu/viewdoc/download?doi=10.1.1.14.9450&rep=rep1&type=pdf
 
 #![feature(const_fn)]
-#![feature(box_patterns)]
+#![feature(box_syntax, box_patterns)]
 
 use std::cmp;
 use std::ops;
@@ -25,28 +25,48 @@ pub struct Rope<T> {
 
 use self::Node::*;
 
+/// A `Node` in the `Rope`'s tree.
+///
+/// A `Node` is either a `Leaf` holding a vector of `T`, or a
+/// a `Branch` concatenating together two `Node`s.
 #[derive(Debug)]
-enum Node<T> { /// A leaf node
-               Leaf(Vec<T>)
-             , /// A branch node
-               Branch { l: Box<Node<T>>, r: Box<Node<T>> }
-             , /// Nothing
-               None
-}
-
-
-trait Take<T> {
-    fn take(&mut self) -> Node<T>;
-}
-
-impl<T> Take<T> for Box<Node<T>> {
-
-    /// Take the value out of a `Node`, replacing it with `None`
-    #[inline]
-    fn take(&mut self) -> Node<T> {
-        std::mem::replace(self, None)
+enum Node<T> {
+    /// A leaf node
+    Leaf(Vec<T>)
+  , /// A branch concatenating together `l`eft and `r`ight nodes.
+    Branch {
+        /// The length of this node
+        len: usize
+      , /// The weight of a node is the summed weight of its left subtree
+        weight: usize
+      , /// The left branch node
+        left: Option<Box<Node<T>>>
+      , /// The right branch node
+        right: Option<Box<Node<T>>>
     }
 }
+
+
+impl<T> Node<T> {
+    const fn none() -> Self {
+        Branch { len: 0
+               , weight: 0
+               , left: None
+               , right: None
+               }
+    }
+
+    /// Concatenate two `Node`s to return a new `Branch` node.
+    fn branch(left: Self, right: Self) -> Self {
+        unimplemented!()
+    }
+
+    #[inline]
+    fn leaf(data: Vec<T>) -> Self {
+        Leaf(data)
+    }
+}
+
 
 impl<T> Node<T> {
 
@@ -60,11 +80,13 @@ impl<T> Node<T> {
     fn height(&self) -> usize {
         use std::cmp::max;
 
-        match *self { Node::Leaf(_) => 1
-                    , Node::Branch { box ref l, box ref r} =>
-                        max(r.height(), l.height()) + 1
-                    , Node::None => 0
-                    }
+        match self {
+            &Node::Leaf(_) => 1
+          , &Node::Branch { ref left, ref right, ..} =>
+                max( left.as_ref().map(Box::as_ref).map_or(0, Node::height)
+                   , right.as_ref().map(Box::as_ref).map_or(0, Node::height)
+                   ) + 1
+            }
     }
 }
 
@@ -79,7 +101,7 @@ impl<T> Rope<T> {
     /// assert_eq!(an_rope.len(), 0);
     /// ```
     pub const fn new() -> Rope<T> {
-        Rope { root: Node::None }
+        Rope { root: Node::<T>::none() }
     }
 
     /// Returns the length of this Rope
@@ -153,12 +175,15 @@ impl<T> ops::Index<usize> for Node<T> {
     type Output = T;
 
     fn index(&self, i: usize) -> &T {
-        let len = self.len();
-        match self { &Node::Leaf(ref vec) => { &vec[i] }
-                    , &Node::Branch { box ref r, .. } if len < i => &r[i - len]
-                    , &Node::Branch { box ref l, .. } => &l[i]
-                    , &Node::None => panic!("Index out of bounds!")
-                    }
+        // let len = self.len();
+        // match self { &Node::Leaf(ref vec) => { &vec[i] }
+        //             , &Node::Branch { right: Some(box ref r), .. } if len < i =>
+        //                 &r[i - len]
+        //             , &Node::Branch { left: Some(box ref l), .. } => &l[i]
+        //             , &Node::Branch { left: None, right: None, .. } =>
+        //                 panic!("Index out of bounds!")
+        //             }
+        unimplemented!()
     }
 }
 
@@ -167,17 +192,18 @@ impl<T> Node<T> {
     /// Returns the length of a node
     //  TODO: do we want to cache this?
     fn len(&self) -> usize {
-        match *self { Node::Leaf(ref v) => v.len()
-                    , Node::Branch { box ref l, box ref r} => l.len() + r.len()
-                    , Node::None => 0
+        match self { &Node::Leaf(ref v) => v.len()
+                   , &Node::Branch { ref left, ref right, .. } =>
+                        left.as_ref().map(Box::as_ref).map_or(0, Node::len) +
+                        right.as_ref().map(Box::as_ref).map_or(0, Node::len)
                     }
     }
 
     /// Returns the weight of a node
     fn weight (&self) -> usize {
-        match *self { Node::Leaf(ref v) => v.len()
-                    , Node::Branch { box ref l, .. } => l.weight()
-                    , Node::None => 0
+        match self { &Node::Leaf(ref v) => v.len()
+                   , &Node::Branch { ref left, .. } =>
+                        left.as_ref().map(Box::as_ref).map_or(0, Node::weight)
                     }
     }
 
@@ -194,7 +220,7 @@ impl<T> convert::Into<Vec<T>> for Rope<T> {
 impl convert::From<String> for Rope<u8> {
     fn from(string: String) -> Rope<u8> {
         Rope {
-            root: if string.len() == 0 { Node::None }
+            root: if string.len() == 0 { Node::none() }
                   else { Node::Leaf(string.into_bytes()) }
         }
     }
