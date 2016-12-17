@@ -76,7 +76,7 @@ impl Node {
     }
 
     #[inline]
-    fn new_leaf(string: String) -> Self {
+    const fn new_leaf(string: String) -> Self {
         Leaf(string)
     }
 
