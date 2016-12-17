@@ -131,14 +131,13 @@ impl Node<String> {
     }
 
     /// Returns the weight of a node
-    #[inline]
-    fn weight(&self) -> usize {
-        match *self { Node::Leaf(_) => 1
-                    , Node::Branch { box ref l, box ref r} =>
-                        cmp::max(r.weight(), l.weight()) + 1
+    fn weight (&self) -> usize {
+        match *self { Node::Leaf(ref s) => s.len()
+                    , Node::Branch { box ref l, .. } => l.weight()
                     , Node::None => 0
                     }
     }
+
 
 }
 

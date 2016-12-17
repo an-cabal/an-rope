@@ -41,3 +41,23 @@ impl<T> Take<T> for Box<Node<T>> {
 //         }
 //     }
 // }
+
+impl<T> Node<T> {
+
+    /// Concatenate together two nodes, returning a new `Branch` node
+    pub fn branch(self, other: Node<T>) -> Node<T> {
+        unimplemented!()
+    }
+
+    /// Returns the height in the tree of a node
+    #[inline]
+    fn height(&self) -> usize {
+        use std::cmp::max;
+
+        match *self { Node::Leaf(_) => 1
+                    , Node::Branch { box ref l, box ref r} =>
+                        max(r.height(), l.height()) + 1
+                    , Node::None => 0
+                    }
+    }
+}
