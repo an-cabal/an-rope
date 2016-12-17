@@ -126,6 +126,30 @@ impl Node {
                         left.as_ref().map(Box::as_ref).map_or(0, Node::weight)
                     }
     }
+
+    /// Rebalance the subrope starting at this `Node`, returning a new `Node`
+    ///
+    /// From "Ropes: An Alternative to Strings":
+    /// > "The rebalancing operation maintains an ordered sequence of (empty
+    /// > or) balanced ropes, one for each length interval [_Fn_, _Fn_+1), for
+    /// > _n_ >= 2. We traverse the rope from left to right, inserting each
+    /// > leaf into the appropriate sequence position, depending on its length.
+    ///
+    /// > The concatenation of the sequence of ropes in order of decreasing
+    /// > length is equivalent to the prefix of the rope we have traversed so
+    /// > far. Each new leaf _x_ is inserted into the appropriate entry of the
+    /// > sequence. Assume that _x_’s length is in the interval [_Fn_, _Fn_+1),
+    /// > and thus it should be put in slot _n_ (which also corresponds to
+    /// > maximum depth _n_ − 2). If all lower and equal numbered levels are
+    /// > empty, then this can be done directly. If not, then we concatenate
+    /// > ropes in slots 2, ... ,(_n_ − 1) (concatenating onto the left), and
+    /// > concatenate _x_ to the right of the result. We then continue to
+    /// > concatenate ropes from the sequence in increasing order to the left
+    /// > of this result, until the result fits into an empty slot in the
+    /// > sequence."
+    fn rebalance(self) -> Self {
+        unimplemented!()
+    }
 }
 
 impl ops::Add for Node {
@@ -218,13 +242,14 @@ impl Rope {
     }
 
     /// Rebalances this entire `Rope`, returning a balanced `Rope`.
+    #[inline]
     fn rebalance(self) -> Self {
         if self.is_balanced() {
             // the rope is already balanced, do nothing
             self
         } else {
             // rebalance the rope
-            unimplemented!()
+            Rope { root: self.root.rebalance() }
         }
     }
 
