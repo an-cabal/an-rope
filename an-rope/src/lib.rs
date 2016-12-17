@@ -15,18 +15,58 @@ use std::cmp;
 use std::ops;
 use std::convert;
 
-
-pub mod bintree;
-use bintree::Node;
-
 #[derive(Debug)]
 pub struct Rope<T> {
     // can we get away with having these be of &str or will they need
     // to be string?
-    root: RopeNode<T>
+    root: Node<T>
 }
 
-type RopeNode<T> = Node<Vec<T>>;
+
+use self::Node::*;
+
+#[derive(Debug)]
+enum Node<T> { /// A leaf node
+               Leaf(Vec<T>)
+             , /// A branch node
+               Branch { l: Box<Node<T>>, r: Box<Node<T>> }
+             , /// Nothing
+               None
+}
+
+
+trait Take<T> {
+    fn take(&mut self) -> Node<T>;
+}
+
+impl<T> Take<T> for Box<Node<T>> {
+
+    /// Take the value out of a `Node`, replacing it with `None`
+    #[inline]
+    fn take(&mut self) -> Node<T> {
+        std::mem::replace(self, None)
+    }
+}
+
+impl<T> Node<T> {
+
+    /// Concatenate together two nodes, returning a new `Branch` node
+    pub fn branch(self, other: Node<T>) -> Node<T> {
+        unimplemented!()
+    }
+
+    /// Returns the height in the tree of a node
+    #[inline]
+    fn height(&self) -> usize {
+        use std::cmp::max;
+
+        match *self { Node::Leaf(_) => 1
+                    , Node::Branch { box ref l, box ref r} =>
+                        max(r.height(), l.height()) + 1
+                    , Node::None => 0
+                    }
+    }
+}
 
 impl<T> Rope<T> {
 
@@ -109,7 +149,7 @@ impl<T> Rope<T> {
 }
 
 
-impl<T> ops::Index<usize> for RopeNode<T> {
+impl<T> ops::Index<usize> for Node<T> {
     type Output = T;
 
     fn index(&self, i: usize) -> &T {
@@ -122,7 +162,7 @@ impl<T> ops::Index<usize> for RopeNode<T> {
     }
 }
 
-impl<T> RopeNode<T> {
+impl<T> Node<T> {
 
     /// Returns the length of a node
     //  TODO: do we want to cache this?
@@ -144,6 +184,12 @@ impl<T> RopeNode<T> {
 
 }
 
+impl<T> convert::Into<Vec<T>> for Rope<T> {
+    fn into(self) -> Vec<T> {
+        unimplemented!()
+    }
+
+}
 
 impl convert::From<String> for Rope<u8> {
     fn from(string: String) -> Rope<u8> {
@@ -177,7 +223,7 @@ impl ops::AddAssign for Rope<u8> {
     /// let mut rope = Rope::from(String::from("ab"));
     /// rope += Rope::from(String::from("cd"));
     /// assert_eq!(rope, Rope::from(String::from("abcd")));
-    /// ````
+    /// ```
     #[inline]
     fn add_assign(&mut self, other: Rope<u8>) {
         self.append(other)
@@ -193,7 +239,7 @@ impl ops::AddAssign<String> for Rope<u8> {
     /// let mut rope = Rope::from(String::from("ab"));
     /// rope += String::from("cd");
     /// assert_eq!(rope, Rope::from(String::from("abcd")));
-    /// ````
+    /// ```
     #[inline]
     fn add_assign(&mut self, string: String) {
         self.append(Rope::from(string))
@@ -209,7 +255,7 @@ impl<'a> ops::AddAssign<&'a str> for Rope<u8> {
     /// let mut rope = Rope::from(String::from("ab"));
     /// rope += String::from("cd");
     /// assert_eq!(rope, Rope::from(String::from("abcd")));
-    /// ````
+    /// ```
     #[inline]
     fn add_assign(&mut self, string: &'a str) {
         self.append(Rope::from(string.to_owned()))
