@@ -99,6 +99,11 @@ macro_rules! str_iters {
 // });
 
 impl Node {
+
+    fn split(self, index: usize) -> (Node, Node) {
+        unimplemented!()
+    }
+
     const fn new() -> Self {
         Branch { len: 0
                , weight: 0
@@ -114,6 +119,11 @@ impl Node {
                , left: Some(box left)
                , right: Some(box right)
         }
+    }
+
+    #[inline]
+    fn concat(self, right: Self) -> Self {
+        Node::new_branch(self, right)
     }
 
     #[inline]
@@ -484,9 +494,25 @@ impl Rope {
     /// an_rope = an_rope.insert_rope(1, Rope::from("bd"));
     /// assert_eq!(an_rope, Rope::from("abcd"));
     /// ```
-    pub fn insert_rope(&mut self,  index: usize, rope: Rope) {
-        assert!(index < self.len());
-        unimplemented!()
+    pub fn insert_rope(&mut self, index: usize, rope: Rope) {
+        use std::mem::replace;
+        if rope.len() > 0 {
+            let len = self.len();
+            if index == 0 {
+                // if the rope is being inserted at index 0, just prepend it
+                self.prepend(rope)
+            } else if index == len {
+                // if the rope is being inserted at index len, append it
+                self.append(rope)
+            } else {
+                let (l, r) = replace(&mut self.root, Node::new())
+                                .split(index);
+                self.root = l.concat(rope.root)
+                             .concat(r)
+                             .rebalance();
+
+            }
+        }
     }
 
     /// Insert `rope` into `index` in this `Rope`, returning a new `Rope`.
@@ -523,7 +549,9 @@ impl Rope {
     /// ```
     pub fn with_insert_rope(&self, index: usize, rope: Rope) -> Rope {
         assert!(index < self.len());
-        unimplemented!()
+        let mut new_rope = self.clone();
+        new_rope.insert_rope(index, rope);
+        new_rope
     }
 
     /// Insert string slice `s` into `index` in this `Rope`,
@@ -632,6 +660,9 @@ impl Rope {
         }
     }
 
+    pub fn prepend(&mut self, other: Rope) {
+        unimplemented!()
+    }
 
     /// Splits the rope into two ropes at the given index.
     ///
