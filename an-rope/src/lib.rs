@@ -192,6 +192,7 @@ impl Node {
     }
 
     /// Returns an iterator over all the strings in this `Node`s subrope'
+    #[inline]
     pub fn strings<'a>(&'a self) -> Box<Iterator<Item=&'a str> + 'a> {
         box self.leaves().map(|n| match n {
             &Leaf(ref s) => s.as_ref()
@@ -203,12 +204,43 @@ impl Node {
     /// Returns a move iterator over all the strings in this `Node`s subrope'
     ///
     /// Consumes `self`.
+    #[inline]
     pub fn into_strings(self) -> Box<Iterator<Item=String>> {
         box self.into_leaves().map(|n| match n {
             Leaf(s) => s
           , _ => panic!("Strings iterator found something that wasn't a leaf! \
                         This never happens.")
         })
+    }
+
+    /// Returns an iterator over all the characters in this `Node`'s subrope
+    ///
+    /// As a `Rope` consists of valid UTF-8, we can iterate through a
+    /// `Rope` by `char`. This method returns such an iterator.
+    ///
+    /// It's important to remember that `char` represents a Unicode Scalar
+    /// Value, and may not match your idea of what a 'character' is. Iteration
+    /// over grapheme clusters may be what you actually want.
+    #[inline]
+    pub fn chars<'a>(&'a self) -> Box<Iterator<Item=char> + 'a> {
+        box self.strings().flat_map(str::chars)
+    }
+
+    /// Returns n iterator over the bytes of this `Node`'s subrope
+    ///
+    /// As a `Rope` consists of a sequence of bytes, we can iterate through a
+    /// string slice by byte. This method returns such an iterator.
+    #[inline]
+    pub fn bytes<'a>(&'a self) -> Box<Iterator<Item=u8> + 'a> {
+        box self.strings().flat_map(str::bytes)
+    }
+
+    /// Returns an iterator over the grapheme clusters of this `Node`'s subrope'
+    ///
+    /// This is the iterator returned by `Node::into_iter`.
+    #[inline]
+    pub fn graphemes<'a>(&'a self) -> Box<Iterator<Item=&'a str> + 'a> {
+        unimplemented!()
     }
 }
 
@@ -365,6 +397,11 @@ impl Rope {
     /// Returns an iterator over all the strings in this `Rope`
     #[inline]
     pub fn strings<'a>(&'a self) -> Box<Iterator<Item=&'a str> + 'a> {
+        // TODO: since all the iterator methods on `Rope` just call the
+        //       methods on `Node`, do we wanna just make `Node` pub
+        //       and add a deref conversion from a `Rope` handle to its'
+        //       root `Node`?
+        //          - eliza, 12/18/2016
         self.root.strings()
     }
 
@@ -374,6 +411,36 @@ impl Rope {
     #[inline]
     pub fn into_strings(self) -> Box<Iterator<Item=String>> {
         self.root.into_strings()
+    }
+
+    /// Returns an iterator over all the characters in this `Rope`.
+    ///
+    /// As a `Rope` consists of valid UTF-8, we can iterate through a
+    /// `Rope` by `char`. This method returns such an iterator.
+    ///
+    /// It's important to remember that `char` represents a Unicode Scalar
+    /// Value, and may not match your idea of what a 'character' is. Iteration
+    /// over grapheme clusters may be what you actually want.
+    #[inline]
+    pub fn chars<'a>(&'a self) -> Box<Iterator<Item=char> + 'a> {
+        self.root.chars()
+    }
+
+    /// Returns n iterator over the bytes of this `Rope`
+    ///
+    /// As a `Rope` consists of a sequence of bytes, we can iterate through a
+    /// string slice by byte. This method returns such an iterator.
+    #[inline]
+    pub fn bytes<'a>(&'a self) -> Box<Iterator<Item=u8> + 'a> {
+        self.root.bytes()
+    }
+
+    /// Returns an iterator over the grapheme clusters of this `Rope`
+    ///
+    /// This is the iterator returned by `Node::into_iter`.
+    #[inline]
+    pub fn graphemes<'a>(&'a self) -> Box<Iterator<Item=&'a str> + 'a> {
+        self.root.graphemes()
     }
 }
 
