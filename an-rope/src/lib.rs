@@ -197,7 +197,9 @@ impl Node {
     pub fn strings<'a>(&'a self) -> impl Iterator<Item=&'a str> {
         box self.leaves().map(|n| match n {
             &Leaf(ref s) => s.as_ref()
-          , _ => unreachable!()
+          , _ => unreachable!("Node.leaves() iterator contained something \
+                               that wasn't a leaf. Barring _force majeure_, \
+                               this should be impossible. Something's broken.")
         })
     }
 
@@ -208,7 +210,10 @@ impl Node {
     pub fn into_strings(self) -> impl Iterator<Item=String> {
         box self.into_leaves().map(|n| match n {
             Leaf(s) => s
-          , _ => unreachable!()
+            , _ => unreachable!("Node.into_leaves() iterator contained \
+                                 something  that wasn't a leaf. Barring _force \
+                                 majeure_, this should be impossible. \
+                                 Something's broken.")
         })
     }
 
