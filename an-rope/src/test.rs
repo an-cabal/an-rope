@@ -89,7 +89,7 @@ fn insert_balance_test() {
 fn insert_test_1() {
     let s: String = iter::repeat('a').take(1_000).collect();
     let r_1 = Rope::from(s);
-    let r_2 = Rope::new();
+    let mut r_2 = Rope::new();
     for _ in 0..100 {
         let t: String = iter::repeat('a').take(10).collect();
         r_2.insert(&Rope::from(t), 0);
@@ -100,7 +100,7 @@ fn insert_test_1() {
 #[test]
 fn insert_test_2() {
     let s: String = iter::repeat('a').take(10).collect();
-    let r_1 = Rope::from(s);
+    let mut r_1 = Rope::from(s);
     for _ in 0..99 {
         let t: String = iter::repeat('a').take(10).collect();
         r_1.insert(&Rope::from(t), 5);
@@ -113,8 +113,8 @@ fn insert_test_2() {
 
 #[test]
 fn insert_test_3() {
-    let s_1 = Rope::from(String::from("aaaaa"));
-    let s_2 = Rope::from(String::from("bbbbb"));
+    let mut s_1 = Rope::from(String::from("aaaaa"));
+    let mut s_2 = Rope::from(String::from("bbbbb"));
     let s_3 = Rope::from(String::from("ccccc"));
     s_2.insert(&s_3, 0);
     s_1.insert(&s_2, 0);
