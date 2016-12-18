@@ -62,6 +62,31 @@ fn fibonacci(n: usize) -> usize {
             }
 }
 
+macro_rules! str_iters {
+    ( $($(#[$attr:meta])* impl $name: ident<$ty: ty> for Node {})+ ) => { $(
+        $(#[$attr])*
+        pub fn $name<'a>(&'a self) -> impl Iterator<Item=$ty> + 'a {
+            self.strings().flat_map(str::$name)
+        }
+    )+ };
+
+    ( $($(#[$attr:meta])* impl $name: ident<$ty: ty> for Rope {})+ )=> { $(
+        $(#[$attr])*
+        pub fn $name<'a>(&'a self) -> impl Iterator<Item=$ty> + 'a {
+            self.root.$name()
+        }
+    )+ }
+
+}
+
+// impl Rope {
+//     $(#[attr])*
+//     pub fn $name<'a>(&'a self) -> impl Iterator<Item=$ty> + 'a {
+//         self.root.$name()
+//     }
+// }
+//
+// });
 
 impl Node {
     const fn new() -> Self {
@@ -192,6 +217,7 @@ impl Node {
         IntoLeaves(vec![self])
     }
 
+
     /// Returns an iterator over all the strings in this `Node`s subrope'
     #[inline]
     pub fn strings<'a>(&'a self) -> impl Iterator<Item=&'a str> {
@@ -217,27 +243,43 @@ impl Node {
         })
     }
 
-    /// Returns an iterator over all the characters in this `Node`'s subrope
-    ///
-    /// As a `Rope` consists of valid UTF-8, we can iterate through a
-    /// `Rope` by `char`. This method returns such an iterator.
-    ///
-    /// It's important to remember that `char` represents a Unicode Scalar
-    /// Value, and may not match your idea of what a 'character' is. Iteration
-    /// over grapheme clusters may be what you actually want.
-    #[inline]
-    pub fn chars<'a>(&'a self) -> impl Iterator<Item=char> + 'a {
-        self.strings().flat_map(str::chars)
+    str_iters! {
+        #[doc="Returns an iterator over all the bytes in this `Node`'s \
+               subrope \n\
+
+               \nAs a Rope consists of a sequence of bytes, we can iterate \
+               through a rope by byte. This method returns such an iterator."]
+        #[inline]
+        impl bytes<u8> for Node {}
+        #[doc="Returns an iterator over all the characters in this `Node`'s \
+               subrope \n\
+
+               \nAs a `Rope` consists of valid UTF-8, we can iterate through a \
+               `Rope` by `char`. This method returns such an iterator. \n\
+
+               \nIt's important to remember that `char` represents a Unicode \
+               Scalar Value, and may not match your idea of what a \
+               'character' is. Iteration over grapheme clusters may be what \
+               you actually want."]
+        #[inline]
+        impl chars<char> for Node {}
+        #[inline]
+        impl char_indices<(usize, char)> for Node {}
+        #[inline]
+        impl split_whitespace<&'a str> for Node {}
+        #[inline]
+        impl lines<&'a str> for Node {}
+        #[inline]
+        impl lines_any<&'a str> for Node {}
     }
 
-    /// Returns n iterator over the bytes of this `Node`'s subrope
-    ///
-    /// As a `Rope` consists of a sequence of bytes, we can iterate through a
-    /// string slice by byte. This method returns such an iterator.
-    #[inline]
-    pub fn bytes<'a>(&'a self) -> impl Iterator<Item=u8> + 'a {
-        self.strings().flat_map(str::bytes)
-    }
+    // /// Returns n iterator over the bytes of this `Node`'s subrope
+    // ///
+    // ///
+    // #[inline]
+    // pub fn bytes<'a>(&'a self) -> impl Iterator<Item=u8> + 'a {
+    //     self.strings().flat_map(str::bytes)
+    // }
 
     /// Returns an iterator over the grapheme clusters of this `Node`'s subrope'
     ///
@@ -422,26 +464,32 @@ impl Rope {
         self.root.into_strings()
     }
 
-    /// Returns an iterator over all the characters in this `Rope`.
-    ///
-    /// As a `Rope` consists of valid UTF-8, we can iterate through a
-    /// `Rope` by `char`. This method returns such an iterator.
-    ///
-    /// It's important to remember that `char` represents a Unicode Scalar
-    /// Value, and may not match your idea of what a 'character' is. Iteration
-    /// over grapheme clusters may be what you actually want.
-    #[inline]
-    pub fn chars<'a>(&'a self) -> impl Iterator<Item=char> + 'a {
-        self.root.chars()
-    }
+    str_iters! {
+        #[doc="Returns an iterator over all the bytes in this `Rope`.\n\
 
-    /// Returns n iterator over the bytes of this `Rope`
-    ///
-    /// As a `Rope` consists of a sequence of bytes, we can iterate through a
-    /// string slice by byte. This method returns such an iterator.
-    #[inline]
-    pub fn bytes<'a>(&'a self) -> impl Iterator<Item=u8> + 'a {
-        self.root.bytes()
+               \nAs a Rope consists of a sequence of bytes, we can iterate \
+               through a rope by byte. This method returns such an iterator."]
+        #[inline]
+        impl bytes<u8> for Rope {}
+        #[doc="Returns an iterator over all the characters in this `Rope`.\n\
+
+               \nAs a `Rope` consists of valid UTF-8, we can iterate through a \
+               `Rope` by `char`. This method returns such an iterator. \n\
+
+               \nIt's important to remember that `char` represents a Unicode \
+               Scalar Value, and may not match your idea of what a \
+               'character' is. Iteration over grapheme clusters may be what \
+               you actually want."]
+        #[inline]
+        impl chars<char> for Rope {}
+        #[inline]
+        impl char_indices<(usize, char)> for Rope {}
+        #[inline]
+        impl split_whitespace<&'a str> for Rope {}
+        #[inline]
+        impl lines<&'a str> for Rope {}
+        #[inline]
+        impl lines_any<&'a str> for Rope {}
     }
 
     /// Returns an iterator over the grapheme clusters of this `Rope`
