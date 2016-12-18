@@ -112,11 +112,54 @@ fn with_insert_rope_test_2() {
 }
 
 #[test]
-fn insert_rope_test_3() {
+fn mutable_insert_rope_test_1() {
     let mut s_1 = Rope::from(String::from("aaaaa"));
     let mut s_2 = Rope::from(String::from("bbbbb"));
     let s_3 = Rope::from(String::from("ccccc"));
     s_2.insert_rope(0, s_3);
     s_1.insert_rope(0, s_2);
     assert_eq!(&s_1, "cccccbbbbbaaaaa");
+}
+
+#[test]
+fn mutable_insert_str_test_1() {
+    let mut s = Rope::from("aaaaa");
+    s.insert_str(0, "bbbbb");
+    s.insert_str(10, "ccccc");
+    assert_eq!(&s, "bbbbbaaaaaccccc");
+}
+
+#[test]
+fn mutable_insert_char_test_1() {
+    let mut s = Rope::from("aaaaa");
+    for _ in 0..5 { s.insert(0, 'b')}
+    for _ in 0..5 { s.insert(10, 'c')}
+    assert_eq!(&s, "bbbbbaaaaaccccc");
+}
+
+#[test]
+fn with_insert_char_test_1() {
+    let s = Rope::from("aaaaa");
+    let s_1 = s.with_insert(5, 'b');
+    let s_2 = s_1.with_insert(4, 'b');
+    let s_3 = s_2.with_insert(3, 'b');
+    let s_4 = s_3.with_insert(2, 'b');
+    let s_5 = s_4.with_insert(1, 'b');
+    assert_eq!(&s, "aaaaa");
+    assert_eq!(&s_1, "aaaaab");
+    assert_eq!(&s_2, "aaaabab");
+    assert_eq!(&s_3, "aaababab");
+    assert_eq!(&s_4, "aabababab");
+    assert_eq!(&s_5, "ababababab");
+
+}
+
+#[test]
+fn with_insert_str_test_1() {
+    let s = Rope::from("aaaaa");
+    let s_1 = s.with_insert_str(5, "ccccc");
+    let s_2 = s_1.with_insert_str(5, "bbbbb");
+    assert_eq!(&s, "aaaaa");
+    assert_eq!(&s_1, "aaaaccccc");
+    assert_eq!(&s_2, "aaaaabbbbbccccc");
 }
