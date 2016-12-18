@@ -2,7 +2,7 @@
 name = "an-editor"
 description = "an text editor."
 version = "0.0.1"
-authors = ["Eliza Weisman <hi@hawkweisman.me>"]
+authors = ["Eliza Weisman <hi@hawkweisman.me>", "Chris McDonald <mail.chris.mcdonald@gmail.com>"]
 
 [dependencies.an-rope]
 path = "an-rope"
