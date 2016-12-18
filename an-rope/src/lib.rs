@@ -540,6 +540,13 @@ impl Rope {
     pub fn graphemes<'a>(&'a self) -> impl Iterator<Item=&'a str> {
         self.root.graphemes()
     }
+
+    /// Returns true if the bytes in `self` equal the bytes in `other`
+    #[inline]
+    fn bytes_eq<I>(&self, other: I) -> bool
+    where I: Iterator<Item=u8> {
+        self.bytes().zip(other).all(|(a, b)| a == b)
+    }
 }
 
 
@@ -566,6 +573,7 @@ impl convert::Into<Vec<u8>> for Rope {
 }
 
 impl convert::From<String> for Rope {
+    #[inline]
     fn from(string: String) -> Rope {
         Rope {
             root: if string.len() == 0 { Node::new() }
@@ -574,16 +582,63 @@ impl convert::From<String> for Rope {
     }
 }
 
+impl<'a> convert::From<&'a str> for Rope {
+    #[inline]
+    fn from(string: &'a str) -> Rope { Rope::from(String::from(string)) }
+}
+
+
 //-- comparisons ----------------------------------------------------
+impl cmp::Eq for Rope {}
 impl cmp::PartialEq for Rope {
+    /// A rope equals another rope if all the bytes in both are equal.
+    ///
+    /// # Examples
+    /// ```
+    /// use an_rope::Rope;
+    /// assert!(Rope::from("abcd") == Rope::from("abcd"));
+    /// ```
+    /// ```
+    /// use an_rope::Rope;
+    /// assert!(Rope::from("abcd") != Rope::from("ab"));
+    /// ```
+    /// ```
+    /// use an_rope::Rope;
+    /// assert!(Rope::from("abcd") != Rope::from("dcab"))
+    /// ```
+    #[inline]
     fn eq(&self, other: &Rope) -> bool {
-        unimplemented!()
+        if self.len() == other.len() {
+            self.bytes_eq(other.bytes())
+        } else {
+            false
+        }
     }
 }
 
 impl cmp::PartialEq<str> for Rope {
+    /// A rope equals a string if all the bytes in the string equal the rope's.
+    ///
+    /// # Examples
+    /// ```
+    /// use an_rope::Rope;
+    /// assert!(&Rope::from("abcd") == "abcd");
+    /// ```
+    /// ```
+    /// use an_rope::Rope;
+    /// assert!(&Rope::from("abcd") != "ab");
+    /// ```
+    /// ```
+    /// use an_rope::Rope;
+    /// assert!(&Rope::from("abcd") != "dcab");
+    /// ```
+    #[inline]
     fn eq(&self, other: &str) -> bool {
-        unimplemented!()
+        if self.len() == other.len() {
+            self.bytes_eq(other.bytes())
+        } else {
+            false
+        }
     }
 }
 
