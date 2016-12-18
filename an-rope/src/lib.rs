@@ -11,6 +11,7 @@
 
 #![feature(const_fn)]
 #![feature(box_syntax, box_patterns)]
+#![feature(conservative_impl_trait)]
 
 use std::cmp;
 use std::ops;
@@ -193,7 +194,7 @@ impl Node {
 
     /// Returns an iterator over all the strings in this `Node`s subrope'
     #[inline]
-    pub fn strings<'a>(&'a self) -> Box<Iterator<Item=&'a str> + 'a> {
+    pub fn strings<'a>(&'a self) -> impl Iterator<Item=&'a str> {
         box self.leaves().map(|n| match n {
             &Leaf(ref s) => s.as_ref()
           , _ => panic!("Strings iterator found something that wasn't a leaf! \
@@ -205,7 +206,7 @@ impl Node {
     ///
     /// Consumes `self`.
     #[inline]
-    pub fn into_strings(self) -> Box<Iterator<Item=String>> {
+    pub fn into_strings(self) -> impl Iterator<Item=String> {
         box self.into_leaves().map(|n| match n {
             Leaf(s) => s
           , _ => panic!("Strings iterator found something that wasn't a leaf! \
@@ -222,8 +223,8 @@ impl Node {
     /// Value, and may not match your idea of what a 'character' is. Iteration
     /// over grapheme clusters may be what you actually want.
     #[inline]
-    pub fn chars<'a>(&'a self) -> Box<Iterator<Item=char> + 'a> {
-        box self.strings().flat_map(str::chars)
+    pub fn chars<'a>(&'a self) -> impl Iterator<Item=char> + 'a {
+        self.strings().flat_map(str::chars)
     }
 
     /// Returns n iterator over the bytes of this `Node`'s subrope
@@ -231,16 +232,21 @@ impl Node {
     /// As a `Rope` consists of a sequence of bytes, we can iterate through a
     /// string slice by byte. This method returns such an iterator.
     #[inline]
-    pub fn bytes<'a>(&'a self) -> Box<Iterator<Item=u8> + 'a> {
-        box self.strings().flat_map(str::bytes)
+    pub fn bytes<'a>(&'a self) -> impl Iterator<Item=u8> + 'a {
+        self.strings().flat_map(str::bytes)
     }
 
     /// Returns an iterator over the grapheme clusters of this `Node`'s subrope'
     ///
     /// This is the iterator returned by `Node::into_iter`.
     #[inline]
-    pub fn graphemes<'a>(&'a self) -> Box<Iterator<Item=&'a str> + 'a> {
-        unimplemented!()
+    pub fn graphemes<'a>(&'a self) -> impl Iterator<Item=&'a str> {
+        // the compiler won't let me mark this as unimplemented using the
+        // unimplemented!() macro, due to Reasons (i suspect relating to
+        // returning `impl Trait`)
+        //  - eliza, 12/18/2016
+        panic!("Unimplemented!");
+        self.strings()
     }
 }
 
@@ -396,7 +402,7 @@ impl Rope {
 
     /// Returns an iterator over all the strings in this `Rope`
     #[inline]
-    pub fn strings<'a>(&'a self) -> Box<Iterator<Item=&'a str> + 'a> {
+    pub fn strings<'a>(&'a self) -> impl Iterator<Item=&'a str> {
         // TODO: since all the iterator methods on `Rope` just call the
         //       methods on `Node`, do we wanna just make `Node` pub
         //       and add a deref conversion from a `Rope` handle to its'
@@ -409,7 +415,7 @@ impl Rope {
     ///
     /// Consumes `self`.
     #[inline]
-    pub fn into_strings(self) -> Box<Iterator<Item=String>> {
+    pub fn into_strings<'a>(self) -> impl Iterator<Item=String> + 'a {
         self.root.into_strings()
     }
 
@@ -422,7 +428,7 @@ impl Rope {
     /// Value, and may not match your idea of what a 'character' is. Iteration
     /// over grapheme clusters may be what you actually want.
     #[inline]
-    pub fn chars<'a>(&'a self) -> Box<Iterator<Item=char> + 'a> {
+    pub fn chars<'a>(&'a self) -> impl Iterator<Item=char> + 'a {
         self.root.chars()
     }
 
@@ -431,7 +437,7 @@ impl Rope {
     /// As a `Rope` consists of a sequence of bytes, we can iterate through a
     /// string slice by byte. This method returns such an iterator.
     #[inline]
-    pub fn bytes<'a>(&'a self) -> Box<Iterator<Item=u8> + 'a> {
+    pub fn bytes<'a>(&'a self) -> impl Iterator<Item=u8> + 'a {
         self.root.bytes()
     }
 
@@ -439,7 +445,7 @@ impl Rope {
     ///
     /// This is the iterator returned by `Node::into_iter`.
     #[inline]
-    pub fn graphemes<'a>(&'a self) -> Box<Iterator<Item=&'a str> + 'a> {
+    pub fn graphemes<'a>(&'a self) -> impl Iterator<Item=&'a str> {
         self.root.graphemes()
     }
 }
