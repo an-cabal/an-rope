@@ -377,6 +377,42 @@ impl Rope {
     /// ```
     pub fn len(&self) -> usize { self.root.len() }
 
+    /// Insert `rope` into `index` in this `Rope`
+    ///
+    /// # Returns
+    /// + A new `Rope` with `rope` inserted at `index`
+    ///
+    /// # Panics
+    /// + If `index` is greater than the length of this `Rope`
+    ///
+    /// # Examples
+    ///
+    /// Inserting at index 0 prepends `rope` to this `Rope`:
+    /// ```
+    /// let mut an_rope = Rope::from("cd");
+    /// an_rope = an_rope.insert(Rope::from("ab"), 0);
+    /// assert_eq!(an_rope, Rope::from("abcd"));
+    /// ```
+    ///
+    /// Inserting at index `len` prepends `rope` to this `Rope`:
+    /// ```
+    /// let mut an_rope = Rope::from("ab");
+    /// an_rope = an_rope.insert(Rope::from("cd"), an_rope.len());
+    /// assert_eq!(an_rope, Rope::from("abcd"));
+    /// ```
+    ///
+    /// Inserting at an index in the middle inserts `rope` at that index:
+    /// ```
+    /// let mut an_rope = Rope::from("ad");
+    /// an_rope = an_rope.insert(Rope::from("bd"), 1);
+    /// assert_eq!(an_rope, Rope::from("abcd"));
+    /// ```
+    pub fn insert(&self, rope: &Rope, index: usize) -> Rope {
+        assert!(index < self.len());
+        unimplemented!()
+    }
+
+
     /// Appends a `Rope` to the end of this `Rope`, returning a new `Rope`
     ///
     /// Note that this is equivalent to using the `+` operator.
