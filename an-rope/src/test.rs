@@ -117,5 +117,5 @@ fn insert_test_3() {
     let s_3 = Rope::from(String::from("ccccc"));
     s_2.insert(&s_3, 0);
     s_1.insert(&s_2, 0);
-    assert_eq!(s_1, "cccccbbbbbaaaaa");
+    assert_eq!(&s_1, "cccccbbbbbaaaaa");
 }
