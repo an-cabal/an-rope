@@ -140,18 +140,26 @@ fn mutable_insert_char_test_1() {
 #[test]
 fn with_insert_char_test_1() {
     let s = Rope::from("aaaaa");
-    let s = s.with_insert(5, 'b');
-    let s = s.with_insert(4, 'b');
-    let s = s.with_insert(3, 'b');
-    let s = s.with_insert(2, 'b');
-    let s = s.with_insert(1, 'b');
-    assert_eq!(&s, "ababababab");
+    let s_1 = s.with_insert(5, 'b');
+    let s_2 = s_1.with_insert(4, 'b');
+    let s_3 = s_2.with_insert(3, 'b');
+    let s_4 = s_3.with_insert(2, 'b');
+    let s_5 = s_4.with_insert(1, 'b');
+    assert_eq!(&s, "aaaaa");
+    assert_eq!(&s_1, "aaaaab");
+    assert_eq!(&s_2, "aaaabab");
+    assert_eq!(&s_3, "aaababab");
+    assert_eq!(&s_4, "aabababab");
+    assert_eq!(&s_5, "ababababab");
+
 }
 
 #[test]
 fn with_insert_str_test_1() {
     let s = Rope::from("aaaaa");
-    let s = s.with_insert_str(5, "ccccc");
-    let s = s.with_insert_str(5, "bbbbb");
-    assert_eq!(&s, "aaaaabbbbbccccc");
+    let s_1 = s.with_insert_str(5, "ccccc");
+    let s_2 = s_1.with_insert_str(5, "bbbbb");
+    assert_eq!(&s, "aaaaa");
+    assert_eq!(&s_1, "aaaaccccc");
+    assert_eq!(&s_2, "aaaaabbbbbccccc");
 }
