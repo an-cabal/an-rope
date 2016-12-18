@@ -51,17 +51,20 @@ enum Node {
     /// A leaf node
     Leaf(String)
   , /// A branch concatenating together `l`eft and `r`ight nodes.
-    Branch {
-        /// The length of this node
-        len: usize
-      , /// The weight of a node is the summed weight of its left subtree
-        weight: usize
-      , /// The left branch node
-        left: Option<Box<Node>>
-      , /// The right branch node
-        right: Option<Box<Node>>
-    }
+    Branch(BranchNode)
 }
+#[derive(Debug, Clone)]
+struct BranchNode {
+    /// The length of this node
+    len: usize
+    , /// The weight of a node is the summed weight of its left subtree
+    weight: usize
+    , /// The left branch node
+    left: Option<Box<Node>>
+    , /// The right branch node
+    right: Option<Box<Node>>
+}
+
 
 impl Default for Node {
     fn default() -> Self { Node::empty() }
@@ -102,38 +105,113 @@ macro_rules! str_iters {
 // }
 //
 // });
+impl BranchNode {
+    fn split(&mut self, index: usize) -> (Node, Node) {
+        let result = if index < self.weight {
+            if let Some(box ref mut left) = self.left {
+                left.split(index)
+            } else {
+                panic!()
+            }
+        } else if let Some(box ref mut right) = self.right {
+            right.split(index - self.weight)
+        } else {
+            panic!()
+        };
+        // TODO: update weight here
+        result
+    }
+}
 
 impl Node {
 
-    fn split(self, index: usize) -> (Node, Node) {
-        let len = self.len();
-        assert!(index <= len);
+
+    fn split(&mut self, index: usize) -> (Node, Node) {
         match self {
-            _ if index == 0 => (Node::empty(), self)
-          , _ if index == len => (self, Node::empty())
-          , Branch { left: None, right: None, .. } =>
-            Default::default()
-          , Branch { mut left, mut right, .. } =>
-            unimplemented!()
-          , Leaf(s) => unimplemented!()
+            &mut Leaf(ref s) => ( Leaf(s[index..].to_string())
+                                , Leaf(s[..index].to_string()))
+          , &mut Branch(ref mut node) => node.split(index)
         }
+    // }
+        // let len = self.len();
+        // assert!(index <= len);
+        // match self {
+        //     _ if index == 0 => (Node::empty(), self)
+        //   , _ if index == len => (self, Node::empty())
+        //   , Branch { left: None, right: None, .. } =>
+        //     Default::default()
+        //   , Branch { mut left, mut right, mut len, mut weight }
+        //     if index < l.len() => {
+        //         let (ll, lr) = lval.take().unwrap().split(index);
+        //         left = Some(box lr);
+        //         len = self.len();
+        //         weight = self.calc_weight();
+        //         let r = if let None = left { right } else { self };
+        //         (ll, r)
+        //     }
+        //   , Branch { left: l, right: r, mut len, mut weight } => {
+        //         let (right_left, right) = r.take().split(index);
+        //         r = Some(box right_left);
+        //         len = self.len();
+        //         weight = self.calc_weight();
+        //         let left = if let None = self.right { l } else { self };
+        //         (left, right)
+        //       }
+        //   , Leaf(s) =>
+        //       (Leaf(s[index..].to_string()), Leaf(s[..index].to_string()))
+        // }
+        // match self {
+        //     &Branch { right: Some(box ref mut Leaf(s)), .. } |
+        //     &Branch { left: Some(box ref mut Leaf(s)), .. } =>
+        //         // if we've hit a leaf, split the string and return
+        //
+        //   , &Branch { left: Some(box ref mut l), ref mut weight, .. }
+        //     if index < weight =>
+        //         // if index is less then weight, walk down the left tree
+        //         l.split(index)
+        //   , &Branch { left: Some(box ref mut r), ref weight, .. }
+        //     if index > weight =>
+        //         // if index is greater than weight, walk down the right tree
+        //         r.split(index - weight)
+        //   , &Leaf(_) =>  // this method should never be called on a leaf node
+        //         unreachable!()
+        //   , _ => unimplemented!()
+        // }
+        // let mut i = index;
+        // let mut stack = vec![&*self];
+        // while let Some(node) = stack.last() {
+        //     // if index is less then weight, walk down the left tree
+        //     if i < *node.weight() {
+        //         // match *node {
+        //         //     &Branch { left: Some(box ref mut l), .. } => {
+        //         //          stack.push(l) };
+        //         //     // found a leaf, we're done
+        //         //   , &Leaf(_) => break;
+        //         // }
+        //     } else {
+        //
+        //     }
+        // }
+        // // let Leaf(s) = stack.pop();
+        // // go back up the stack and update weights
+        // (Leaf(s[index..].to_string()), Leaf(s[..index].to_string()))
     }
 
     const fn empty() -> Self {
-        Branch { len: 0
-               , weight: 0
-               , left: None
-               , right: None
-               }
+        Branch(BranchNode { len: 0
+                          , weight: 0
+                          , left: None
+                          , right: None
+                          })
     }
 
     /// Concatenate two `Node`s to return a new `Branch` node.
     fn new_branch(left: Self, right: Self) -> Self {
-        Branch { len: left.len() + right.len()
-               , weight: left.len()
-               , left: Some(box left)
-               , right: Some(box right)
-        }
+        Branch(BranchNode { len: left.len() + right.len()
+                          , weight: left.len()
+                          , left: Some(box left)
+                          , right: Some(box right)
+                          })
     }
 
     #[inline]
@@ -168,7 +246,7 @@ impl Node {
 
         match self {
             &Node::Leaf(_) => 0
-          , &Node::Branch { ref left, ref right, ..} =>
+          , &Node::Branch(BranchNode { ref left, ref right, .. }) =>
                 max( left.as_ref().map(Box::as_ref).map_or(0, Node::depth)
                    , right.as_ref().map(Box::as_ref).map_or(0, Node::depth)
                    ) + 1
@@ -179,19 +257,26 @@ impl Node {
     /// Returns the length of a node
     //  TODO: do we want to cache this?
     fn len(&self) -> usize {
-        match self { &Node::Leaf(ref s) => s.len()
-                   , &Node::Branch { ref left, ref right, .. } =>
+        match self { &Leaf(ref s) => s.len()
+                   , &Branch(BranchNode { ref left, ref right, .. }) =>
                         left.as_ref().map(Box::as_ref).map_or(0, Node::len) +
                         right.as_ref().map(Box::as_ref).map_or(0, Node::len)
                     }
     }
 
-    /// Returns the weight of a node
-    fn weight (&self) -> usize {
-        match self { &Node::Leaf(ref s) => s.len()
-                   , &Node::Branch { ref left, .. } =>
-                        left.as_ref().map(Box::as_ref).map_or(0, Node::weight)
+    /// Calculates the weight of a node
+    fn calc_weight (&self) -> usize {
+        match self { &Leaf(ref s) => s.len()
+                   , &Branch(BranchNode { ref left, .. } )=>
+                        left.as_ref().map(Box::as_ref).map_or(0, Node::calc_weight)
                     }
+    }
+
+    #[inline]
+    fn get_weight(&self) -> usize {
+        match self { &Leaf(ref s) => s.len()
+                   , &Branch( BranchNode { ref weight, .. }) => *weight
+                   }
     }
 
     /// Rebalance the subrope starting at this `Node`, returning a new `Node`
@@ -333,6 +418,7 @@ impl Node {
         panic!("Unimplemented!");
         self.strings()
     }
+
 }
 
 /// An iterator over a series of leaf `Node`s
@@ -344,7 +430,7 @@ impl<'a> Iterator for Leaves<'a> {
         match self.0.pop() {
             None => None
           , Some(leaf @ &Leaf(_)) => Some(leaf)
-          , Some(&Branch { ref left, ref right, .. }) => {
+          , Some(&Branch(BranchNode { ref left, ref right, .. })) => {
                 if let &Some(box ref r) = right { self.0.push(r); }
                 if let &Some(box ref l) = left { self.0.push(l); }
                 self.next()
@@ -362,7 +448,7 @@ impl Iterator for IntoLeaves {
         match self.0.pop() {
             None => None
           , Some(leaf @ Leaf(_)) => Some(leaf)
-          , Some(Branch { left, right, .. }) => {
+          , Some(Branch(BranchNode { left, right, .. })) => {
                 if let Some(box r) = right { self.0.push(r); }
                 if let Some(box l) = left { self.0.push(l); }
                 self.next()
@@ -691,7 +777,7 @@ impl Rope {
     /// assert_eq!(ab, Rope::from(String::from("ab")));
     /// assert_eq!(cd, Rope::from(String::from("cd")));
     /// ```
-    pub fn split(self, index: usize) -> (Rope, Rope) {
+    pub fn split(&mut self, index: usize) -> (Rope, Rope) {
         assert!(index <= self.len());
         let (l, r) = self.root.split(index);
         (Rope { root: l }, Rope { root: r })
@@ -787,13 +873,13 @@ impl ops::Index<usize> for Node {
 
     fn index(&self, i: usize) -> &str {
         let len = self.len();
-        match *self { Node::Leaf(ref vec) => { &vec[i..i+1] }
-                    , Node::Branch { right: Some(box ref r), .. } if len < i =>
-                        &r[i - len]
-                    , Node::Branch { left: Some(box ref l), .. } => &l[i]
-                    , _ =>
-                        panic!("Index out of bounds!")
-                    }
+        match *self {
+            Leaf(ref vec) => { &vec[i..i+1] }
+          , Branch(BranchNode { right: Some(box ref r), .. }) if len < i =>
+                &r[i - len]
+          , Branch(BranchNode { left: Some(box ref l), .. }) => &l[i]
+          , _ => panic!("Index out of bounds!")
+        }
     }
 }
 
