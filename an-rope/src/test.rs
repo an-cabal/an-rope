@@ -89,7 +89,7 @@ fn with_insert_rope_balance_test() {
 fn with_insert_rope_test_1() {
     let s: String = iter::repeat('a').take(1_000).collect();
     let r_1 = Rope::from(s);
-    let r_2 = Rope::new();
+    let mut r_2 = Rope::new();
     for _ in 0..100 {
         let t: String = iter::repeat('a').take(10).collect();
         r_2.with_insert_rope(0, Rope::from(t));
@@ -100,7 +100,7 @@ fn with_insert_rope_test_1() {
 #[test]
 fn with_insert_rope_test_2() {
     let s: String = iter::repeat('a').take(10).collect();
-    let r_1 = Rope::from(s);
+    let mut r_1 = Rope::from(s);
     for _ in 0..99 {
         let t: String = iter::repeat('a').take(10).collect();
         r_1.with_insert_rope(5, Rope::from(t));
@@ -112,11 +112,11 @@ fn with_insert_rope_test_2() {
 }
 
 #[test]
-fn with_insert_rope_test_3() {
-    let s_1 = Rope::from(String::from("aaaaa"));
-    let s_2 = Rope::from(String::from("bbbbb"));
+fn insert_rope_test_3() {
+    let mut s_1 = Rope::from(String::from("aaaaa"));
+    let mut s_2 = Rope::from(String::from("bbbbb"));
     let s_3 = Rope::from(String::from("ccccc"));
-    s_2.with_insert_rope(0, s_3);
-    s_1.with_insert_rope(0, s_2);
+    s_2.insert_rope(0, s_3);
+    s_1.insert_rope(0, s_2);
     assert_eq!(&s_1, "cccccbbbbbaaaaa");
 }
