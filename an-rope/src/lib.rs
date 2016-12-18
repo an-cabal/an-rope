@@ -263,8 +263,13 @@ impl Node {
                you actually want."]
         #[inline]
         impl chars<char> for Node {}
-        #[inline]
-        impl char_indices<(usize, char)> for Node {}
+        // TODO: this is actually Wrong, the indices will wrap around once we
+        //       iterate into the next leaf node. we'll need to write our own
+        //       char_indices iterator that tracks the character's index in the
+        //       global Rope. shouldn't be too hard, just a fold...
+        //          - eliza, 12/18/2016
+        // #[inline]
+        // impl char_indices<(usize, char)> for Node {}
         #[inline]
         impl split_whitespace<&'a str> for Node {}
         #[inline]
@@ -482,8 +487,8 @@ impl Rope {
                you actually want."]
         #[inline]
         impl chars<char> for Rope {}
-        #[inline]
-        impl char_indices<(usize, char)> for Rope {}
+        // #[inline]
+        // impl char_indices<(usize, char)> for Rope {}
         #[inline]
         impl split_whitespace<&'a str> for Rope {}
         #[inline]
