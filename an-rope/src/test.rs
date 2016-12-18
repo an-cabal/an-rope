@@ -74,13 +74,14 @@ fn merge_rebalance_test() {
 #[test]
 fn insert_balance_test() {
     let s: String = iter::repeat('a').take(10).collect();
-    let r_1 = Rope::from(s);
+    let mut r_1 = Rope::from(s);
     for _ in 0..99 {
         let t: String = iter::repeat('a').take(10).collect();
-        r_1.insert(&Rope::from(t), 5);
+        r_1 = r_1.insert(&Rope::from(t), 5);
     }
-
-    r_1.rebalance();
+    //  this isn't necessary, insert() will automatically rebalance
+    //      - eliza, 12/18/2016
+    // r_1.rebalance();
     assert!(r_1.is_balanced());
 }
 
