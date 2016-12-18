@@ -272,12 +272,6 @@ impl Node {
                     }
     }
 
-    #[inline]
-    fn get_weight(&self) -> usize {
-        match self { &Leaf(ref s) => s.len()
-                   , &Branch( BranchNode { ref weight, .. }) => *weight
-                   }
-    }
 
     /// Rebalance the subrope starting at this `Node`, returning a new `Node`
     ///
