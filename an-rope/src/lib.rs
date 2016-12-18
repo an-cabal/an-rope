@@ -303,7 +303,7 @@ impl Node {
 /// An iterator over a series of leaf `Node`s
 struct Leaves<'a>(Vec<&'a Node>);
 
-impl<'a> iter::Iterator for Leaves<'a> {
+impl<'a> Iterator for Leaves<'a> {
     type Item = &'a Node;
     fn next(&mut self) -> Option<Self::Item> {
         match self.0.pop() {
@@ -321,7 +321,7 @@ impl<'a> iter::Iterator for Leaves<'a> {
 /// A move iterator over a series of leaf `Node`s
 struct IntoLeaves(Vec<Node>);
 
-impl iter::Iterator for IntoLeaves {
+impl Iterator for IntoLeaves {
     type Item = Node;
     fn next(&mut self) -> Option<Self::Item> {
         match self.0.pop() {
