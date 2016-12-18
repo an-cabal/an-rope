@@ -104,7 +104,7 @@ impl Node {
         unimplemented!()
     }
 
-    const fn new() -> Self {
+    const fn empty() -> Self {
         Branch { len: 0
                , weight: 0
                , left: None
@@ -370,11 +370,11 @@ impl Rope {
     /// # Examples
     /// ```
     /// use an_rope::Rope;
-    /// let mut an_rope = Rope::<u8>::new();
+    /// let mut an_rope = Rope::<u8>::empty();
     /// assert_eq!(an_rope.len(), 0);
     /// ```
     pub const fn new() -> Rope {
-        Rope { root: Node::new() }
+        Rope { root: Node::empty() }
     }
 
     /// Returns the length of this Rope
@@ -382,7 +382,7 @@ impl Rope {
     /// # Examples
     /// ```
     /// use an_rope::Rope;
-    /// let mut an_empty_rope = Rope::new();
+    /// let mut an_empty_rope = Rope::empty();
     /// assert_eq!(an_empty_rope.len(), 0);
     /// ```
     /// ```
@@ -505,7 +505,7 @@ impl Rope {
                 // if the rope is being inserted at index len, append it
                 self.append(rope)
             } else {
-                let (l, r) = replace(&mut self.root, Node::new())
+                let (l, r) = replace(&mut self.root, Node::empty())
                                 .split(index);
                 self.root = l.concat(rope.root)
                              .concat(r)
@@ -677,7 +677,9 @@ impl Rope {
     /// assert_eq!(cd, Rope::from(String::from("cd")));
     /// ```
     pub fn split(self, index: usize) -> (Rope, Rope) {
-        unimplemented!()
+        assert!(index <= self.len());
+        let (l, r) = self.root.split(index);
+        (Rope { root: l }, Rope { root: r })
     }
 
     /// Rebalances this entire `Rope`, returning a balanced `Rope`.
@@ -791,7 +793,7 @@ impl convert::From<String> for Rope {
     #[inline]
     fn from(string: String) -> Rope {
         Rope {
-            root: if string.len() == 0 { Node::new() }
+            root: if string.len() == 0 { Node::empty() }
                   else { Node::new_leaf(string) }
         }
     }
