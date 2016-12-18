@@ -191,9 +191,21 @@ impl Node {
         IntoLeaves(vec![self])
     }
 
-    fn strings<'a>(&'a self) -> Box<Iterator<Item=&'a str> + 'a> {
+    /// Returns an iterator over all the strings in this `Node`s subrope'
+    pub fn strings<'a>(&'a self) -> Box<Iterator<Item=&'a str> + 'a> {
         box self.leaves().map(|n| match n {
             &Leaf(ref s) => s.as_ref()
+          , _ => panic!("Strings iterator found something that wasn't a leaf! \
+                        This never happens.")
+        })
+    }
+
+    /// Returns a move iterator over all the strings in this `Node`s subrope'
+    ///
+    /// Consumes `self`.
+    pub fn into_strings(self) -> Box<Iterator<Item=String>> {
+        box self.into_leaves().map(|n| match n {
+            Leaf(s) => s
           , _ => panic!("Strings iterator found something that wasn't a leaf! \
                         This never happens.")
         })
@@ -348,6 +360,20 @@ impl Rope {
     #[inline]
     fn is_balanced(&self) -> bool {
         self.root.is_balanced()
+    }
+
+    /// Returns an iterator over all the strings in this `Rope`
+    #[inline]
+    pub fn strings<'a>(&'a self) -> Box<Iterator<Item=&'a str> + 'a> {
+        self.root.strings()
+    }
+
+    /// Returns a move iterator over all the strings in this `Rope`
+    ///
+    /// Consumes `self`.
+    #[inline]
+    pub fn into_strings(self) -> Box<Iterator<Item=String>> {
+        self.root.into_strings()
     }
 }
 
