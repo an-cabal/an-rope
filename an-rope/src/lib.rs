@@ -63,6 +63,11 @@ enum Node {
     }
 }
 
+impl Default for Node {
+    fn default() -> Self { Node::empty() }
+
+}
+
 /// Returns the _n_th fibonacci number.
 // TODO: replace with an iterative implementation and/or lookup table?
 fn fibonacci(n: usize) -> usize {
@@ -107,7 +112,7 @@ impl Node {
             _ if index == 0 => (Node::empty(), self)
           , _ if index == len => (self, Node::empty())
           , Branch { left: None, right: None, .. } =>
-            (Node::empty(), Node::empty())
+            Default::default()
           , Branch { mut left, mut right, .. } =>
             unimplemented!()
           , Leaf(s) => unimplemented!()
