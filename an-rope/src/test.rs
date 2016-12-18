@@ -72,38 +72,38 @@ fn merge_rebalance_test() {
 }
 
 #[test]
-fn insert_balance_test() {
+fn with_insert_rope_balance_test() {
     let s: String = iter::repeat('a').take(10).collect();
     let mut r_1 = Rope::from(s);
     for _ in 0..99 {
         let t: String = iter::repeat('a').take(10).collect();
-        r_1 = r_1.insert(&Rope::from(t), 5);
+        r_1 = r_1.with_insert_rope(5, Rope::from(t));
     }
-    //  this isn't necessary, insert() will automatically rebalance
+    //  this isn't necessary, with_insert_rope() will automatically rebalance
     //      - eliza, 12/18/2016
     // r_1.rebalance();
     assert!(r_1.is_balanced());
 }
 
 #[test]
-fn insert_test_1() {
+fn with_insert_rope_test_1() {
     let s: String = iter::repeat('a').take(1_000).collect();
     let r_1 = Rope::from(s);
     let r_2 = Rope::new();
     for _ in 0..100 {
         let t: String = iter::repeat('a').take(10).collect();
-        r_2.insert(&Rope::from(t), 0);
+        r_2.with_insert_rope(0, Rope::from(t));
     }
     assert_eq!(r_1, r_2);
 }
 
 #[test]
-fn insert_test_2() {
+fn with_insert_rope_test_2() {
     let s: String = iter::repeat('a').take(10).collect();
     let r_1 = Rope::from(s);
     for _ in 0..99 {
         let t: String = iter::repeat('a').take(10).collect();
-        r_1.insert(&Rope::from(t), 5);
+        r_1.with_insert_rope(5, Rope::from(t));
     }
 
     let q: String = iter::repeat('a').take(1_000).collect();
@@ -112,11 +112,11 @@ fn insert_test_2() {
 }
 
 #[test]
-fn insert_test_3() {
+fn with_insert_rope_test_3() {
     let s_1 = Rope::from(String::from("aaaaa"));
     let s_2 = Rope::from(String::from("bbbbb"));
     let s_3 = Rope::from(String::from("ccccc"));
-    s_2.insert(&s_3, 0);
-    s_1.insert(&s_2, 0);
+    s_2.with_insert_rope(0, s_3);
+    s_1.with_insert_rope(0, s_2);
     assert_eq!(&s_1, "cccccbbbbbaaaaa");
 }
