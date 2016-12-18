@@ -101,7 +101,17 @@ macro_rules! str_iters {
 impl Node {
 
     fn split(self, index: usize) -> (Node, Node) {
-        unimplemented!()
+        let len = self.len();
+        assert!(index <= len);
+        match self {
+            _ if index == 0 => (Node::empty(), self)
+          , _ if index == len => (self, Node::empty())
+          , Branch { left: None, right: None, .. } =>
+            (Node::empty(), Node::empty())
+          , Branch { mut left, mut right, .. } =>
+            unimplemented!()
+          , Leaf(s) => unimplemented!()
+        }
     }
 
     const fn empty() -> Self {
