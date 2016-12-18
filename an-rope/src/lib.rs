@@ -22,7 +22,7 @@ use std::iter;
 mod test;
 
 /// A Rope
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Rope {
     // can we get away with having these be of &str or will they need
     // to be string?
@@ -415,6 +415,8 @@ impl Rope {
 
     /// Appends a `Rope` to the end of this `Rope`, returning a new `Rope`
     ///
+    /// Consumes `other`.
+    ///
     /// Note that this is equivalent to using the `+` operator.
     ///
     /// # Examples
@@ -424,12 +426,12 @@ impl Rope {
     /// let another_rope = an_rope.merge(Rope::from(String::from("efgh")));
     /// assert_eq!(another_rope, Rope::from(String::from("abcdefgh")));
     /// ```
-    pub fn merge(&self, other: &Rope) -> Rope {
+    pub fn merge(&self, other: Rope) -> Rope {
         if other.len() == 0 {
             Rope { root: self.root.clone() }
         } else {
             Rope {
-                root: Node::new_branch(self.root.clone(), other.root.clone())
+                root: Node::new_branch(self.root.clone(), other.root)
             }.rebalance()
         }
     }
@@ -654,7 +656,7 @@ impl<'a> ops::Add for &'a Rope {
     /// assert_eq!( &rope + &Rope::from(String::from("cd"))
     ///           , Rope::from(String::from("abcd")));
     /// ```
-    #[inline] fn add(self, other: Self) -> Rope { self.merge(other) }
+    #[inline] fn add(self, other: Self) -> Rope { self.merge((*other).clone()) }
 
 }
 
@@ -669,7 +671,7 @@ impl ops::Add for Rope {
     /// assert_eq!( rope + Rope::from(String::from("cd"))
     ///           , Rope::from(String::from("abcd")) );
     /// ```
-    #[inline] fn add(self, other: Self) -> Rope { self.merge(&other) }
+    #[inline] fn add(self, other: Self) -> Rope { self.merge(other) }
 }
 
 impl ops::Add<String> for Rope {
@@ -686,7 +688,7 @@ impl ops::Add<String> for Rope {
     ///           , Rope::from(String::from("abcd")));
     /// ```
     #[inline] fn add(self, other: String) -> Rope {
-         self.merge(&Rope::from(other))
+         self.merge(Rope::from(other))
     }
 }
 
@@ -705,7 +707,7 @@ impl<'a, 'b> ops::Add<&'b str> for &'a Rope {
     ///           , Rope::from(String::from("abcd")));
     /// ```
     #[inline] fn add(self, other: &'b str) -> Rope {
-         self.merge(&Rope::from(other.to_owned()))
+         self.merge(Rope::from(other.to_owned()))
      }
 
 }
@@ -724,7 +726,7 @@ impl<'a> ops::Add<&'a str> for Rope {
     ///           , Rope::from(String::from("abcd")));
     /// ```
     #[inline] fn add(self, other: &'a str) -> Rope {
-         self.merge(&Rope::from(other.to_owned()))
+         self.merge(Rope::from(other.to_owned()))
      }
 
 }
