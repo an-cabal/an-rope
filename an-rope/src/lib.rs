@@ -16,7 +16,6 @@
 use std::cmp;
 use std::ops;
 use std::convert;
-use std::iter;
 
 #[cfg(test)]
 mod test;
