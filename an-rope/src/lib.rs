@@ -1,9 +1,10 @@
-//! An rope.
+//! # An rope.
 //!
 //! A rope is an efficient data structure for large mutable strings. It's
 //! essentially a binary tree whose leaves are strings.
 //!
 //! For more information, see the following resources:
+//!
 //! + http://scienceblogs.com/goodmath/2009/01/26/ropes-twining-together-strings/
 //! + https://www.ibm.com/developerworks/library/j-ropes/
 //! + http://citeseer.ist.psu.edu/viewdoc/download?doi=10.1.1.14.9450&rep=rep1&type=pdf
@@ -19,6 +20,7 @@ use std::iter;
 #[cfg(test)]
 mod test;
 
+/// A Rope
 #[derive(Debug)]
 pub struct Rope {
     // can we get away with having these be of &str or will they need
@@ -163,7 +165,8 @@ impl Node {
             let mut leaves: Vec<Option<Node>> =
                 self.into_leaves().map(Option::Some).collect();
             let len = leaves.len();
-            fn _rebalance(l: &mut Vec<Option<Node>>, start: usize, end: usize) -> Node {
+            fn _rebalance(l: &mut Vec<Option<Node>>, start: usize, end: usize)
+                          -> Node {
                 match end - start {
                     1 => l[start].take().unwrap()
                   , 2 => l[start].take().unwrap() + l[start + 1].take().unwrap()
