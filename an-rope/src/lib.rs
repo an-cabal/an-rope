@@ -288,10 +288,8 @@ impl Node {
     #[inline]
     fn subtree_weight (&self) -> usize {
         match self { &Leaf(ref s) => s.len()
-                   , &Branch(BranchNode { ref left, ref right, .. }) =>
+                   , &Branch(BranchNode { ref left, .. }) =>
                         left.as_ref().map(Box::as_ref)
-                            .map_or(0, Node::subtree_weight) +
-                        right.as_ref().map(Box::as_ref)
                             .map_or(0, Node::subtree_weight)
                     }
     }
