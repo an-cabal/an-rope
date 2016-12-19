@@ -97,16 +97,9 @@ macro_rules! str_iters {
 
 }
 
-// impl Rope {
-//     $(#[attr])*
-//     pub fn $name<'a>(&'a self) -> impl Iterator<Item=$ty> + 'a {
-//         self.root.$name()
-//     }
-// }
-//
-// });
 impl BranchNode {
 
+    #[inline]
     fn update_weight(&mut self) {
         self.weight = self.left.as_ref().map(Box::as_ref)
                           .map_or(0, Node::subtree_weight);
@@ -138,69 +131,6 @@ impl Node {
                                 , Leaf(s[..index].to_string()))
           , &mut Branch(ref mut node) => node.split(index)
         }
-    // }
-        // let len = self.len();
-        // assert!(index <= len);
-        // match self {
-        //     _ if index == 0 => (Node::empty(), self)
-        //   , _ if index == len => (self, Node::empty())
-        //   , Branch { left: None, right: None, .. } =>
-        //     Default::default()
-        //   , Branch { mut left, mut right, mut len, mut weight }
-        //     if index < l.len() => {
-        //         let (ll, lr) = lval.take().unwrap().split(index);
-        //         left = Some(box lr);
-        //         len = self.len();
-        //         weight = self.calc_weight();
-        //         let r = if let None = left { right } else { self };
-        //         (ll, r)
-        //     }
-        //   , Branch { left: l, right: r, mut len, mut weight } => {
-        //         let (right_left, right) = r.take().split(index);
-        //         r = Some(box right_left);
-        //         len = self.len();
-        //         weight = self.calc_weight();
-        //         let left = if let None = self.right { l } else { self };
-        //         (left, right)
-        //       }
-        //   , Leaf(s) =>
-        //       (Leaf(s[index..].to_string()), Leaf(s[..index].to_string()))
-        // }
-        // match self {
-        //     &Branch { right: Some(box ref mut Leaf(s)), .. } |
-        //     &Branch { left: Some(box ref mut Leaf(s)), .. } =>
-        //         // if we've hit a leaf, split the string and return
-        //
-        //   , &Branch { left: Some(box ref mut l), ref mut weight, .. }
-        //     if index < weight =>
-        //         // if index is less then weight, walk down the left tree
-        //         l.split(index)
-        //   , &Branch { left: Some(box ref mut r), ref weight, .. }
-        //     if index > weight =>
-        //         // if index is greater than weight, walk down the right tree
-        //         r.split(index - weight)
-        //   , &Leaf(_) =>  // this method should never be called on a leaf node
-        //         unreachable!()
-        //   , _ => unimplemented!()
-        // }
-        // let mut i = index;
-        // let mut stack = vec![&*self];
-        // while let Some(node) = stack.last() {
-        //     // if index is less then weight, walk down the left tree
-        //     if i < *node.weight() {
-        //         // match *node {
-        //         //     &Branch { left: Some(box ref mut l), .. } => {
-        //         //          stack.push(l) };
-        //         //     // found a leaf, we're done
-        //         //   , &Leaf(_) => break;
-        //         // }
-        //     } else {
-        //
-        //     }
-        // }
-        // // let Leaf(s) = stack.pop();
-        // // go back up the stack and update weights
-        // (Leaf(s[index..].to_string()), Leaf(s[..index].to_string()))
     }
 
     const fn empty() -> Self {
