@@ -900,12 +900,14 @@ impl ops::Index<usize> for Node {
 
     fn index(&self, i: usize) -> &str {
         let len = self.len();
+        assert!( i < len
+               , "Node::index: index {} out of bounds (length {})", i, len);
         match *self {
             Leaf(ref vec) => { &vec[i..i+1] }
           , Branch(BranchNode { right: Some(box ref r), .. }) if len < i =>
                 &r[i - len]
           , Branch(BranchNode { left: Some(box ref l), .. }) => &l[i]
-          , _ => panic!("Index out of bounds!")
+          , _ => unreachable!()
         }
     }
 }
