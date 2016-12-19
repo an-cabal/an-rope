@@ -16,6 +16,7 @@
 use std::cmp;
 use std::ops;
 use std::convert;
+use std::mem;
 
 #[cfg(test)]
 mod test;
@@ -107,9 +108,9 @@ impl BranchNode {
 
     fn split(&mut self, index: usize) -> &mut Node {
         // let mut result: &mut Node;
-        if index < self.weight {
+         if index < self.weight {
             if let Some(box ref mut left @ Leaf(_)) = self.left {
-                std::mem::replace(left, left.split(index));
+                left.split(index);
                 self.update_weight();
                 left
             } else {
@@ -120,22 +121,51 @@ impl BranchNode {
         } else {
             panic!()
         }
-        // result
     }
 }
 
 impl Node {
+    fn split_leaf(&mut self, index: usize) -> bool {
+        // we mutably borrow `self` here. This precludes us from changing it
+        // directly as in `*self = ...`, because the borrow checker won't allow
+        // it. Therefore, the assignment to `self` must be outside the `if let`
+        // clause.
+        *self = if let Leaf(ref mut s) = *self {
+
+            // if this node is a Leaf, take the String out of it
+            // (note that empty strings don't allocate).
+            let string = mem::replace(s, String::new());
+            // split the string into left and right parts...
+            let left = Leaf(string[index..].to_string());
+            let right = Leaf(string[..index].to_string());
+            // construct the new Branch node that will be reassigned to `self`
+            Node::new_branch(left, right)
+        } else {
+            // if this node is not a Leaf, we return immediately, thus skipping
+            // the assignment
+            return false
+        };
+        return true
+    }
 
     fn split(&mut self, index: usize) -> &mut Node {
-        use std::mem::replace;
-        match &*self {
-            &Leaf(ref s) => {
-                let left = Leaf(s[index..].to_string());
-                let right = Leaf(s[..index].to_string());
-                &mut Node::new_branch(left, right)
+        if self.split_leaf(index) == true {
+            self
+        } else {
+            if let &mut Branch(ref mut node) = self {
+                node.split(index)
+            } else {
+                unreachable!()
             }
-          , &Branch(ref mut node) => node.split(index)
         }
+        // if let ref mut leaf @ Leaf(_) = self {
+        //     leaf.split_leaf(index);
+        //     self
+        // } else if let &mut Branch(ref mut node) = self {
+        //     node.split(index)
+        // } else {
+        //     unreachable!()
+        // }
     }
 
     const fn empty() -> Self {
