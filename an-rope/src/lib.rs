@@ -542,8 +542,8 @@ impl Rope {
     /// assert_eq!(an_rope, Rope::from("abcd"));
     /// ```
     pub fn insert(&mut self,  index: usize, char: char) {
-        assert!( index < self.len()
-               , "Rope::insert: index {} was >= length {}"
+        assert!( index <= self.len()
+               , "Rope::insert: index {} was > length {}"
                , index, self.len());
         unimplemented!()
     }
@@ -580,8 +580,8 @@ impl Rope {
     /// assert_eq!(an_rope, Rope::from("abcd"));
     /// ```
     pub fn with_insert(&self, index: usize, ch: char) -> Rope {
-        assert!( index < self.len()
-               , "Rope::with_insert: index {} was >= length {}"
+        assert!( index <= self.len()
+               , "Rope::with_insert: index {} was > length {}"
                , index, self.len());
         unimplemented!()
     }
@@ -707,8 +707,8 @@ impl Rope {
     /// assert_eq!(an_rope, Rope::from("abcd"));
     /// ```
     pub fn insert_str(&mut self,  index: usize, s: &str) {
-        assert!( index < self.len()
-               , "Rope::insert_str: index {} was >= length {}"
+        assert!( index <= self.len()
+               , "Rope::insert_str: index {} was > length {}"
                , index, self.len());
         unimplemented!()
     }
@@ -744,8 +744,8 @@ impl Rope {
     /// assert_eq!(an_rope, Rope::from("abcd"));
     /// ```
     pub fn with_insert_str(&self, index: usize, s: &str) -> Rope {
-        assert!( index < self.len()
-               , "Rope::with_insert_str: index {} was >= length {}"
+        assert!( index <= self.len()
+               , "Rope::with_insert_str: index {} was > length {}"
                , index, self.len());
         unimplemented!()
     }
