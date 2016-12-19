@@ -105,10 +105,13 @@ impl BranchNode {
                           .map_or(0, Node::subtree_weight);
     }
 
-    fn split(&mut self, index: usize) -> (Node, Node) {
-        let result = if index < self.weight {
-            if let Some(box ref mut left) = self.left {
-                left.split(index)
+    fn split(&mut self, index: usize) -> &mut Node {
+        // let mut result: &mut Node;
+        if index < self.weight {
+            if let Some(box ref mut left @ Leaf(_)) = self.left {
+                std::mem::replace(left, left.split(index));
+                self.update_weight();
+                left
             } else {
                 panic!()
             }
@@ -116,19 +119,22 @@ impl BranchNode {
             right.split(index - self.weight)
         } else {
             panic!()
-        };
-        self.update_weight();
-        result
+        }
+        // result
     }
 }
 
 impl Node {
 
-    fn split(&mut self, index: usize) -> (Node, Node) {
-        match self {
-            &mut Leaf(ref s) => ( Leaf(s[index..].to_string())
-                                , Leaf(s[..index].to_string()))
-          , &mut Branch(ref mut node) => node.split(index)
+    fn split(&mut self, index: usize) -> &mut Node {
+        use std::mem::replace;
+        match &*self {
+            &Leaf(ref s) => {
+                let left = Leaf(s[index..].to_string());
+                let right = Leaf(s[..index].to_string());
+                &mut Node::new_branch(left, right)
+            }
+          , &Branch(ref mut node) => node.split(index)
         }
     }
 
@@ -143,7 +149,7 @@ impl Node {
     /// Concatenate two `Node`s to return a new `Branch` node.
     fn new_branch(left: Self, right: Self) -> Self {
         Branch(BranchNode { len: left.len() + right.len()
-                          , weight: left.len()
+                          , weight: left.subtree_weight()
                           , left: Some(box left)
                           , right: Some(box right)
                           })
@@ -217,7 +223,7 @@ impl Node {
     /// From "Ropes: An Alternative to Strings":
     /// > "The rebalancing operation maintains an ordered sequence of (empty
     /// > or) balanced ropes, one for each length interval [_Fn_, _Fn_+1), for
-    /// > _n_ >= 2. We traverse the rope from left to right, with_insert_ropeing each
+    /// > _n_ >= 2. We traverse the rope from left to right, inserting each
     /// > leaf into the appropriate sequence position, depending on its length.
     ///
     /// > The concatenation of the sequence of ropes in order of decreasing
@@ -537,12 +543,13 @@ impl Rope {
                 // if the rope is being inserted at index len, append it
                 self.append(rope)
             } else {
-                let (l, r) = replace(&mut self.root, Node::empty())
-                                .split(index);
-                self.root = l.concat(rope.root)
-                             .concat(r)
-                             .rebalance();
-
+                if let &mut Branch(ref mut new_branch) = self.root.split(index) {
+                    new_branch.left.unwrap()
+                              .concat(rope.root);
+                     self.rebalance();
+                } else {
+                    unreachable!()
+                }
             }
         }
     }
@@ -709,9 +716,10 @@ impl Rope {
     /// assert_eq!(cd, Rope::from(String::from("cd")));
     /// ```
     pub fn split(&mut self, index: usize) -> (Rope, Rope) {
-        assert!(index <= self.len());
-        let (l, r) = self.root.split(index);
-        (Rope { root: l }, Rope { root: r })
+        // assert!(index <= self.len());
+        // let (l, r) = self.root.split(index);
+        // (Rope { root: l }, Rope { root: r })
+        unimplemented!()
     }
 
     /// Rebalances this entire `Rope`, returning a balanced `Rope`.
