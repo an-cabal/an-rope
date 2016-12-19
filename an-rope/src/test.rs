@@ -161,6 +161,6 @@ fn with_insert_str_test_1() {
     let s_1 = s.with_insert_str(5, "ccccc");
     let s_2 = s_1.with_insert_str(5, "bbbbb");
     assert_eq!(&s, "aaaaa");
-    assert_eq!(&s_1, "aaaaccccc");
+    assert_eq!(&s_1, "aaaaaccccc");
     assert_eq!(&s_2, "aaaaabbbbbccccc");
 }
