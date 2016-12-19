@@ -101,27 +101,87 @@ macro_rules! str_iters {
 impl BranchNode {
 
     #[inline]
+    fn new(left: Box<Node>, right: Box<Node>) -> Self {
+        BranchNode { len: left.len() + right.len()
+                   , weight: left.subtree_weight()
+                   , left: Some(left)
+                   , right: Some(right)
+                   }
+    }
+
+    #[inline]
+    fn take_right(&mut self) -> Box<Node> {
+        mem::replace(&mut self.right, None).unwrap_or(box Node::empty())
+    }
+
+    #[inline]
+    fn take_left(&mut self) -> Box<Node> {
+        self.left.take().unwrap_or(box Node::empty())
+    }
+
+    #[inline]
     fn update_weight(&mut self) {
-        self.weight = self.left.as_ref().map(Box::as_ref)
+        self.weight = self.left.as_ref()
+                          .map(Box::as_ref)
                           .map_or(0, Node::subtree_weight);
     }
 
     fn split(&mut self, index: usize) -> &mut Node {
-        // let mut result: &mut Node;
-         if index < self.weight {
-            if let Some(box ref mut left @ Leaf(_)) = self.left {
-                left.split(index);
-                self.update_weight();
-                left
+        if index < self.weight {
+            // split the left node
+            *self = if let BranchNode {
+                left: Some(box ref mut left)
+              , ref mut right, ..
+            } = *self {
+                let mut l_leaf = mem::replace(left, Node::empty());
+                l_leaf.split(index);
+                let r = right.take().unwrap_or(box Node::empty());
+                // replacing *self with a new BranchNode will update the
+                // node's weight automagically
+                BranchNode::new(box l_leaf, r)
             } else {
-                panic!()
-            }
-        } else if let Some(box ref mut right) = self.right {
-            right.split(index - self.weight)
+                unreachable!()
+            };
+            self.left.as_mut().unwrap()
         } else {
-            panic!()
+            // split the right node
+            *self = if let BranchNode {
+                ref mut left
+              , right: Some(box ref mut right), ..
+            } = *self {
+                let mut r_leaf = mem::replace(right, Node::empty());
+                r_leaf.split(index);
+                let l = left.take().unwrap_or(box Node::empty());
+                // replacing *self with a new BranchNode will update the
+                // node's weight automagically
+                BranchNode::new(l, box r_leaf)
+            } else {
+                // i think this should never happen
+                unreachable!()
+            };
+            self.right.as_mut().unwrap()
         }
     }
+
+//         }
+// else if let
+//
+//         // let mut result: &mut Node;
+//         let result = if index < self.weight {
+//             if let Some(box ref mut left @ Leaf(_)) = self.left {
+//                 left.split(index);
+//                 left
+//             } else {
+//                 panic!()
+//             }
+//         } else if let Some(box ref mut right) = self.right {
+//             right.split(index - self.weight)
+//         } else {
+//             panic!()
+//         };
+//         self.update_weight();
+//         return result
+    // }
 }
 
 impl Node {
@@ -158,14 +218,6 @@ impl Node {
                 unreachable!()
             }
         }
-        // if let ref mut leaf @ Leaf(_) = self {
-        //     leaf.split_leaf(index);
-        //     self
-        // } else if let &mut Branch(ref mut node) = self {
-        //     node.split(index)
-        // } else {
-        //     unreachable!()
-        // }
     }
 
     const fn empty() -> Self {
@@ -177,17 +229,14 @@ impl Node {
     }
 
     /// Concatenate two `Node`s to return a new `Branch` node.
+    #[inline]
     fn new_branch(left: Self, right: Self) -> Self {
-        Branch(BranchNode { len: left.len() + right.len()
-                          , weight: left.subtree_weight()
-                          , left: Some(box left)
-                          , right: Some(box right)
-                          })
+        Branch(BranchNode::new(box left, box right))
     }
 
     #[inline]
-    fn concat(self, right: Self) -> Self {
-        Node::new_branch(self, right)
+    fn concat(&mut self, right: Self) {
+        *self = Node::new_branch(mem::replace(self, Node::empty()), right)
     }
 
     #[inline]
@@ -563,7 +612,6 @@ impl Rope {
     /// assert_eq!(an_rope, Rope::from("abcd"));
     /// ```
     pub fn insert_rope(&mut self, index: usize, rope: Rope) {
-        use std::mem::replace;
         if rope.len() > 0 {
             let len = self.len();
             if index == 0 {
@@ -574,13 +622,17 @@ impl Rope {
                 self.append(rope)
             } else {
                 if let &mut Branch(ref mut new_branch) = self.root.split(index) {
-                    new_branch.left.unwrap()
+                    new_branch.left.as_mut()
+                              .unwrap()
                               .concat(rope.root);
-                     self.rebalance();
                 } else {
                     unreachable!()
                 }
             }
+            // rebalance the new rope
+            // TODO: refactor please!
+            let new_rope = mem::replace(self, Rope::new());
+            *self = new_rope.rebalance();
         }
     }
 
