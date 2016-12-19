@@ -103,7 +103,7 @@ fn with_insert_rope_test_2() {
     let mut r_1 = Rope::from(s);
     for _ in 0..99 {
         let t: String = iter::repeat('a').take(10).collect();
-        r_1.with_insert_rope(5, Rope::from(t));
+        r_1 = r_1.with_insert_rope(5, Rope::from(t));
     }
 
     let q: String = iter::repeat('a').take(1_000).collect();
