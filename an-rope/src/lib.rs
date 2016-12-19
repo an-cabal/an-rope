@@ -679,7 +679,9 @@ impl Rope {
     /// assert_eq!(an_rope, Rope::from("abcd"));
     /// ```
     pub fn with_insert_rope(&self, index: usize, rope: Rope) -> Rope {
-        assert!(index < self.len());
+        assert!( index <= self.len()
+               , "Rope::with_:insert_rope: index {} was > length {}"
+               , index, self.len());
         let mut new_rope = self.clone();
         new_rope.insert_rope(index, rope);
         new_rope
