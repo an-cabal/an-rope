@@ -74,8 +74,8 @@ impl Default for Node {
 /// Returns the _n_th fibonacci number.
 // TODO: replace with an iterative implementation and/or lookup table?
 fn fibonacci(n: usize) -> usize {
-    match n { 1 => 1
-            , 2 => 1
+    match n { 0 => 1
+            , 1 => 1
             , _ => fibonacci(n - 1) + fibonacci(n - 2)
             }
 }
