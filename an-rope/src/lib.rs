@@ -541,11 +541,15 @@ impl Rope {
     /// an_rope = an_rope.insert(1, 'b');
     /// assert_eq!(an_rope, Rope::from("abcd"));
     /// ```
-    pub fn insert(&mut self,  index: usize, char: char) {
+    #[inline]
+    pub fn insert(&mut self, index: usize, ch: char) {
         assert!( index <= self.len()
                , "Rope::insert: index {} was > length {}"
                , index, self.len());
-        unimplemented!()
+        // TODO: this is gross...
+        let mut s = String::new();
+        s.push(ch);
+        self.insert_rope(index, Rope::from(s))
     }
 
     /// Insert `ch` into `index` in this `Rope`, returning a new `Rope`.
@@ -579,11 +583,15 @@ impl Rope {
     /// an_rope = an_rope.with_insert(1, 'b'));
     /// assert_eq!(an_rope, Rope::from("abcd"));
     /// ```
+    #[inline]
     pub fn with_insert(&self, index: usize, ch: char) -> Rope {
         assert!( index <= self.len()
                , "Rope::with_insert: index {} was > length {}"
                , index, self.len());
-        unimplemented!()
+       // TODO: this is gross...
+       let mut s = String::new();
+       s.push(ch);
+       self.with_insert_rope(index, Rope::from(s))
     }
 
     /// Insert `rope` into `index` in this `Rope`,
@@ -706,11 +714,12 @@ impl Rope {
     /// an_rope = an_rope.insert_str(1, "bd");
     /// assert_eq!(an_rope, Rope::from("abcd"));
     /// ```
-    pub fn insert_str(&mut self,  index: usize, s: &str) {
+    #[inline]
+    pub fn insert_str(&mut self, index: usize, s: &str) {
         assert!( index <= self.len()
                , "Rope::insert_str: index {} was > length {}"
                , index, self.len());
-        unimplemented!()
+        self.insert_rope(index, s.into())
     }
 
     /// Insert `s` into `index` in this `Rope`, returning a new `Rope`.
@@ -743,11 +752,12 @@ impl Rope {
     /// an_rope = an_rope.with_insert_str(1, "bd");
     /// assert_eq!(an_rope, Rope::from("abcd"));
     /// ```
+    #[inline]
     pub fn with_insert_str(&self, index: usize, s: &str) -> Rope {
         assert!( index <= self.len()
                , "Rope::with_insert_str: index {} was > length {}"
                , index, self.len());
-        unimplemented!()
+        self.with_insert_rope(index, s.into())
     }
 
     /// Appends a `Rope` to the end of this `Rope`, updating it in place.
