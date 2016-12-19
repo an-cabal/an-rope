@@ -642,9 +642,7 @@ impl Rope {
                 }
             }
             // rebalance the new rope
-            // TODO: refactor please!
-            let new_rope = mem::replace(self, Rope::new());
-            *self = new_rope.rebalance();
+            self.rebalance();
         }
     }
 
@@ -772,7 +770,10 @@ impl Rope {
     /// assert_eq!(an_rope, Rope::from(String::from("abcdefgh")));
     /// ```
     pub fn append(&mut self, other: Rope) {
-        unimplemented!()
+        if other.len() > 0 {
+            self.root.concat(other.root);
+            self.rebalance();
+        }
     }
 
     /// Appends a `Rope` to the end of this `Rope`, returning a new `Rope`
@@ -791,16 +792,46 @@ impl Rope {
     /// ```
     pub fn with_append(&self, other: Rope) -> Rope {
         if other.len() == 0 {
-            Rope { root: self.root.clone() }
+            self.clone()
         } else {
-            Rope {
-                root: Node::new_branch(self.root.clone(), other.root)
-            }.rebalance()
+            // let mut rope = Rope {
+            //     root: Node::new_branch(self.root.clone(), other.root)
+            // };
+            // rope.rebalance();
+            // rope
+            let mut rope = self.clone();
+            rope.append(other);
+            rope
         }
     }
 
+    /// Prepends a `Rope` to the end of this `Rope`, modifying it in place.
+    ///
+    /// Consumes `other`.
     pub fn prepend(&mut self, other: Rope) {
-        unimplemented!()
+        if other.len() > 0 {
+            let root = mem::replace(&mut self.root, Node::empty());
+            self.root = Node::new_branch(other.root, root);
+            self.rebalance();
+        }
+    }
+
+    /// Prepends a `Rope` to the end of this `Rope`, returning a new `Rope`
+    ///
+    /// Consumes `other`.
+    pub fn with_prepend(&self, other: Rope) -> Rope {
+        if other.len() == 0 {
+            self.clone()
+        } else {
+            // let mut rope = Rope {
+            //     root: Node::new_branch(self.root.clone(), other.root)
+            // };
+            // rope.rebalance();
+            // rope
+            let mut rope = self.clone();
+            rope.prepend(other);
+            rope
+        }
     }
 
     /// Splits the rope into two ropes at the given index.
@@ -824,13 +855,13 @@ impl Rope {
 
     /// Rebalances this entire `Rope`, returning a balanced `Rope`.
     #[inline]
-    fn rebalance(self) -> Self {
+    fn rebalance(&mut self) {
         if self.is_balanced() {
             // the rope is already balanced, do nothing
-            self
         } else {
             // rebalance the rope
-            Rope { root: self.root.rebalance() }
+            let root = mem::replace(&mut self.root, Node::empty());
+            self.root = root.rebalance();
         }
     }
 
