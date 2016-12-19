@@ -106,6 +106,12 @@ macro_rules! str_iters {
 //
 // });
 impl BranchNode {
+
+    fn update_weight(&mut self) {
+        self.weight = self.left.as_ref().map(Box::as_ref)
+                          .map_or(0, Node::subtree_weight);
+    }
+
     fn split(&mut self, index: usize) -> (Node, Node) {
         let result = if index < self.weight {
             if let Some(box ref mut left) = self.left {
@@ -118,7 +124,7 @@ impl BranchNode {
         } else {
             panic!()
         };
-        // TODO: update weight here
+        self.update_weight();
         result
     }
 }
@@ -265,10 +271,14 @@ impl Node {
     }
 
     /// Calculates the weight of a node
-    fn calc_weight (&self) -> usize {
+    #[inline]
+    fn subtree_weight (&self) -> usize {
         match self { &Leaf(ref s) => s.len()
-                   , &Branch(BranchNode { ref left, .. } )=>
-                        left.as_ref().map(Box::as_ref).map_or(0, Node::calc_weight)
+                   , &Branch(BranchNode { ref left, ref right, .. }) =>
+                        left.as_ref().map(Box::as_ref)
+                            .map_or(0, Node::subtree_weight) +
+                        right.as_ref().map(Box::as_ref)
+                            .map_or(0, Node::subtree_weight)
                     }
     }
 
