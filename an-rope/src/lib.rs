@@ -124,7 +124,6 @@ impl BranchNode {
 
 impl Node {
 
-
     fn split(&mut self, index: usize) -> (Node, Node) {
         match self {
             &mut Leaf(ref s) => ( Leaf(s[index..].to_string())
@@ -328,8 +327,6 @@ impl Node {
         impl split_whitespace<&'a str> for Node {}
         #[inline]
         impl lines<&'a str> for Node {}
-        #[inline]
-        impl lines_any<&'a str> for Node {}
     }
 
     // /// Returns n iterator over the bytes of this `Node`'s subrope
@@ -781,8 +778,6 @@ impl Rope {
         impl split_whitespace<&'a str> for Rope {}
         #[inline]
         impl lines<&'a str> for Rope {}
-        #[inline]
-        impl lines_any<&'a str> for Rope {}
     }
 
     /// Returns an iterator over the grapheme clusters of this `Rope`
