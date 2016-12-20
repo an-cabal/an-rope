@@ -337,8 +337,8 @@ impl<'a> Iterator for Leaves<'a> {
             None => None
           , Some(leaf @ &Leaf(_)) => Some(leaf)
           , Some(&Branch(BranchNode { ref left, ref right, .. })) => {
-                self.0.push(left);
                 self.0.push(right);
+                self.0.push(left);
                 self.next()
             }
         }
