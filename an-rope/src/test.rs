@@ -93,7 +93,7 @@ fn with_insert_rope_test_1() {
     let mut r_2 = Rope::new();
     for _ in 0..100 {
         let t: String = iter::repeat('a').take(10).collect();
-        r_2.with_insert_rope(0, Rope::from(t));
+        r_2 = r_2.with_insert_rope(0, Rope::from(t));
     }
     assert_eq!(r_1, r_2);
 }
