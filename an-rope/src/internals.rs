@@ -78,7 +78,7 @@ impl BranchNode {
             // replacing *self with a new BranchNode will update the
             // node's weight automagically
             *self = BranchNode::new(self.take_left(), right);
-            self.left.as_mut()
+            self.right.as_mut()
         }
     }
 
