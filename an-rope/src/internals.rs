@@ -53,23 +53,6 @@ impl BranchNode {
                    }
     }
 
-    #[inline]
-    fn take_right(&mut self) -> Box<Node> {
-        mem::replace(&mut self.right, None).unwrap_or(box Node::empty())
-    }
-
-    #[inline]
-    fn take_left(&mut self) -> Box<Node> {
-        self.left.take().unwrap_or(box Node::empty())
-    }
-
-    #[inline]
-    fn update_weight(&mut self) {
-        self.weight = self.left.as_ref()
-                          .map(Box::as_ref)
-                          .map_or(0, Node::subtree_weight);
-    }
-
     fn split(&mut self, index: usize) -> &mut Node {
         if index < self.weight {
             // split the left node
@@ -107,25 +90,6 @@ impl BranchNode {
         }
     }
 
-//         }
-// else if let
-//
-//         // let mut result: &mut Node;
-//         let result = if index < self.weight {
-//             if let Some(box ref mut left @ Leaf(_)) = self.left {
-//                 left.split(index);
-//                 left
-//             } else {
-//                 panic!()
-//             }
-//         } else if let Some(box ref mut right) = self.right {
-//             right.split(index - self.weight)
-//         } else {
-//             panic!()
-//         };
-//         self.update_weight();
-//         return result
-    // }
 }
 
 impl Node {
