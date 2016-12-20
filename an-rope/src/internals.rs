@@ -335,8 +335,7 @@ impl<'a> Iterator for Leaves<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         match self.0.pop() {
             None => None
-          , Some(leaf @ &Leaf(_)) => if leaf.len() == 0 { None }
-                                     else { Some(leaf) }
+          , Some(leaf @ &Leaf(_)) => Some(leaf)
           , Some(&Branch(BranchNode { ref left, ref right, .. })) => {
                 self.0.push(left);
                 self.0.push(right);
@@ -354,8 +353,7 @@ impl Iterator for IntoLeaves {
     fn next(&mut self) -> Option<Self::Item> {
         match self.0.pop() {
             None => None
-          , Some(leaf @ Leaf(_)) => if leaf.len() == 0 { None }
-                                    else { Some(leaf) }
+          , Some(leaf @ Leaf(_)) => Some(leaf)
           , Some(Branch(BranchNode { box left, box right, .. })) => {
                 self.0.push(right);
                 self.0.push(left);
