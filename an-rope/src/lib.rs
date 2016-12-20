@@ -217,11 +217,13 @@ impl Rope {
                 // if the rope is being inserted at index len, append it
                 self.append(rope)
             } else {
-                if let &mut Branch(ref mut new_branch) = self.root.split(index) {
-                    new_branch.left.as_mut()
-                              .concat(rope.root);
-                } else {
-                    unreachable!()
+                match self.root.split(index) {
+                    &mut Branch(ref mut new_branch) =>
+                        new_branch.left.as_mut()
+                                  .concat(rope.root)
+                  , thing =>
+                        unreachable!("Node::split didn't return a branch node? \
+                                      Got: {:?}", thing)
                 }
             }
             // rebalance the new rope
