@@ -91,6 +91,10 @@ impl Node {
         // it. Therefore, the assignment to `self` must be outside the `if let`
         // clause.
         *self = if let Leaf(ref mut s) = *self {
+            assert!( s.len() >= 1
+                   , "Node::split_leaf: String {} had only {} characters and \
+                      thus could not be split at index {}."
+                   , s, s.len(), index);
 
             // if this node is a Leaf, take the String out of it
             // (note that empty strings don't allocate).
