@@ -22,7 +22,7 @@ use std::mem;
 mod test;
 
 use self::internals::Node::*;
-use self::internals::{ Node, BranchNode };
+use self::internals::Node;
 
 /// A Rope
 ///
@@ -218,9 +218,10 @@ impl Rope {
                 self.append(rope)
             } else {
                 match self.root.split(index) {
-                    &mut Branch(ref mut new_branch) =>
+                    &mut Branch(ref mut new_branch) => {
                         new_branch.left.as_mut()
-                                  .concat(rope.root)
+                                  .concat(rope.root);
+                              }
                   , thing =>
                         unreachable!("Node::split didn't return a branch node? \
                                       Got: {:?}", thing)
@@ -442,8 +443,9 @@ impl Rope {
     /// ```
     pub fn prepend(&mut self, other: Rope) {
         if other.len() > 0 {
-            let root = mem::replace(&mut self.root, Node::empty());
-            self.root = Node::new_branch(other.root, root);
+            let old_root = mem::replace(&mut self.root, Node::empty());
+            self.root = other.root;
+            self.root.concat(old_root);
             self.rebalance();
         }
     }
@@ -588,23 +590,6 @@ impl Rope {
     fn bytes_eq<I>(&self, other: I) -> bool
     where I: Iterator<Item=u8> {
         self.bytes().zip(other).all(|(a, b)| a == b)
-    }
-}
-
-
-impl ops::Index<usize> for Node {
-    type Output = str;
-
-    fn index(&self, i: usize) -> &str {
-        let len = self.len();
-        assert!( i < len
-               , "Node::index: index {} out of bounds (length {})", i, len);
-        match *self {
-            Leaf(ref vec) => { &vec[i..i+1] }
-          , Branch(BranchNode { box ref right, .. }) if len < i =>
-                &right[i - len]
-          , Branch(BranchNode { box ref left, .. }) => &left[i]
-        }
     }
 }
 

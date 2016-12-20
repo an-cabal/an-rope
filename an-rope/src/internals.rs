@@ -374,3 +374,20 @@ impl ops::Add for Node {
     /// Concatenate two `Node`s, returning a `Branch` node.
     fn add(self, right: Self) -> Self { Node::new_branch(self, right) }
 }
+
+
+impl ops::Index<usize> for Node {
+    type Output = str;
+
+    fn index(&self, i: usize) -> &str {
+        let len = self.len();
+        assert!( i < len
+               , "Node::index: index {} out of bounds (length {})", i, len);
+        match *self {
+            Leaf(ref vec) => { &vec[i..i+1] }
+          , Branch(BranchNode { box ref right, .. }) if len < i =>
+                &right[i - len]
+          , Branch(BranchNode { box ref left, .. }) => &left[i]
+        }
+    }
+}
