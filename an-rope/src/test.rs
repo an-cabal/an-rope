@@ -139,6 +139,24 @@ fn mutable_insert_char_test_1() {
 }
 
 #[test]
+fn mutable_insert_char_test_2() {
+    // this is the same as with_insert_char_test1() except mutable
+    let mut s = Rope::from("aaaaa");
+    assert_eq!(&s, "aaaaa");
+    s.insert(5, 'b');
+    assert_eq!(&s, "aaaaab");
+    s.insert(4, 'b');
+    assert_eq!(&s, "aaaabab");
+    s.insert(3, 'b');
+    assert_eq!(&s, "aaababab");
+    s.insert(2, 'b');
+    assert_eq!(&s, "aabababab");
+    s.insert(1, 'b');
+    assert_eq!(&s, "ababababab");
+
+}
+
+#[test]
 fn with_insert_char_test_1() {
     let s = Rope::from("aaaaa");
     let s_1 = s.with_insert(5, 'b');
