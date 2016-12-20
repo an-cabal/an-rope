@@ -504,10 +504,10 @@ impl Rope {
     /// assert_eq!(cd, Rope::from(String::from("cd")));
     /// ```
     pub fn split(&mut self, index: usize) -> (Rope, Rope) {
-        // assert!(index <= self.len());
-        // let (l, r) = self.root.split(index);
-        // (Rope { root: l }, Rope { root: r })
-        unimplemented!()
+        assert!(index <= self.len());
+        let root = mem::replace(&mut self.root, Node::empty());
+        let (l, r) = root.split(index);
+        (Rope { root: l }, Rope { root: r })
     }
 
     /// Rebalances this entire `Rope`, returning a balanced `Rope`.
