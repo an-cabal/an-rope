@@ -22,15 +22,14 @@ pub struct BranchNode {
   , /// The weight of a node is the summed weight of its left subtree
     weight: usize
   , /// The left branch node
-    pub left: Option<Box<Node>>
+    pub left: Box<Node>
   , /// The right branch node
-    pub right: Option<Box<Node>>
+    pub right: Box<Node>
 }
 
 
 impl Default for Node {
     fn default() -> Self { Node::empty() }
-
 }
 
 /// Returns the _n_th fibonacci number.
@@ -45,48 +44,41 @@ fn fibonacci(n: usize) -> usize {
 impl BranchNode {
 
     #[inline]
-    fn new(left: Box<Node>, right: Box<Node>) -> Self {
+    fn new(left: Node, right: Node) -> Self {
         BranchNode { len: left.len() + right.len()
                    , weight: left.subtree_weight()
-                   , left: Some(left)
-                   , right: Some(right)
+                   , left: box left
+                   , right: box right
                    }
+    }
+
+    #[inline]
+    fn take_left(&mut self) -> Node {
+        mem::replace(self.left.as_mut(), Node::empty())
+    }
+
+    #[inline]
+    fn take_right(&mut self) -> Node {
+        mem::replace(self.right.as_mut(), Node::empty())
     }
 
     fn split(&mut self, index: usize) -> &mut Node {
         if index < self.weight {
             // split the left node
-            *self = if let BranchNode {
-                left: Some(box ref mut left)
-              , ref mut right, ..
-            } = *self {
-                let mut l_leaf = mem::replace(left, Node::empty());
-                l_leaf.split(index);
-                let r = right.take().unwrap_or(box Node::empty());
-                // replacing *self with a new BranchNode will update the
-                // node's weight automagically
-                BranchNode::new(box l_leaf, r)
-            } else {
-                unreachable!()
-            };
-            self.left.as_mut().unwrap()
+            let mut left = self.take_left();
+            left.split(index);
+            // replacing *self with a new BranchNode will update the
+            // node's weight automagically
+            *self = BranchNode::new(left, self.take_right());
+            self.left.as_mut()
         } else {
             // split the right node
-            *self = if let BranchNode {
-                ref mut left
-              , right: Some(box ref mut right), ..
-            } = *self {
-                let mut r_leaf = mem::replace(right, Node::empty());
-                r_leaf.split(index);
-                let l = left.take().unwrap_or(box Node::empty());
-                // replacing *self with a new BranchNode will update the
-                // node's weight automagically
-                BranchNode::new(l, box r_leaf)
-            } else {
-                // i think this should never happen
-                unreachable!()
-            };
-            self.right.as_mut().unwrap()
+            let mut right = self.take_right();
+            right.split(index);
+            // replacing *self with a new BranchNode will update the
+            // node's weight automagically
+            *self = BranchNode::new(self.take_left(), right);
+            self.left.as_mut()
         }
     }
 
@@ -128,18 +120,14 @@ impl Node {
         }
     }
 
-    pub const fn empty() -> Self {
-        Branch(BranchNode { len: 0
-                          , weight: 0
-                          , left: None
-                          , right: None
-                          })
+    pub fn empty() -> Self {
+        Leaf(String::new())
     }
 
     /// Concatenate two `Node`s to return a new `Branch` node.
     #[inline]
     pub fn new_branch(left: Self, right: Self) -> Self {
-        Branch(BranchNode::new(box left, box right))
+        Branch(BranchNode::new(left, right))
     }
 
     #[inline]
@@ -175,9 +163,7 @@ impl Node {
         match self {
             &Node::Leaf(_) => 0
           , &Node::Branch(BranchNode { ref left, ref right, .. }) =>
-                max( left.as_ref().map(Box::as_ref).map_or(0, Node::depth)
-                   , right.as_ref().map(Box::as_ref).map_or(0, Node::depth)
-                   ) + 1
+                max(left.depth(), right.depth()) + 1
             }
     }
 
@@ -187,8 +173,7 @@ impl Node {
     pub fn len(&self) -> usize {
         match self { &Leaf(ref s) => s.len()
                    , &Branch(BranchNode { ref left, ref right, .. }) =>
-                        left.as_ref().map(Box::as_ref).map_or(0, Node::len) +
-                        right.as_ref().map(Box::as_ref).map_or(0, Node::len)
+                        left.len() + right.len()
                     }
     }
 
@@ -197,8 +182,7 @@ impl Node {
     fn subtree_weight (&self) -> usize {
         match self { &Leaf(ref s) => s.len()
                    , &Branch(BranchNode { ref left, .. }) =>
-                        left.as_ref().map(Box::as_ref)
-                            .map_or(0, Node::subtree_weight)
+                        left.subtree_weight()
                     }
     }
 
@@ -351,10 +335,11 @@ impl<'a> Iterator for Leaves<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         match self.0.pop() {
             None => None
-          , Some(leaf @ &Leaf(_)) => Some(leaf)
+          , Some(leaf @ &Leaf(_)) => if leaf.len() == 0 { None }
+                                     else { Some(leaf) }
           , Some(&Branch(BranchNode { ref left, ref right, .. })) => {
-                if let &Some(box ref r) = right { self.0.push(r); }
-                if let &Some(box ref l) = left { self.0.push(l); }
+                self.0.push(left);
+                self.0.push(right);
                 self.next()
             }
         }
@@ -369,10 +354,11 @@ impl Iterator for IntoLeaves {
     fn next(&mut self) -> Option<Self::Item> {
         match self.0.pop() {
             None => None
-          , Some(leaf @ Leaf(_)) => Some(leaf)
-          , Some(Branch(BranchNode { left, right, .. })) => {
-                if let Some(box r) = right { self.0.push(r); }
-                if let Some(box l) = left { self.0.push(l); }
+          , Some(leaf @ Leaf(_)) => if leaf.len() == 0 { None }
+                                    else { Some(leaf) }
+          , Some(Branch(BranchNode { box left, box right, .. })) => {
+                self.0.push(right);
+                self.0.push(left);
                 self.next()
             }
         }

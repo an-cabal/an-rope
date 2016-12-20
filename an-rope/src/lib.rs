@@ -74,7 +74,7 @@ impl Rope {
     /// let mut an_rope = Rope::<u8>::empty();
     /// assert_eq!(an_rope.len(), 0);
     /// ```
-    pub const fn new() -> Rope {
+    pub fn new() -> Rope {
         Rope { root: Node::empty() }
     }
 
@@ -219,7 +219,6 @@ impl Rope {
             } else {
                 if let &mut Branch(ref mut new_branch) = self.root.split(index) {
                     new_branch.left.as_mut()
-                              .unwrap()
                               .concat(rope.root);
                 } else {
                     unreachable!()
@@ -600,10 +599,9 @@ impl ops::Index<usize> for Node {
                , "Node::index: index {} out of bounds (length {})", i, len);
         match *self {
             Leaf(ref vec) => { &vec[i..i+1] }
-          , Branch(BranchNode { right: Some(box ref r), .. }) if len < i =>
-                &r[i - len]
-          , Branch(BranchNode { left: Some(box ref l), .. }) => &l[i]
-          , _ => unreachable!()
+          , Branch(BranchNode { box ref right, .. }) if len < i =>
+                &right[i - len]
+          , Branch(BranchNode { box ref left, .. }) => &left[i]
         }
     }
 }
