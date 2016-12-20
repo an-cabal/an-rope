@@ -115,7 +115,8 @@ impl Node {
             if let &mut Branch(ref mut node) = self {
                 node.split(index)
             } else {
-                unreachable!()
+                unreachable!("A node that was neither a leaf nor a branch \
+                              happened?")
             }
         }
     }
