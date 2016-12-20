@@ -217,15 +217,14 @@ impl Rope {
                 // if the rope is being inserted at index len, append it
                 self.append(rope)
             } else {
-                match self.root.split(index) {
-                    &mut Branch(ref mut new_branch) => {
-                        new_branch.left.as_mut()
-                                  .concat(rope.root);
-                              }
-                  , thing =>
-                        unreachable!("Node::split didn't return a branch node? \
-                                      Got: {:?}", thing)
-                }
+                let root = mem::replace(&mut self.root, Node::empty());
+                // split the rope at the given index
+                let (left, right) = root.split(index);
+                // concatenate the left side of the rope to insert
+                let left = Node::new_branch(left, rope.root);
+                // concatenate the right side of the split to the
+                // new node and put the new node in the root position
+                self.root = Node::new_branch(left, right);
             }
             // rebalance the new rope
             self.rebalance();

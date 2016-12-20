@@ -62,69 +62,48 @@ impl BranchNode {
         mem::replace(self.right.as_mut(), Node::empty())
     }
 
-    fn split(&mut self, index: usize) -> &mut Node {
-        if index < self.weight {
+    fn split(self, index: usize) -> (Node, Node) {
+        let weight = (&self).weight;
+        if index < weight {
             // split the left node
-            let mut left = self.take_left();
-            left.split(index);
-            // replacing *self with a new BranchNode will update the
-            // node's weight automagically
-            *self = BranchNode::new(left, self.take_right());
-            self.left.as_mut()
+            let (left, left_right) = self.left.split(index);
+            let right = if (&left_right).len() == 0 {
+                *self.right
+            } else {
+                Node::new_branch(left_right, *self.right)
+            };
+            (left, right)
         } else {
-            // split the right node
-            let mut right = self.take_right();
-            right.split(index);
-            // replacing *self with a new BranchNode will update the
-            // node's weight automagically
-            *self = BranchNode::new(self.take_left(), right);
-            self.right.as_mut()
+            // split the right node;
+            let (right_left, right) = self.right.split(index - weight);
+            let left = if (&right_left).len() == 0 {
+                *self.left
+            } else {
+                Node::new_branch(*self.left, right_left)
+            };
+            (left, right)
         }
     }
 
 }
 
 impl Node {
-    fn split_leaf(&mut self, index: usize) -> bool {
-        // we mutably borrow `self` here. This precludes us from changing it
-        // directly as in `*self = ...`, because the borrow checker won't allow
-        // it. Therefore, the assignment to `self` must be outside the `if let`
-        // clause.
-        *self = if let Leaf(ref mut s) = *self {
-            assert!( s.len() >= 1
-                   , "Node::split_leaf: String {} had only {} characters and \
-                      thus could not be split at index {}."
-                   , s, s.len(), index);
 
-            // if this node is a Leaf, take the String out of it
-            // (note that empty strings don't allocate).
-            let string = mem::replace(s, String::new());
-            // split the string into left and right parts...
-            let left = Leaf(string[index..].to_string());
-            let right = Leaf(string[..index].to_string());
-            // construct the new Branch node that will be reassigned to `self`
-            Node::new_branch(left, right)
-        } else {
-            // if this node is not a Leaf, we return immediately, thus skipping
-            // the assignment
-            return false
-        };
-        return true
-    }
-
-    pub fn split(&mut self, index: usize) -> &mut Node {
-        if self.split_leaf(index) == true {
-            self
-        } else {
-            if let &mut Branch(ref mut node) = self {
-                node.split(index)
+    pub fn split(self, index: usize) -> (Node, Node) {
+        match self {
+            Leaf(s) => if s.len() == 0 {
+                (Node::empty(), Node::empty())
             } else {
-                unreachable!("A node that was neither a leaf nor a branch \
-                              happened?")
+                // split the string into left and right parts...
+                let left = Leaf(s[..index].to_string());
+                let right = Leaf(s[index..].to_string());
+                (left, right)
             }
+          , Branch(node) => node.split(index)
         }
     }
 
+    #[inline]
     pub fn empty() -> Self {
         Leaf(String::new())
     }
