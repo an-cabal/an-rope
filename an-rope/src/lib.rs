@@ -503,10 +503,9 @@ impl Rope {
     /// assert_eq!(ab, Rope::from(String::from("ab")));
     /// assert_eq!(cd, Rope::from(String::from("cd")));
     /// ```
-    pub fn split(&mut self, index: usize) -> (Rope, Rope) {
+    pub fn split(self, index: usize) -> (Rope, Rope) {
         assert!(index <= self.len());
-        let root = mem::replace(&mut self.root, Node::empty());
-        let (l, r) = root.split(index);
+        let (l, r) = self.root.split(index);
         (Rope { root: l }, Rope { root: r })
     }
 
