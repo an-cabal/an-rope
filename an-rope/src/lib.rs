@@ -111,6 +111,9 @@ impl Rope {
     /// # Panics
     /// + If `index` is greater than the length of this `Rope`
     ///
+    /// # Time Complexity
+    /// O(log _n_)
+    ///
     /// # Examples
     ///
     /// Inserting at index 0 prepends `char` to this `Rope`:
@@ -149,6 +152,9 @@ impl Rope {
     ///
     /// # Returns
     /// + A new `Rope` with `ch` inserted at `index`
+    ///
+    /// # Time Complexity
+    /// O(log _n_)
     ///
     /// # Panics
     /// + If `index` is greater than the length of this `Rope`
@@ -192,6 +198,9 @@ impl Rope {
     ///
     /// # Panics
     /// + If `index` is greater than the length of this `Rope`
+    ///
+    /// # Time Complexity
+    /// O(log _n_)
     ///
     /// # Examples
     ///
@@ -243,6 +252,9 @@ impl Rope {
     /// # Returns
     /// + A new `Rope` with `rope` inserted at `index`
     ///
+    /// # Time Complexity
+    /// O(log _n_)
+    ///
     /// # Panics
     /// + If `index` is greater than the length of this `Rope`
     ///
@@ -282,6 +294,9 @@ impl Rope {
     /// # Panics
     /// + If `index` is greater than the length of this `Rope`
     ///
+    /// # Time Complexity
+    /// O(log _n_)
+    ///
     /// # Examples
     ///
     /// Inserting at index 0 prepends `s` to this `Rope`:
@@ -319,6 +334,9 @@ impl Rope {
     ///
     /// # Panics
     /// + If `index` is greater than the length of this `Rope`
+    ///
+    /// # Time Complexity
+    /// O(log _n_)
     ///
     /// # Examples
     ///
