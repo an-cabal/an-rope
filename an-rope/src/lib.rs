@@ -16,7 +16,6 @@
 use std::cmp;
 use std::ops;
 use std::convert;
-use std::mem;
 
 #[cfg(test)]
 mod test;
@@ -64,6 +63,13 @@ mod internals;
 
 
 impl Rope {
+
+    /// Take this `Rope`s root node, leaving an empty node in its place
+    #[inline]
+    fn take_root(&mut self) -> Node {
+        use std::mem;
+        mem::replace(&mut self.root, Node::empty())
+    }
 
     /// Returns a new empty Rope
     ///
@@ -219,16 +225,11 @@ impl Rope {
                 // if the rope is being inserted at index len, append it
                 self.append(rope)
             } else {
-                let root = mem::replace(&mut self.root, Node::empty());
                 // split the rope at the given index
-                let (left, right) = root.split(index);
+                let (left, right) = self.take_root().split(index);
 
                 // construct the new root node with `Rope` inserted
-                self.root = left;
-                // concatenate the left side of the rope to insert
-                // concatenate the right side of the split to the new node
-                self.root.concat(rope.root)
-                         .concat(right);
+                self.root = left + rope.root + right;
             }
             // rebalance the new rope
             self.rebalance();
@@ -410,9 +411,7 @@ impl Rope {
     /// ```
     pub fn prepend(&mut self, other: Rope) {
         if other.len() > 0 {
-            let old_root = mem::replace(&mut self.root, Node::empty());
-            self.root = other.root;
-            self.root.concat(old_root);
+            self.root = other.root + self.take_root();
             self.rebalance();
         }
     }
@@ -484,8 +483,7 @@ impl Rope {
             // the rope is already balanced, do nothing
         } else {
             // rebalance the rope
-            let root = mem::replace(&mut self.root, Node::empty());
-            self.root = root.rebalance();
+            self.root = self.take_root().rebalance();
         }
     }
 
