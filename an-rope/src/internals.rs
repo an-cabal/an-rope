@@ -162,12 +162,6 @@ impl Node {
     }
 
     #[inline]
-    pub fn concat(&mut self, right: Self) -> &mut Self {
-        *self = Node::new_branch(mem::replace(self, Node::empty()), right);
-        self
-    }
-
-    #[inline]
     pub const fn new_leaf(string: String) -> Self {
         Leaf(string)
     }
@@ -399,6 +393,16 @@ impl ops::Add for Node {
     type Output = Self;
     /// Concatenate two `Node`s, returning a `Branch` node.
     fn add(self, right: Self) -> Self { Node::new_branch(self, right) }
+}
+
+
+impl ops::AddAssign for Node {
+    /// Concatenate two `Node`s
+    fn add_assign(&mut self, right: Self) {
+        use std::mem::replace;
+        *self = Node::new_branch(replace(self, Node::empty()), right)
+     }
+
 }
 
 

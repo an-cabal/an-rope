@@ -364,7 +364,7 @@ impl Rope {
 
     pub fn append(&mut self, other: Rope) {
         if other.len() > 0 {
-            self.root.concat(other.root);
+            self.root += other.root;
             self.rebalance();
         }
     }
