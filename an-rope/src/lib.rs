@@ -21,7 +21,6 @@ use std::mem;
 #[cfg(test)]
 mod test;
 
-use self::internals::Node::*;
 use self::internals::Node;
 
 /// A Rope
