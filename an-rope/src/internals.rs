@@ -135,8 +135,7 @@ impl Node {
                 // splitting an empty leaf node returns two empty leaf nodes
                 (Node::empty(), Node::empty())
           , Leaf(ref s) if s.len() == 1 =>
-                // TODO: handle this case
-                unimplemented!()
+                (Leaf(s.clone()), Node::empty())
           , Leaf(s) => {
                 // splitting a leaf node with length >= 2 returns two new Leaf
                 // nodes, one with the left half of the string, and one with
