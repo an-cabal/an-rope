@@ -52,15 +52,30 @@ impl BranchNode {
                    }
     }
 
+    /// Split this branch node on the specified `index`.
+    ///
+    /// This function walks the tree from this node until it reaches the index
+    /// to split on, and then it splits the leaf node containing that index.
+    ///
+    /// # Returns
+    /// A tuple containing the left and right sides of the split node. These are
+    /// returned as a tuple rather than as a new branch, since the expected use
+    /// case for this function is splitting a node so that new text can be
+    /// inserted between the two split halves.
+    ///
+    /// # Time complexity
+    /// O(log _n_)
     fn split(self, index: usize) -> (Node, Node) {
         let weight = (&self).weight;
+        // to determine which side of this node we are splitting on, we compare
+        // the index to split to this node's weight.
         if index < weight {
-            // if the index to split on is less than this node's weight,
-            // we split this node's left child.
+            // if the index is less than this node's weight, then it's in the
+            // left subtree. calling `split` on the left child will walk
+            // the left subtree to that index
             let (left, left_right) = self.left.split(index);
             // the left side of the split left child will become the left side
             // of the split pair.
-
             let right = if (&left_right).len() == 0 {
                 // if the right side of the split is empty, then the right
                 // side of the returned pair is just this node's right child
@@ -73,8 +88,10 @@ impl BranchNode {
             };
             (left, right)
         } else {
-            // if the index is not less than this node's weight, we split the
-            // right child
+            // otherwise, if the index >= this node's weight, the index is
+            // somewhere in the right subtree. walk the right subtree,
+            // subtracting this node's weight, (the length of it's left subtree)
+            // to find the new index in the right subtree.
             let (right_left, right) = self.right.split(index - weight);
             // the right side of the split right child will become the right
             // side of the split
@@ -97,17 +114,40 @@ impl BranchNode {
 
 impl Node {
 
+    /// Split this `Node`'s subtree on the specified `index`.
+    ///
+    /// Consumes `self`.
+    ///
+    /// This function walks the tree from this node until it reaches the index
+    /// to split on, and then it splits the leaf node containing that index.
+    ///
+    /// # Returns
+    /// A tuple containing the left and right sides of the split node. These are
+    /// returned as a tuple rather than as a new branch, since the expected use
+    /// case for this function is splitting a node so that new text can be
+    /// inserted between the two split halves.
+    ///
+    /// # Time complexity
+    /// O(log _n_)
     pub fn split(self, index: usize) -> (Node, Node) {
         match self {
-            Leaf(s) => if s.len() == 0 {
+            Leaf(ref s) if s.len() == 0 =>
+                // splitting an empty leaf node returns two empty leaf nodes
                 (Node::empty(), Node::empty())
-            } else {
-                // split the string into left and right parts...
+          , Leaf(ref s) if s.len() == 1 =>
+                // TODO: handle this case
+                unimplemented!()
+          , Leaf(s) => {
+                // splitting a leaf node with length >= 2 returns two new Leaf
+                // nodes, one with the left half of the string, and one with
+                // the right
                 let left = Leaf(s[..index].to_string());
                 let right = Leaf(s[index..].to_string());
                 (left, right)
             }
-          , Branch(node) => node.split(index)
+          , Branch(node) =>
+                // otherwise, just delegate out to `BranchNode::split()`
+                node.split(index)
         }
     }
 
