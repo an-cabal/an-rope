@@ -165,8 +165,7 @@ impl Node {
     #[inline]
     fn subtree_weight (&self) -> usize {
         match self { &Leaf(ref s) => s.len()
-                   , &Branch(BranchNode { ref left, .. }) =>
-                        left.subtree_weight()
+                   , &Branch(BranchNode { ref left, .. }) => left.len()
                     }
     }
 
