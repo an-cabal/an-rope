@@ -55,20 +55,38 @@ impl BranchNode {
     fn split(self, index: usize) -> (Node, Node) {
         let weight = (&self).weight;
         if index < weight {
-            // split the left node
+            // if the index to split on is less than this node's weight,
+            // we split this node's left child.
             let (left, left_right) = self.left.split(index);
+            // the left side of the split left child will become the left side
+            // of the split pair.
+
             let right = if (&left_right).len() == 0 {
+                // if the right side of the split is empty, then the right
+                // side of the returned pair is just this node's right child
                 *self.right
             } else {
+                // otherwise, the right side of the returned pair is a branch
+                // containing the right side of the split node on the left,
+                // and this node's right child on the right
                 Node::new_branch(left_right, *self.right)
             };
             (left, right)
         } else {
-            // split the right node;
+            // if the index is not less than this node's weight, we split the
+            // right child
             let (right_left, right) = self.right.split(index - weight);
+            // the right side of the split right child will become the right
+            // side of the split
+
             let left = if (&right_left).len() == 0 {
+                // if the left side of the split right child is empty, then the
+                // left side of the returned pair is just this node's left child
                 *self.left
             } else {
+                // otherwise, the left side of the returned pair is a branch
+                // containing the left side of the split node on the right,
+                // and this node's left child on the left
                 Node::new_branch(*self.left, right_left)
             };
             (left, right)
