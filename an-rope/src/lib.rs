@@ -12,6 +12,12 @@
 #![feature(const_fn)]
 #![feature(box_syntax, box_patterns)]
 #![feature(conservative_impl_trait)]
+#![feature(collections)]
+#![feature(collections_range)]
+
+extern crate collections;
+
+use collections::range::RangeArgument;
 
 use std::cmp;
 use std::ops;
@@ -590,6 +596,11 @@ impl Rope {
     where I: Iterator<Item=u8> {
         self.bytes().zip(other).all(|(a, b)| a == b)
     }
+
+    pub fn slice<'a, R>(&'a self, range: R) -> RopeSlice<'a>
+    where R: RangeArgument<usize> {
+        unimplemented!()
+    }
 }
 
 impl convert::Into<Vec<u8>> for Rope {
@@ -874,4 +885,26 @@ impl ops::IndexMut<ops::RangeFrom<usize>> for Rope {
     fn index_mut(&mut self, i: ops::RangeFrom<usize>) -> &mut str {
         unimplemented!()
     }
+}
+
+//-- rope slice -------------------------------------------------------------
+pub struct RopeSlice<'a> { node: &'a Node
+                         , offset: usize
+                         , end: usize
+                         }
+
+impl<'a> RopeSlice<'a> {
+
+    fn spanning_node(node: &Node, i: usize, len: usize) -> &Node {
+        use internals::BranchNode;
+        match node {
+            _ if i < node.weight() && len < node.len() => node
+          , &Branch(BranchNode { ref left, weight, .. }) if i < weight =>
+                RopeSlice::spanning_node(left, i - weight, len)
+          , &Branch(BranchNode { ref right, .. }) =>
+                RopeSlice::spanning_node(right, i, len)
+          , &Leaf(_) => unreachable!()
+        }
+    }
+
 }

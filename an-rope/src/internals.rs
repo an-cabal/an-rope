@@ -20,7 +20,7 @@ pub struct BranchNode {
     /// The length of this node
     len: usize
   , /// The weight of a node is the summed weight of its left subtree
-    weight: usize
+    pub weight: usize
   , /// The left branch node
     pub left: Box<Node>
   , /// The right branch node
@@ -170,6 +170,10 @@ impl Node {
                     }
     }
 
+    pub fn weight(&self) -> usize {
+        match self { &Leaf(ref s) => s.len()
+                   , &Branch(BranchNode { ref weight, ..} ) => *weight }
+    }
 
     /// Rebalance the subrope starting at this `Node`, returning a new `Node`
     ///
