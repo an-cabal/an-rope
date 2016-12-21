@@ -222,11 +222,13 @@ impl Rope {
                 let root = mem::replace(&mut self.root, Node::empty());
                 // split the rope at the given index
                 let (left, right) = root.split(index);
+
+                // construct the new root node with `Rope` inserted
+                self.root = left;
                 // concatenate the left side of the rope to insert
-                let left = Node::new_branch(left, rope.root);
-                // concatenate the right side of the split to the
-                // new node and put the new node in the root position
-                self.root = Node::new_branch(left, right);
+                // concatenate the right side of the split to the new node
+                self.root.concat(rope.root)
+                         .concat(right);
             }
             // rebalance the new rope
             self.rebalance();
@@ -358,6 +360,7 @@ impl Rope {
     /// an_rope.append(Rope::from(String::from("efgh")));
     /// assert_eq!(an_rope, Rope::from(String::from("abcdefgh")) );
     /// ```
+
     pub fn append(&mut self, other: Rope) {
         if other.len() > 0 {
             self.root.concat(other.root);
@@ -425,6 +428,21 @@ impl Rope {
     /// let another_rope = an_rope.with_prepend(Rope::from("abcd"));
     /// assert_eq!(&an_rope, "efgh");
     /// assert_eq!(&another_rope, "abcdefgh");
+    /// ```
+    /// ```
+    /// use an_rope::Rope;
+    /// let an_rope = Rope::from("");
+    /// let another_rope = an_rope.with_prepend(Rope::from("abcd"));
+    /// assert_eq!(&an_rope, "");
+    /// assert_eq!(&another_rope, "abcd");
+    /// ```
+    /// ```
+    /// use an_rope::Rope;
+    /// let an_rope = Rope::from("abcd");
+    /// let another_rope = an_rope.with_prepend(Rope::from(""));
+    /// assert_eq!(&an_rope, "abcd");
+    /// assert_eq!(&another_rope, &an_rope);
+    /// assert_eq!(&another_rope, "abcd");
     /// ```
     pub fn with_prepend(&self, other: Rope) -> Rope {
         if other.len() == 0 {

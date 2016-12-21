@@ -162,8 +162,9 @@ impl Node {
     }
 
     #[inline]
-    pub fn concat(&mut self, right: Self) {
-        *self = Node::new_branch(mem::replace(self, Node::empty()), right)
+    pub fn concat(&mut self, right: Self) -> &mut Self {
+        *self = Node::new_branch(mem::replace(self, Node::empty()), right);
+        self
     }
 
     #[inline]
