@@ -358,7 +358,6 @@ impl Rope {
     /// an_rope.append(Rope::from(String::from("efgh")));
     /// assert_eq!(an_rope, Rope::from(String::from("abcdefgh")) );
     /// ```
-
     pub fn append(&mut self, other: Rope) {
         if other.len() > 0 {
             self.root.concat(other.root);

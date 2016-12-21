@@ -52,16 +52,6 @@ impl BranchNode {
                    }
     }
 
-    #[inline]
-    fn take_left(&mut self) -> Node {
-        mem::replace(self.left.as_mut(), Node::empty())
-    }
-
-    #[inline]
-    fn take_right(&mut self) -> Node {
-        mem::replace(self.right.as_mut(), Node::empty())
-    }
-
     fn split(self, index: usize) -> (Node, Node) {
         let weight = (&self).weight;
         if index < weight {
