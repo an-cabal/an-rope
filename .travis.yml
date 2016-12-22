@@ -4,6 +4,12 @@ os:
   - linux
   - osx
 
+matrix:
+  allow_failures:
+    - os: osx
+  fast_finish: true
+
+
 rust:
   - nightly
 
@@ -39,8 +45,8 @@ after_success: |
     sudo make install &&
     cd ../.. &&
     rm -rf kcov-master &&
-    for file in target/debug/<PROJECT-NAME>-*; do mkdir -p "target/cov/$(basename $file)"; kcov --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file"; done &&
-    for file in an-rope/target/debug/<PROJECT-NAME>-*; do mkdir -p "an-rope/target/cov/$(basename $file)"; kcov --exclude-pattern=/.cargo,/usr/lib --verify "an-rope/target/cov/$(basename $file)" "$file"; done &&
+    for file in target/debug/an-editor-*; do mkdir -p "target/cov/$(basename $file)"; kcov --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file"; done &&
+    for file in an-rope/target/debug/an-rope-*; do mkdir -p "an-rope/target/cov/$(basename $file)"; kcov --exclude-pattern=/.cargo,/usr/lib --verify "an-rope/target/cov/$(basename $file)" "$file"; done &&
     bash <(curl -s https://codecov.io/bash) &&
     echo "Uploaded code coverage";
   fi
