@@ -124,6 +124,7 @@ impl Rope {
     /// Inserting at index 0 prepends `char` to this `Rope`:
     ///
     /// ```
+    /// use an_rope::Rope;
     /// let mut an_rope = Rope::from("bcd");
     /// an_rope.insert(0, 'a');
     /// assert_eq!(an_rope, Rope::from("abcd"));
@@ -132,6 +133,7 @@ impl Rope {
     /// Inserting at index `len` prepends `char` to this `Rope`:
     ///
     /// ```
+    /// use an_rope::Rope;
     /// let mut an_rope = Rope::from("abc");
     /// an_rope.insert(an_rope.len(), 'd');
     /// assert_eq!(an_rope, Rope::from("abcd"));
@@ -140,6 +142,7 @@ impl Rope {
     /// Inserting at an index in the middle inserts `char` at that index:
     ///
     /// ```
+    /// use an_rope::Rope;
     /// let mut an_rope = Rope::from("acd");
     /// an_rope = an_rope.insert(1, 'b');
     /// assert_eq!(an_rope, Rope::from("abcd"));
@@ -172,6 +175,7 @@ impl Rope {
     /// Inserting at index 0 prepends `rope` to this `Rope`:
     ///
     /// ```
+    /// use an_rope::Rope;
     /// let mut an_rope = Rope::from("bcd");
     /// an_rope = an_rope.with_insert(0, 'a'));
     /// assert_eq!(an_rope, Rope::from("abcd"));
@@ -180,6 +184,7 @@ impl Rope {
     /// Inserting at index `len` prepends `char` to this `Rope`:
     ///
     /// ```
+    /// use an_rope::Rope;
     /// let mut an_rope = Rope::from("abc");
     /// an_rope = an_rope.with_insert(an_rope.len(), 'd');
     /// assert_eq!(an_rope, Rope::from("abcd"));
@@ -188,6 +193,7 @@ impl Rope {
     /// Inserting at an index in the middle inserts `char` at that index:
     ///
     /// ```
+    /// use an_rope::Rope;
     /// let mut an_rope = Rope::from("acd");
     /// an_rope = an_rope.with_insert(1, 'b'));
     /// assert_eq!(an_rope, Rope::from("abcd"));
@@ -218,6 +224,7 @@ impl Rope {
     /// Inserting at index 0 prepends `rope` to this `Rope`:
     ///
     /// ```
+    /// use an_rope::Rope;
     /// let mut an_rope = Rope::from("cd");
     /// an_rope.insert_rope(0, Rope::from("ab"));
     /// assert_eq!(an_rope, Rope::from("abcd"));
@@ -226,6 +233,7 @@ impl Rope {
     /// Inserting at index `len` prepends `rope` to this `Rope`:
     ///
     /// ```
+    /// use an_rope::Rope;
     /// let mut an_rope = Rope::from("ab");
     /// an_rope.insert_rope(an_rope.len(), Rope::from("cd"));
     /// assert_eq!(an_rope, Rope::from("abcd"));
@@ -234,6 +242,7 @@ impl Rope {
     /// Inserting at an index in the middle inserts `rope` at that index:
     ///
     /// ```
+    /// use an_rope::Rope;
     /// let mut an_rope = Rope::from("ad");
     /// an_rope = an_rope.insert_rope(1, Rope::from("bd"));
     /// assert_eq!(an_rope, Rope::from("abcd"));
@@ -278,6 +287,7 @@ impl Rope {
     /// Inserting at index 0 prepends `rope` to this `Rope`:
     ///
     /// ```
+    /// use an_rope::Rope;
     /// let mut an_rope = Rope::from("cd");
     /// an_rope = an_rope.with_insert_rope(0, Rope::from("ab"));
     /// assert_eq!(an_rope, Rope::from("abcd"));
@@ -286,6 +296,7 @@ impl Rope {
     /// Inserting at index `len` prepends `rope` to this `Rope`:
     ///
     /// ```
+    /// use an_rope::Rope;
     /// let mut an_rope = Rope::from("ab");
     /// an_rope = an_rope.with_insert_rope(an_rope.len(), Rope::from("cd"));
     /// assert_eq!(an_rope, Rope::from("abcd"));
@@ -294,6 +305,7 @@ impl Rope {
     /// Inserting at an index in the middle inserts `rope` at that index:
     ///
     /// ```
+    /// use an_rope::Rope;
     /// let mut an_rope = Rope::from("ad");
     /// an_rope = an_rope.with_insert_rope(1, Rope::from("bd"));
     /// assert_eq!(an_rope, Rope::from("abcd"));
@@ -320,6 +332,7 @@ impl Rope {
     /// Inserting at index 0 prepends `s` to this `Rope`:
     ///
     /// ```
+    /// use an_rope::Rope;
     /// let mut an_rope = Rope::from("cd");
     /// an_rope.insert_str(0, "ab");
     /// assert_eq!(an_rope, Rope::from("abcd"));
@@ -328,6 +341,7 @@ impl Rope {
     /// Inserting at index `len` prepends `s` to this `Rope`:
     ///
     /// ```
+    /// use an_rope::Rope;
     /// let mut an_rope = Rope::from("ab");
     /// an_rope.insert_str(an_rope.len(), "cd");
     /// assert_eq!(an_rope, Rope::from("abcd"));
@@ -336,6 +350,7 @@ impl Rope {
     /// Inserting at an index in the middle inserts `s` at that index:
     ///
     /// ```
+    /// use an_rope::Rope;
     /// let mut an_rope = Rope::from("ad");
     /// an_rope = an_rope.insert_str(1, "bd");
     /// assert_eq!(an_rope, Rope::from("abcd"));
@@ -364,25 +379,30 @@ impl Rope {
     /// Inserting at index 0 prepends `s` to this `Rope`:
     ///
     /// ```
-    /// let mut an_rope = Rope::from("cd");
-    /// an_rope = an_rope.with_insert_str(0, "ab");
+    /// use an_rope::Rope;
+    /// let an_rope = Rope::from("cd");
+    /// let an_rope = an_rope.with_insert_str(0, "ab");
     /// assert_eq!(an_rope, Rope::from("abcd"));
     /// ```
     ///
     /// Inserting at index `len` prepends `s` to this `Rope`:
     ///
     /// ```
-    /// let mut an_rope = Rope::from("ab");
-    /// an_rope = an_rope.with_insert_str(an_rope.len(), "cd");
-    /// assert_eq!(an_rope, Rope::from("abcd"));
+    /// use an_rope::Rope;
+    /// let an_rope = Rope::from("ab");
+    /// let new_rope = an_rope.with_insert_str(an_rope.len(), "cd");
+    /// assert_eq!(new_rope, Rope::from("abcd"));
+    /// assert_eq!(an_rope, Rope::from("ab"));
     /// ```
     ///
     /// Inserting at an index in the middle inserts `s` at that index:
     ///
     /// ```
-    /// let mut an_rope = Rope::from("ad");
-    /// an_rope = an_rope.with_insert_str(1, "bd");
-    /// assert_eq!(an_rope, Rope::from("abcd"));
+    /// use an_rope::Rope;
+    /// let an_rope = Rope::from("ad");
+    /// let new_rope = an_rope.with_insert_str(1, "bc");
+    /// assert_eq!(an_rope, Rope::from("ad"));
+    /// assert_eq!(new_rope, Rope::from("abcd"));
     /// ```
     #[inline]
     pub fn with_insert_str(&self, index: usize, s: &str) -> Rope {
@@ -564,16 +584,13 @@ impl Rope {
 
     str_iters! {
         #[doc="Returns an iterator over all the bytes in this `Rope`.\n\
-
                \nAs a Rope consists of a sequence of bytes, we can iterate \
                through a rope by byte. This method returns such an iterator."]
         #[inline]
         impl bytes<u8> for Rope {}
         #[doc="Returns an iterator over all the characters in this `Rope`.\n\
-
                \nAs a `Rope` consists of valid UTF-8, we can iterate through a \
                `Rope` by `char`. This method returns such an iterator. \n\
-
                \nIt's important to remember that `char` represents a Unicode \
                Scalar Value, and may not match your idea of what a \
                'character' is. Iteration over grapheme clusters may be what \
