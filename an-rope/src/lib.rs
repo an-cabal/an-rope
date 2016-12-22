@@ -68,8 +68,6 @@ macro_rules! str_iters {
 
 mod internals;
 
-
-
 impl Rope {
 
     /// Returns a new empty Rope
@@ -580,6 +578,8 @@ impl Rope {
         impl split_whitespace<&'a str> for Rope {}
         #[inline]
         impl lines<&'a str> for Rope {}
+        #[inline]
+        impl char_indices<(char, usize)> for Rope {}
     }
 
     /// Returns an iterator over the grapheme clusters of this `Rope`
@@ -984,6 +984,11 @@ impl<'a> RopeSlice<'a> {
     #[inline]
     pub fn lines(&'a self) -> impl Iterator<Item=&'a str> {
         self.slice_strings_iter(self.node.lines())
+    }
+
+    #[inline]
+    pub fn char_indices(&'a self) -> impl Iterator<Item=(char, usize)> + 'a {
+        self.chars().enumerate().map(|(i, c)| (c, i))
     }
 
 }

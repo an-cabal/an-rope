@@ -303,6 +303,11 @@ impl Node {
         impl lines<&'a str> for Node {}
     }
 
+    pub fn char_indices<'a>(&'a self)
+                        -> impl Iterator<Item=(char, usize)> + 'a {
+        self.chars().enumerate().map(|(i, c)| (c, i))
+    }
+
     // /// Returns n iterator over the bytes of this `Node`'s subrope
     // ///
     // ///
