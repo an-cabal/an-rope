@@ -599,7 +599,22 @@ impl Rope {
 
     pub fn slice<'a, R>(&'a self, range: R) -> RopeSlice<'a>
     where R: RangeArgument<usize> {
-        unimplemented!()
+        let len = self.len();
+
+        let start = *range.start().unwrap_or(&0);
+        let end = *range.end().unwrap_or(&self.len());
+        let slice_len = start - end;
+
+        let node = if start == 0 && end == len {
+            &self.root
+        } else {
+            RopeSlice::spanning_node(&self.root, start, slice_len)
+        };
+
+        RopeSlice { node: node
+                  , offset: if start == 0 { 0 } else { unimplemented!() }
+                  , len: slice_len
+                  }
     }
 }
 
@@ -890,7 +905,7 @@ impl ops::IndexMut<ops::RangeFrom<usize>> for Rope {
 //-- rope slice -------------------------------------------------------------
 pub struct RopeSlice<'a> { node: &'a Node
                          , offset: usize
-                         , end: usize
+                         , len: usize
                          }
 
 impl<'a> RopeSlice<'a> {
@@ -899,10 +914,10 @@ impl<'a> RopeSlice<'a> {
         use internals::BranchNode;
         match node {
             _ if i < node.weight() && len < node.len() => node
-          , &Branch(BranchNode { ref left, weight, .. }) if i < weight =>
-                RopeSlice::spanning_node(left, i - weight, len)
+          , &Branch(BranchNode { ref left, weight, .. }) if weight < i =>
+                RopeSlice::spanning_node(left, i , len)
           , &Branch(BranchNode { ref right, .. }) =>
-                RopeSlice::spanning_node(right, i, len)
+                RopeSlice::spanning_node(right, i - node.len(), len)
           , &Leaf(_) => unreachable!()
         }
     }
