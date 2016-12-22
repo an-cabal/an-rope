@@ -1047,3 +1047,21 @@ impl ops::IndexMut<ops::RangeFrom<usize>> for Rope {
         unimplemented!()
     }
 }
+
+impl iter::Extend<char> for Rope{
+
+    fn extend<T>(&mut self, iter: T)
+    where T: IntoIterator<Item=char> {
+        unimplemented!()
+    }
+
+}
+
+impl iter::Extend<String> for Rope{
+
+    fn extend<T>(&mut self, iter: T)
+    where T: IntoIterator<Item=String> {
+        unimplemented!()
+    }
+
+}
