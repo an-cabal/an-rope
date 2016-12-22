@@ -16,6 +16,7 @@
 use std::cmp;
 use std::ops;
 use std::convert;
+use std::fmt;
 
 #[cfg(test)]
 mod test;
@@ -34,12 +35,19 @@ use self::internals::Node;
 /// non-destructive, persistant API. The persistant API's methods have names
 /// prefixed with `with_`, such as `with_push()` and `with_append()`.
 ///
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Rope {
     // can we get away with having these be of &str or will they need
     // to be string?
     root: Node
 }
+
+impl fmt::Debug for Rope {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Rope[\"{}\"] {:?}", self.root, self.root)
+    }
+}
+
 
 macro_rules! str_iters {
     ( $($(#[$attr:meta])* impl $name: ident<$ty: ty> for Node {})+ ) => { $(

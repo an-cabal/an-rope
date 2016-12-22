@@ -1,5 +1,6 @@
 use std::ops;
 use std::mem;
+use std::fmt;
 
 use self::Node::*;
 
@@ -7,7 +8,7 @@ use self::Node::*;
 ///
 /// A `Node` is either a `Leaf` holding a `String`, or a
 /// a `Branch` concatenating together two `Node`s.
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum Node {
     /// A leaf node
     Leaf(String)
@@ -15,7 +16,24 @@ pub enum Node {
     Branch(BranchNode)
 }
 
-#[derive(Debug, Clone)]
+impl fmt::Debug for Node {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Leaf(ref string) => write!(f, "{:?}", string)
+          , Branch(ref branch) => write!(f, "{:?}", branch)
+        }
+    }
+}
+impl fmt::Display for Node {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Leaf(ref string) => write!(f, "{}", string)
+          , Branch(ref branch) => write!(f, "{}", branch)
+        }
+    }
+}
+
+#[derive(Clone)]
 pub struct BranchNode {
     /// The length of this node
     len: usize
@@ -25,6 +43,19 @@ pub struct BranchNode {
     pub left: Box<Node>
   , /// The right branch node
     pub right: Box<Node>
+}
+
+
+impl fmt::Debug for BranchNode {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}({:?}, {:?})", self.weight, self.left, self.right)
+    }
+}
+
+impl fmt::Display for BranchNode {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}{}", self.left, self.right)
+    }
 }
 
 
