@@ -916,3 +916,74 @@ pub struct RopeSlice<'a> { node: &'a Node
                          , offset: usize
                          , len: usize
                          }
+
+impl<'a> RopeSlice<'a> {
+    #[inline]
+    fn slice_char_iter<I, T>(&'a self, i: I) -> impl Iterator<Item=T> + 'a
+    where I: Iterator<Item=T>
+        , I: 'a
+        , T: Copy {
+            i.skip(self.offset).take(self.len)
+    }
+
+    fn slice_strings_iter<I>(&'a self, i: I) -> impl Iterator<Item=&'a str> +'a
+    where I: Iterator<Item=&'a str>
+        , I: 'a {
+        i.scan((self.offset, self.len), |curr, s| {
+            match *curr {
+                (0, 0) => None
+              , (0, ref mut remaining) if *remaining < s.len() => {
+                    let r = *remaining;
+                    *remaining = 0;
+                    Some(&s[..r])
+                }
+              , (0, ref mut remaining) => {
+                    *remaining -= s.len();
+                    Some(s)
+                }
+              , (ref mut offset, _) if *offset > s.len() => {
+                    *offset -= s.len();
+                    Some("")
+                }
+              , (ref mut offset, _) => {
+                    let c = *offset;
+                    *offset -= s.len();
+                    Some(&s[c..])
+                }
+            }
+            // if curr_len > 0 {
+            //     let c = curr_offset;
+            //     let res = if c > 0 {
+            //         curr_offset -= s.len();
+            //         if c < s.len()  {
+            //             &s[c..]
+            //         } else {
+            //             ""
+            //         }
+            //     } else {
+            //         s
+            //     };
+            //     Some(res)
+            })
+         .skip_while(|&s| s == "")
+    }
+
+    pub fn chars(&'a self) -> impl Iterator<Item=char> +'a  {
+        self.slice_char_iter(self.node.chars())
+    }
+
+    pub fn bytes(&'a self) -> impl Iterator<Item=u8> + 'a  {
+        self.slice_char_iter(self.node.bytes())
+    }
+
+    #[inline]
+    pub fn split_whitespace(&'a self) -> impl Iterator<Item=&'a str> {
+        self.slice_strings_iter(self.node.split_whitespace())
+    }
+
+    #[inline]
+    pub fn lines(&'a self) -> impl Iterator<Item=&'a str> {
+        self.slice_strings_iter(self.node.lines())
+    }
+
+}
