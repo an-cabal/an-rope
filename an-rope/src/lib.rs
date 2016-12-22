@@ -17,6 +17,7 @@ use std::cmp;
 use std::ops;
 use std::convert;
 use std::fmt;
+use std::iter;
 
 #[cfg(test)]
 mod test;
@@ -917,4 +918,22 @@ impl ops::IndexMut<ops::RangeFrom<usize>> for Rope {
     fn index_mut(&mut self, i: ops::RangeFrom<usize>) -> &mut str {
         unimplemented!()
     }
+}
+
+impl iter::Extend<char> for Rope{
+
+    fn extend<T>(&mut self, iter: T)
+    where T: IntoIterator<Item=char> {
+        unimplemented!()
+    }
+
+}
+
+impl iter::Extend<String> for Rope{
+
+    fn extend<T>(&mut self, iter: T)
+    where T: IntoIterator<Item=String> {
+        unimplemented!()
+    }
+
 }
