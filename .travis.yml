@@ -26,12 +26,10 @@ addons:
       - gcc
       - binutils-dev
 
-
 script:
   - cargo build --verbose
   - cargo test --verbose
   - cargo test -p an-rope --verbose
-
 
 after_success: |
   if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
@@ -50,3 +48,6 @@ after_success: |
     bash <(curl -s https://codecov.io/bash) &&
     echo "Uploaded code coverage";
   fi
+
+notifications:
+  slack: stemtumblr:5NYecEWWIW4z3LxVE98V6BZk
