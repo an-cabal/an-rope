@@ -601,14 +601,23 @@ impl Rope {
     where R: RangeArgument<usize> {
         let len = self.len();
 
+        // if the RangeArgument doesn't have a defined start index,
+        // the slice begins at the 0th index.
         let start = *range.start().unwrap_or(&0);
+        // similarly, if there's no defined end, then the end index
+        // is the last index in the Rope.
         let end = *range.end().unwrap_or(&self.len());
+
         let slice_len = start - end;
 
+        // find the lowest node that contains both the slice start index and
+        // the end index
         let node = if start == 0 && end == len {
+            // if the slice contains the entire rope, then the spanning node
+            // is the root node
             &self.root
         } else {
-            RopeSlice::spanning_node(&self.root, start, slice_len)
+            &self.root.spanning(start, slice_len)
         };
 
         RopeSlice { node: node
@@ -907,19 +916,3 @@ pub struct RopeSlice<'a> { node: &'a Node
                          , offset: usize
                          , len: usize
                          }
-
-impl<'a> RopeSlice<'a> {
-
-    fn spanning_node(node: &Node, i: usize, len: usize) -> &Node {
-        use internals::BranchNode;
-        match node {
-            _ if i < node.weight() && len < node.len() => node
-          , &Branch(BranchNode { ref left, weight, .. }) if weight < i =>
-                RopeSlice::spanning_node(left, i , len)
-          , &Branch(BranchNode { ref right, .. }) =>
-                RopeSlice::spanning_node(right, i - node.len(), len)
-          , &Leaf(_) => unreachable!()
-        }
-    }
-
-}

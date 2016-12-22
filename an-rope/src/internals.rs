@@ -89,6 +89,17 @@ impl BranchNode {
 
 impl Node {
 
+    pub fn spanning(&self, i: usize, len: usize) -> &Node {
+        match *self {
+            _ if i < self.weight() && len < self.len() => self
+          , Branch(BranchNode { ref left, weight, .. }) if weight < i =>
+                left.spanning(i, len)
+          , Branch(BranchNode { ref right, .. }) =>
+                right.spanning(i -self.len(), len)
+          , Leaf(_) => unreachable!()
+        }
+    }
+
     pub fn split(self, index: usize) -> (Node, Node) {
         match self {
             Leaf(s) => if s.len() == 0 {
