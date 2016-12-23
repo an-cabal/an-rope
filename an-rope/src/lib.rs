@@ -14,6 +14,7 @@
 #![feature(conservative_impl_trait)]
 #![feature(collections)]
 #![feature(collections_range)]
+#![feature(inclusive_range_syntax)]
 
 extern crate collections;
 
@@ -23,6 +24,7 @@ use std::cmp;
 use std::ops;
 use std::convert;
 use std::mem;
+use std::fmt;
 
 #[cfg(test)]
 mod test;
@@ -912,10 +914,18 @@ impl ops::IndexMut<ops::RangeFrom<usize>> for Rope {
 }
 
 //-- rope slice -------------------------------------------------------------
+#[derive(Debug)]
 pub struct RopeSlice<'a> { node: &'a Node
                          , offset: usize
                          , len: usize
                          }
+
+impl<'a> fmt::Display for RopeSlice<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // TODO: don't create an intermediate string?
+        write!(f, "{}", self.chars().collect::<String>())
+    }
+}
 
 impl<'a> RopeSlice<'a> {
     #[inline]
