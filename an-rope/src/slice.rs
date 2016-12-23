@@ -15,118 +15,7 @@ use collections::range::RangeArgument;
 
 use super::internals::Node;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use ::Rope;
 
-    #[test]
-    fn char_indices() {
-        let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
-        let rope = Rope::from(string);
-        let rope_slice = rope.slice(4..8);
-        let string_slice = &string[4..8];
-        let indices = rope_slice.char_indices().zip(string_slice.char_indices());
-        for ((ridx, rch), (sidx, sch)) in indices {
-            assert_eq!(rch, sch);
-            assert_eq!(ridx, sidx);
-        }
-    }
-
-    #[test]
-    fn to() {
-        let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
-        let rope = Rope::from(string);
-        let rope_slice = rope.slice(1..10);
-        let string_slice = &string[1..10];
-        assert_eq!(&rope_slice, string_slice)
-    }
-
-    // #[test]
-    // fn between() {
-    //     let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
-    //     let rope = Rope::from(string);
-    //     let rope_slice = rope.slice(1...10usize);
-    //     let string_slice = &string[1...10];
-    //     assert_eq!(&rope_slice, string_slice)
-    // }
-
-    #[test]
-    fn until() {
-        let string = "aaaaabbbbbbccccccccccdefgdefgaabababab";
-        let rope = Rope::from(string);
-        let rope_slice = rope.slice(..10);
-        let string_slice = &string[..10];
-        assert_eq!(&rope_slice, string_slice)
-    }
-
-    #[test]
-    fn from() {
-        let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
-        let rope = Rope::from(string);
-        let rope_slice = rope.slice(5..);
-        let string_slice = &string[5..];
-        assert_eq!(&rope_slice, string_slice)
-    }
-
-    #[test]
-    fn full() {
-        let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
-        let rope = Rope::from(string);
-        let rope_slice = rope.slice(..);
-        let string_slice = &string[..];
-        assert_eq!(&rope_slice, string_slice)
-    }
-
-    #[test]
-    fn mut_char_indices() {
-        let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
-        let rope = Rope::from(string);
-        let rope_slice = rope.slice_mut(4..8);
-        let string_slice = &mut string[4..8];
-        let indices = rope_slice.char_indices().zip(string_slice.char_indices());
-        for ((ridx, rch), (sidx, sch)) in indices {
-            assert_eq!(rch, sch);
-            assert_eq!(ridx, sidx);
-        }
-    }
-
-    #[test]
-    fn mut_to() {
-        let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
-        let rope = Rope::from(string);
-        let rope_slice = rope.slice_mut(1..10);
-        let string_slice = &mut string[1..10];
-        assert_eq!(&rope_slice, string_slice)
-    }
-
-    #[test]
-    fn mut_until() {
-        let string = "aaaaabbbbbbccccccccccdefgdefgaabababab";
-        let rope = Rope::from(string);
-        let rope_slice = rope.slice_mut(..10);
-        let string_slice = &string[..10];
-        assert_eq!(&mut rope_slice, string_slice)
-    }
-
-    #[test]
-    fn mut_from() {
-        let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
-        let rope = Rope::from(string);
-        let rope_slice = rope.slice_mut(5..);
-        let string_slice = &mut string[5..];
-        assert_eq!(&rope_slice, string_slice)
-    }
-
-    #[test]
-    fn mut_full() {
-        let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
-        let rope = Rope::from(string);
-        let rope_slice = rope.slice_mut(..);
-        let string_slice = &mut string[..];
-        assert_eq!(&rope_slice, string_slice)
-    }
-}
 
 /// An immutable borrowed slice of a `Rope`.
 ///
@@ -323,5 +212,118 @@ impl<'a> cmp::PartialEq<str> for RopeSlice<'a> {
         } else {
             false
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ::Rope;
+
+    #[test]
+    fn char_indices() {
+        let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
+        let rope = Rope::from(string);
+        let rope_slice = rope.slice(4..8);
+        let string_slice = &string[4..8];
+        let indices = rope_slice.char_indices().zip(string_slice.char_indices());
+        for ((ridx, rch), (sidx, sch)) in indices {
+            assert_eq!(rch, sch);
+            assert_eq!(ridx, sidx);
+        }
+    }
+
+    #[test]
+    fn to() {
+        let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
+        let rope = Rope::from(string);
+        let rope_slice = rope.slice(1..10);
+        let string_slice = &string[1..10];
+        assert_eq!(&rope_slice, string_slice)
+    }
+
+    // #[test]
+    // fn between() {
+    //     let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
+    //     let rope = Rope::from(string);
+    //     let rope_slice = rope.slice(1...10usize);
+    //     let string_slice = &string[1...10];
+    //     assert_eq!(&rope_slice, string_slice)
+    // }
+
+    #[test]
+    fn until() {
+        let string = "aaaaabbbbbbccccccccccdefgdefgaabababab";
+        let rope = Rope::from(string);
+        let rope_slice = rope.slice(..10);
+        let string_slice = &string[..10];
+        assert_eq!(&rope_slice, string_slice)
+    }
+
+    #[test]
+    fn from() {
+        let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
+        let rope = Rope::from(string);
+        let rope_slice = rope.slice(5..);
+        let string_slice = &string[5..];
+        assert_eq!(&rope_slice, string_slice)
+    }
+
+    #[test]
+    fn full() {
+        let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
+        let rope = Rope::from(string);
+        let rope_slice = rope.slice(..);
+        let string_slice = &string[..];
+        assert_eq!(&rope_slice, string_slice)
+    }
+
+    #[test]
+    fn mut_char_indices() {
+        let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
+        let rope = Rope::from(string);
+        let rope_slice = rope.slice_mut(4..8);
+        let string_slice = &mut string[4..8];
+        let indices = rope_slice.char_indices().zip(string_slice.char_indices());
+        for ((ridx, rch), (sidx, sch)) in indices {
+            assert_eq!(rch, sch);
+            assert_eq!(ridx, sidx);
+        }
+    }
+
+    #[test]
+    fn mut_to() {
+        let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
+        let rope = Rope::from(string);
+        let rope_slice = rope.slice_mut(1..10);
+        let string_slice = &mut string[1..10];
+        assert_eq!(&rope_slice, string_slice)
+    }
+
+    #[test]
+    fn mut_until() {
+        let string = "aaaaabbbbbbccccccccccdefgdefgaabababab";
+        let rope = Rope::from(string);
+        let rope_slice = rope.slice_mut(..10);
+        let string_slice = &string[..10];
+        assert_eq!(&mut rope_slice, string_slice)
+    }
+
+    #[test]
+    fn mut_from() {
+        let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
+        let rope = Rope::from(string);
+        let rope_slice = rope.slice_mut(5..);
+        let string_slice = &mut string[5..];
+        assert_eq!(&rope_slice, string_slice)
+    }
+
+    #[test]
+    fn mut_full() {
+        let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
+        let rope = Rope::from(string);
+        let rope_slice = rope.slice_mut(..);
+        let string_slice = &mut string[..];
+        assert_eq!(&rope_slice, string_slice)
     }
 }
