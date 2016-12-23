@@ -7,6 +7,7 @@
 //! unnecessary allocations, and, in the case of `Rope::slice_mut()`, would
 //! return a mutable slice of a _new `String`_ –- mutating the slice would _not_
 //! mutate the underlying `Rope`.
+// TODO: implement Borrow<RopeSlice> for Rope?
 
 use std::fmt;
 use std::cmp;
@@ -14,7 +15,6 @@ use std::cmp;
 use collections::range::RangeArgument;
 
 use super::internals::Node;
-
 
 
 /// An immutable borrowed slice of a `Rope`.
@@ -43,7 +43,14 @@ pub struct RopeSliceMut<'a> { node: &'a mut Node
                             , offset: usize
                             , len: usize
                             }
+
 impl<'a> RopeSliceMut<'a>  {
+
+    // TODO: share duplicate functionality with non-mutable RopeSlice in a less
+    //       ugly way. Maybe an added generic?
+    //          - eliza, 12/23/16
+
+    // TODO: add mutable iterators
 
     pub fn new<R>(node: &'a mut Node, range: R) -> Self
     where R: RangeArgument<usize> {
@@ -72,6 +79,89 @@ impl<'a> RopeSliceMut<'a>  {
                      , offset: offset
                      , len: slice_len }
     }
+
+    #[inline]
+    fn slice_char_iter<I, T>(&'a self, i: I) -> impl Iterator<Item=T> + 'a
+    where I: Iterator<Item=T>
+        , I: 'a
+        , T: Copy {
+            i.skip(self.offset).take(self.len)
+    }
+
+    fn slice_strings_iter<I>(&'a self, i: I) -> impl Iterator<Item=&'a str> +'a
+    where I: Iterator<Item=&'a str>
+        , I: 'a {
+        i.scan((self.offset, self.len), |curr, s| {
+            match *curr {
+                (0, 0) => None
+              , (0, ref mut remaining) if *remaining < s.len() => {
+                    let r = *remaining;
+                    *remaining = 0;
+                    Some(&s[..r])
+                }
+              , (0, ref mut remaining) => {
+                    *remaining -= s.len();
+                    Some(s)
+                }
+              , (ref mut offset, _) if *offset > s.len() => {
+                    *offset -= s.len();
+                    Some("")
+                }
+              , (ref mut offset, _) => {
+                    let c = *offset;
+                    *offset -= s.len();
+                    Some(&s[c..])
+                }
+            }
+            // if curr_len > 0 {
+            //     let c = curr_offset;
+            //     let res = if c > 0 {
+            //         curr_offset -= s.len();
+            //         if c < s.len()  {
+            //             &s[c..]
+            //         } else {
+            //             ""
+            //         }
+            //     } else {
+            //         s
+            //     };
+            //     Some(res)
+            })
+         .skip_while(|&s| s == "")
+    }
+
+    pub fn chars(&'a self) -> impl Iterator<Item=char> +'a  {
+        self.slice_char_iter(self.node.chars())
+    }
+
+    pub fn bytes(&'a self) -> impl Iterator<Item=u8> + 'a  {
+        self.slice_char_iter(self.node.bytes())
+    }
+
+    #[inline]
+    pub fn split_whitespace(&'a self) -> impl Iterator<Item=&'a str> {
+        self.slice_strings_iter(self.node.split_whitespace())
+    }
+
+    #[inline]
+    pub fn lines(&'a self) -> impl Iterator<Item=&'a str> {
+        self.slice_strings_iter(self.node.lines())
+    }
+
+    #[inline]
+    pub fn char_indices(&'a self) -> impl Iterator<Item=(usize, char)> + 'a {
+        self.chars().enumerate()
+    }
+
+    /// Returns true if the bytes in `self` equal the bytes in `other`
+    #[inline]
+    fn bytes_eq<I>(&self, other: I) -> bool
+    where I: Iterator<Item=u8> {
+        self.bytes().zip(other).all(|(a, b)| a == b)
+    }
+
+    #[inline]
+    pub fn len(&self) -> usize { self.len }
 }
 
 impl<'a> RopeSlice<'a> {
