@@ -392,8 +392,8 @@ mod tests {
 
     #[test]
     fn from() {
-        let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
-        let rope = Rope::from(string);
+        let mut string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
+        let mut rope = Rope::from(string);
         let rope_slice = rope.slice(5..);
         let string_slice = &string[5..];
         assert_eq!(&rope_slice, string_slice)
@@ -410,8 +410,9 @@ mod tests {
 
     #[test]
     fn mut_char_indices() {
-        let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
-        let rope = Rope::from(string);
+        let mut string =
+            String::from("aaaaabbbbbbccccccccccccdefgdefgaabababab");
+        let mut rope = Rope::from(string.clone());
         let rope_slice = rope.slice_mut(4..8);
         let string_slice = &mut string[4..8];
         let indices = rope_slice.char_indices().zip(string_slice.char_indices());
@@ -423,8 +424,9 @@ mod tests {
 
     #[test]
     fn mut_to() {
-        let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
-        let rope = Rope::from(string);
+        let mut string =
+            String::from("aaaaabbbbbbccccccccccccdefgdefgaabababab");
+        let mut rope = Rope::from(string.clone());
         let rope_slice = rope.slice_mut(1..10);
         let string_slice = &mut string[1..10];
         assert_eq!(&rope_slice, string_slice)
@@ -432,17 +434,19 @@ mod tests {
 
     #[test]
     fn mut_until() {
-        let string = "aaaaabbbbbbccccccccccdefgdefgaabababab";
-        let rope = Rope::from(string);
+        let mut string =
+            String::from("aaaaabbbbbbccccccccccccdefgdefgaabababab");
+        let mut rope = Rope::from(string.clone());
         let rope_slice = rope.slice_mut(..10);
-        let string_slice = &string[..10];
-        assert_eq!(&mut rope_slice, string_slice)
+        let string_slice = &mut string[..10];
+        assert_eq!(&rope_slice, string_slice)
     }
 
     #[test]
     fn mut_from() {
-        let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
-        let rope = Rope::from(string);
+        let mut string =
+            String::from("aaaaabbbbbbccccccccccccdefgdefgaabababab");
+        let mut rope = Rope::from(string.clone());
         let rope_slice = rope.slice_mut(5..);
         let string_slice = &mut string[5..];
         assert_eq!(&rope_slice, string_slice)
@@ -450,8 +454,9 @@ mod tests {
 
     #[test]
     fn mut_full() {
-        let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
-        let rope = Rope::from(string);
+        let mut string =
+            String::from("aaaaabbbbbbccccccccccccdefgdefgaabababab");
+        let mut rope = Rope::from(string.clone());
         let rope_slice = rope.slice_mut(..);
         let string_slice = &mut string[..];
         assert_eq!(&rope_slice, string_slice)
