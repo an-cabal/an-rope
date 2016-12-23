@@ -55,6 +55,86 @@ fn repeated_concat_right_rebalance() {
 }
 
 #[test]
+fn append_empty_rope() {
+    let mut an_rope = Rope::from("");
+    an_rope.append(Rope::from("abcd"));
+    assert_eq!(&an_rope, "abcd");
+
+    let mut an_rope = Rope::from("abcd");
+    an_rope.append(Rope::from(""));
+    assert_eq!(&an_rope, "abcd");
+}
+
+#[test]
+fn append() {
+    let mut an_rope = Rope::from(String::from("abcd"));
+    an_rope.append(Rope::from(String::from("efgh")));
+    assert_eq!(an_rope, Rope::from(String::from("abcdefgh")) );
+}
+
+#[test]
+fn with_append_empty_rope() {
+    let an_rope = Rope::from("");
+    let another_rope = an_rope.with_append(Rope::from("abcd"));
+    assert_eq!(&another_rope, "abcd");
+    assert_eq!(&an_rope, "");
+
+    let an_rope = Rope::from("abcd");
+    let an_rope = an_rope.with_append(Rope::from(""));
+    assert_eq!(&an_rope, "abcd");
+}
+
+#[test]
+fn with_append() {
+    let an_rope = Rope::from("abcd");
+    let another_rope = an_rope.with_append(Rope::from("efgh"));
+    assert_eq!(&another_rope, "abcdefgh");
+    assert_eq!(&an_rope, "abcd");
+}
+
+#[test]
+fn prepend_empty_rope() {
+    let mut an_rope = Rope::from("");
+    an_rope.prepend(Rope::from("abcd"));
+    assert_eq!(&an_rope, "abcd");
+
+
+    let mut an_rope = Rope::from("abcd");
+    an_rope.prepend(Rope::from(""));
+    assert_eq!(&an_rope, "abcd");
+}
+
+
+#[test]
+fn with_prepend_empty_rope() {
+    let an_rope = Rope::from("");
+    let another_rope = an_rope.with_prepend(Rope::from("abcd"));
+    assert_eq!(&an_rope, "");
+    assert_eq!(&another_rope, "abcd");
+
+    let an_rope = Rope::from("abcd");
+    let another_rope = an_rope.with_prepend(Rope::from(""));
+    assert_eq!(&an_rope, "abcd");
+    assert_eq!(&another_rope, &an_rope);
+    assert_eq!(&another_rope, "abcd");
+}
+
+#[test]
+fn with_prepend() {
+    let an_rope = Rope::from("efgh");
+    let another_rope = an_rope.with_prepend(Rope::from("abcd"));
+    assert_eq!(&an_rope, "efgh");
+    assert_eq!(&another_rope, "abcdefgh");
+}
+
+#[test]
+fn prepend() {
+    let mut an_rope = Rope::from(String::from("efgh"));
+    an_rope.prepend(Rope::from(String::from("abcd")));
+    assert_eq!(&an_rope, "abcdefgh");
+}
+
+#[test]
 fn merge_rebalance_test() {
     let s = "Lorem ipsum dolor sit amet, consectetur adipiscing eli\
              t, sed do eiusmod tempor incididunt ut labore et dolor\

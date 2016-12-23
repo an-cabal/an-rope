@@ -1,5 +1,6 @@
 use std::ops;
 use std::mem;
+use std::fmt;
 
 use self::Node::*;
 
@@ -7,7 +8,7 @@ use self::Node::*;
 ///
 /// A `Node` is either a `Leaf` holding a `String`, or a
 /// a `Branch` concatenating together two `Node`s.
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum Node {
     /// A leaf node
     Leaf(String)
@@ -15,7 +16,24 @@ pub enum Node {
     Branch(BranchNode)
 }
 
-#[derive(Debug, Clone)]
+impl fmt::Debug for Node {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Leaf(ref string) => write!(f, "{:?}", string)
+          , Branch(ref branch) => write!(f, "{:?}", branch)
+        }
+    }
+}
+impl fmt::Display for Node {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Leaf(ref string) => write!(f, "{}", string)
+          , Branch(ref branch) => write!(f, "{}", branch)
+        }
+    }
+}
+
+#[derive(Clone)]
 pub struct BranchNode {
     /// The length of this node
     len: usize
@@ -25,6 +43,19 @@ pub struct BranchNode {
     pub left: Box<Node>
   , /// The right branch node
     pub right: Box<Node>
+}
+
+
+impl fmt::Debug for BranchNode {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}({:?}, {:?})", self.weight, self.left, self.right)
+    }
+}
+
+impl fmt::Display for BranchNode {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}{}", self.left, self.right)
+    }
 }
 
 
@@ -52,33 +83,58 @@ impl BranchNode {
                    }
     }
 
-    #[inline]
-    fn take_left(&mut self) -> Node {
-        mem::replace(self.left.as_mut(), Node::empty())
-    }
-
-    #[inline]
-    fn take_right(&mut self) -> Node {
-        mem::replace(self.right.as_mut(), Node::empty())
-    }
-
+    /// Split this branch node on the specified `index`.
+    ///
+    /// This function walks the tree from this node until it reaches the index
+    /// to split on, and then it splits the leaf node containing that index.
+    ///
+    /// # Returns
+    /// A tuple containing the left and right sides of the split node. These are
+    /// returned as a tuple rather than as a new branch, since the expected use
+    /// case for this function is splitting a node so that new text can be
+    /// inserted between the two split halves.
+    ///
+    /// # Time complexity
+    /// O(log _n_)
     fn split(self, index: usize) -> (Node, Node) {
         let weight = (&self).weight;
+        // to determine which side of this node we are splitting on, we compare
+        // the index to split to this node's weight.
         if index < weight {
-            // split the left node
+            // if the index is less than this node's weight, then it's in the
+            // left subtree. calling `split` on the left child will walk
+            // the left subtree to that index
             let (left, left_right) = self.left.split(index);
+            // the left side of the split left child will become the left side
+            // of the split pair.
             let right = if (&left_right).len() == 0 {
+                // if the right side of the split is empty, then the right
+                // side of the returned pair is just this node's right child
                 *self.right
             } else {
+                // otherwise, the right side of the returned pair is a branch
+                // containing the right side of the split node on the left,
+                // and this node's right child on the right
                 Node::new_branch(left_right, *self.right)
             };
             (left, right)
         } else {
-            // split the right node;
+            // otherwise, if the index >= this node's weight, the index is
+            // somewhere in the right subtree. walk the right subtree,
+            // subtracting this node's weight, (the length of it's left subtree)
+            // to find the new index in the right subtree.
             let (right_left, right) = self.right.split(index - weight);
+            // the right side of the split right child will become the right
+            // side of the split
+
             let left = if (&right_left).len() == 0 {
+                // if the left side of the split right child is empty, then the
+                // left side of the returned pair is just this node's left child
                 *self.left
             } else {
+                // otherwise, the left side of the returned pair is a branch
+                // containing the left side of the split node on the right,
+                // and this node's left child on the left
                 Node::new_branch(*self.left, right_left)
             };
             (left, right)
@@ -88,6 +144,7 @@ impl BranchNode {
 }
 
 impl Node {
+
 
     pub fn spanning(&self, i: usize, len: usize) -> &Node {
         match *self {
@@ -100,17 +157,39 @@ impl Node {
         }
     }
 
+    /// Split this `Node`'s subtree on the specified `index`.
+    ///
+    /// Consumes `self`.
+    ///
+    /// This function walks the tree from this node until it reaches the index
+    /// to split on, and then it splits the leaf node containing that index.
+    ///
+    /// # Returns
+    /// A tuple containing the left and right sides of the split node. These are
+    /// returned as a tuple rather than as a new branch, since the expected use
+    /// case for this function is splitting a node so that new text can be
+    /// inserted between the two split halves.
+    ///
+    /// # Time complexity
+    /// O(log _n_)
     pub fn split(self, index: usize) -> (Node, Node) {
         match self {
-            Leaf(s) => if s.len() == 0 {
+            Leaf(ref s) if s.len() == 0 =>
+                // splitting an empty leaf node returns two empty leaf nodes
                 (Node::empty(), Node::empty())
-            } else {
-                // split the string into left and right parts...
+          , Leaf(ref s) if s.len() == 1 =>
+                (Leaf(s.clone()), Node::empty())
+          , Leaf(s) => {
+                // splitting a leaf node with length >= 2 returns two new Leaf
+                // nodes, one with the left half of the string, and one with
+                // the right
                 let left = Leaf(s[..index].to_string());
                 let right = Leaf(s[index..].to_string());
                 (left, right)
             }
-          , Branch(node) => node.split(index)
+          , Branch(node) =>
+                // otherwise, just delegate out to `BranchNode::split()`
+                node.split(index)
         }
     }
 
@@ -123,11 +202,6 @@ impl Node {
     #[inline]
     pub fn new_branch(left: Self, right: Self) -> Self {
         Branch(BranchNode::new(left, right))
-    }
-
-    #[inline]
-    pub fn concat(&mut self, right: Self) {
-        *self = Node::new_branch(mem::replace(self, Node::empty()), right)
     }
 
     #[inline]
@@ -176,8 +250,7 @@ impl Node {
     #[inline]
     fn subtree_weight (&self) -> usize {
         match self { &Leaf(ref s) => s.len()
-                   , &Branch(BranchNode { ref left, .. }) =>
-                        left.subtree_weight()
+                   , &Branch(BranchNode { ref left, .. }) => left.len()
                     }
     }
 
@@ -372,6 +445,16 @@ impl ops::Add for Node {
     type Output = Self;
     /// Concatenate two `Node`s, returning a `Branch` node.
     fn add(self, right: Self) -> Self { Node::new_branch(self, right) }
+}
+
+
+impl ops::AddAssign for Node {
+    /// Concatenate two `Node`s
+    fn add_assign(&mut self, right: Self) {
+        use std::mem::replace;
+        *self = Node::new_branch(replace(self, Node::empty()), right)
+     }
+
 }
 
 
