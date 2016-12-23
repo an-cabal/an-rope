@@ -956,7 +956,12 @@ impl ops::IndexMut<ops::RangeFrom<usize>> for Rope {
     }
 }
 
-//-- rope slice -------------------------------------------------------------
+//-- rope slices ------------------------------------------------------------
+
+/// An immutable borrowed slice of a `Rope`.
+///
+/// A RopeSlice represents an immutable borrowed slice of some or all the
+/// characters in a `Rope`.
 #[derive(Debug)]
 pub struct RopeSlice<'a> { node: &'a Node
                          , offset: usize
@@ -969,6 +974,16 @@ impl<'a> fmt::Display for RopeSlice<'a> {
         write!(f, "{}", self.chars().collect::<String>())
     }
 }
+
+/// An mutable borrowed slice of a `Rope`.
+///
+/// A `RopeSliceMut` represents a mutable borrowed slice of some or all the
+/// characters in a `Rope`.
+#[derive(Debug)]
+pub struct RopeSliceMut<'a> { node: &'a mut Node
+                            , offset: usize
+                            , len: usize
+                            }
 
 impl<'a> RopeSlice<'a> {
     #[inline]
