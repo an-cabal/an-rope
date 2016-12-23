@@ -657,16 +657,16 @@ impl Rope {
 
         // find the lowest node that contains both the slice start index and
         // the end index
-        let node = if start == 0 && end == len {
+        let (node, offset) = if start == 0 && end == len {
             // if the slice contains the entire rope, then the spanning node
             // is the root node
-            &self.root
+            (&self.root, 0)
         } else {
-            &self.root.spanning(start, slice_len)
+            self.root.spanning(start, slice_len)
         };
 
         RopeSlice { node: node
-                  , offset: if start == 0 { 0 } else { unimplemented!() }
+                  , offset: offset
                   , len: slice_len
                   }
     }
