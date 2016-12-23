@@ -1001,4 +1001,41 @@ impl<'a> RopeSlice<'a> {
         self.chars().enumerate()
     }
 
+    /// Returns true if the bytes in `self` equal the bytes in `other`
+    #[inline]
+    fn bytes_eq<I>(&self, other: I) -> bool
+    where I: Iterator<Item=u8> {
+        self.bytes().zip(other).all(|(a, b)| a == b)
+    }
+
+    #[inline]
+    pub fn len(&self) -> usize { self.len }
+}
+
+//-- comparisons ----------------------------------------------------
+impl<'a> cmp::Eq for RopeSlice<'a> {}
+impl<'a> cmp::PartialEq for RopeSlice<'a> {
+    /// A rope equals another rope if all the bytes in both are equal.
+
+    #[inline]
+    fn eq(&self, other: &RopeSlice<'a>) -> bool {
+        if self.len() == other.len() {
+            self.bytes_eq(other.bytes())
+        } else {
+            false
+        }
+    }
+}
+
+impl<'a> cmp::PartialEq<str> for RopeSlice<'a> {
+    /// A rope equals another rope if all the bytes in both are equal.
+
+    #[inline]
+    fn eq(&self, other: &str) -> bool {
+        if self.len() == other.len() {
+            self.bytes_eq(other.bytes())
+        } else {
+            false
+        }
+    }
 }
