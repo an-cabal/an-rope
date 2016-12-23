@@ -579,7 +579,7 @@ impl Rope {
         #[inline]
         impl lines<&'a str> for Rope {}
         #[inline]
-        impl char_indices<(char, usize)> for Rope {}
+        impl char_indices<(usize, char)> for Rope {}
     }
 
     /// Returns an iterator over the grapheme clusters of this `Rope`

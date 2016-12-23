@@ -304,8 +304,8 @@ impl Node {
     }
 
     pub fn char_indices<'a>(&'a self)
-                        -> impl Iterator<Item=(char, usize)> + 'a {
-        self.chars().enumerate().map(|(i, c)| (c, i))
+                        -> impl Iterator<Item=(usize, char)> + 'a {
+        self.chars().enumerate()
     }
 
     // /// Returns n iterator over the bytes of this `Node`'s subrope

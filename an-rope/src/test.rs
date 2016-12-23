@@ -191,7 +191,7 @@ fn rope_char_indices() {
         .with_append(Rope::from("defgdefgaabababab"));
     let string = String::from("aaaaabbbbbbccccccccccccdefgdefgaabababab");
     let indices = rope.char_indices().zip(string.char_indices());
-    for ((ridx, sidx), (sidx, sch)) in indices {
+    for ((ridx, rch), (sidx, sch)) in indices {
         assert_eq!(rch, sch);
         assert_eq!(ridx, sidx);
     }
