@@ -987,8 +987,8 @@ impl<'a> RopeSlice<'a> {
     }
 
     #[inline]
-    pub fn char_indices(&'a self) -> impl Iterator<Item=(char, usize)> + 'a {
-        self.chars().enumerate().map(|(i, c)| (c, i))
+    pub fn char_indices(&'a self) -> impl Iterator<Item=(usize, char)> + 'a {
+        self.chars().enumerate()
     }
 
 }
