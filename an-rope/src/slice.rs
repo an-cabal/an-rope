@@ -182,6 +182,28 @@ impl<'a> RopeSliceMut<'a>  {
     ///
     /// # Time Complexity
     /// O(log _n_)
+    ///
+    /// # Examples
+    /// ```
+    /// #![feature(collections)]
+    /// #![feature(collections_range)]
+    ///
+    /// extern crate collections;
+    /// extern crate an_rope;
+    /// # fn main() {
+    ///
+    /// use collections::range::RangeArgument;
+    /// use an_rope::Rope;
+    ///
+    /// let mut rope = Rope::from("this is a string");
+    /// { // we have to create a new block here so that the mutable borrow
+    ///   // on `Rope` will end
+    ///    let mut slice = rope.slice_mut(8..);
+    ///    slice.insert_rope(1, Rope::from("n example"));
+    /// }
+    /// assert_eq!(&rope, "this is an example string");
+    /// # }
+    /// ```
     pub fn insert_rope(&mut self, index: usize, rope: Rope) {
         assert!( index <= self.len()
                , "RopeSliceMut::insert_rope: index {} was > length {}"
@@ -207,6 +229,28 @@ impl<'a> RopeSliceMut<'a>  {
     ///
     /// # Time Complexity
     /// O(log _n_)
+    ///
+    /// # Examples
+    /// ```
+    /// #![feature(collections)]
+    /// #![feature(collections_range)]
+    ///
+    /// extern crate collections;
+    /// extern crate an_rope;
+    /// # fn main() {
+    ///
+    /// use collections::range::RangeArgument;
+    /// use an_rope::Rope;
+    ///
+    /// let mut rope = Rope::from("this is a string");
+    /// { // we have to create a new block here so that the mutable borrow
+    ///   // on `Rope` will end
+    ///    let mut slice = rope.slice_mut(8..);
+    ///    slice.insert(1, 'n');
+    /// }
+    /// assert_eq!(&rope, "this is an string");
+    /// # }
+    /// ```
     pub fn insert(&mut self, index: usize, ch: char) {
         assert!( index <= self.len()
                , "RopeSliceMut::insert: index {} was > length {}"
@@ -228,6 +272,28 @@ impl<'a> RopeSliceMut<'a>  {
     ///
     /// # Time Complexity
     /// O(log _n_)
+    ///
+    /// # Examples
+    /// ```
+    /// #![feature(collections)]
+    /// #![feature(collections_range)]
+    ///
+    /// extern crate collections;
+    /// extern crate an_rope;
+    /// # fn main() {
+    ///
+    /// use collections::range::RangeArgument;
+    /// use an_rope::Rope;
+    ///
+    /// let mut rope = Rope::from("this is a string");
+    /// { // we have to create a new block here so that the mutable borrow
+    ///   // on `Rope` will end
+    ///    let mut slice = rope.slice_mut(8..);
+    ///    slice.insert_str(1, "n example");
+    /// }
+    /// assert_eq!(&rope, "this is an example string");
+    /// # }
+    /// ```
     pub fn insert_str(&mut self, index: usize, s: &str) {
         assert!( index <= self.len()
                , "RopeSliceMut::insert_str: index {} was > length {}"
