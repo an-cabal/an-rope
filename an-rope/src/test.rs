@@ -182,3 +182,17 @@ fn with_insert_str_test_1() {
     assert_eq!(&s_1, "aaaaaccccc");
     assert_eq!(&s_2, "aaaaabbbbbccccc");
 }
+
+#[test]
+fn rope_char_indices() {
+    let rope = Rope::from("aaaaa")
+        .with_append(Rope::from("bbbbbb"))
+        .with_append(Rope::from("cccccccccccc"))
+        .with_append(Rope::from("defgdefgaabababab"));
+    let string = String::from("aaaaabbbbbbccccccccccccdefgdefgaabababab");
+    let indices = rope.char_indices().zip(string.char_indices());
+    for ((ridx, sidx), (sidx, sch)) in indices {
+        assert_eq!(rch, sch);
+        assert_eq!(ridx, sidx);
+    }
+}
