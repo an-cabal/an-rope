@@ -11,6 +11,7 @@
 
 use std::fmt;
 use std::cmp;
+use std::convert;
 
 use collections::range::RangeArgument;
 
@@ -459,6 +460,35 @@ impl<'a> cmp::PartialEq<str> for RopeSliceMut<'a> {
         }
     }
 }
+
+impl<'a> convert::Into<Rope> for RopeSlice<'a> {
+    /// Converts this `RopeSlice` into a new `Rope`
+    fn into(self) -> Rope {
+        Rope::from(self.chars().collect::<String>())
+    }
+}
+
+impl<'a> convert::Into<String> for RopeSlice<'a> {
+    /// Converts this `RopeSlice` into a new `String`
+    fn into(self) -> String {
+        self.chars().collect::<String>()
+    }
+}
+
+impl<'a> convert::Into<Rope> for RopeSliceMut<'a> {
+    /// Converts this `RopeSliceMut` into a new `Rope`
+    fn into(self) -> Rope {
+        Rope::from(self.chars().collect::<String>())
+    }
+}
+
+impl<'a> convert::Into<String> for RopeSliceMut<'a> {
+    /// Converts this `RopeSliceMut` into a new `String`
+    fn into(self) -> String {
+        self.chars().collect::<String>()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
