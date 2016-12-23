@@ -209,3 +209,48 @@ fn rope_slice_char_indices() {
         assert_eq!(ridx, sidx);
     }
 }
+
+#[test]
+fn rope_slice_to() {
+    let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
+    let rope = Rope::from(string);
+    let rope_slice = rope.slice(1..10);
+    let string_slice = &string[1..10];
+    assert_eq!(&rope_slice, string_slice)
+}
+
+// #[test]
+// fn rope_slice_between() {
+//     let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
+//     let rope = Rope::from(string);
+//     let rope_slice = rope.slice(1...10usize);
+//     let string_slice = &string[1...10];
+//     assert_eq!(&rope_slice, string_slice)
+// }
+
+#[test]
+fn rope_slice_until() {
+    let string = "aaaaabbbbbbccccccccccdefgdefgaabababab";
+    let rope = Rope::from(string);
+    let rope_slice = rope.slice(..10);
+    let string_slice = &string[..10];
+    assert_eq!(&rope_slice, string_slice)
+}
+
+#[test]
+fn rope_slice_from() {
+    let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
+    let rope = Rope::from(string);
+    let rope_slice = rope.slice(5..);
+    let string_slice = &string[5..];
+    assert_eq!(&rope_slice, string_slice)
+}
+
+#[test]
+fn rope_slice_full() {
+    let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
+    let rope = Rope::from(string);
+    let rope_slice = rope.slice(..);
+    let string_slice = &string[..];
+    assert_eq!(&rope_slice, string_slice)
+}
