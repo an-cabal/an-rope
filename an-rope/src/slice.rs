@@ -305,6 +305,46 @@ impl<'a> cmp::PartialEq<str> for RopeSlice<'a> {
     }
 }
 
+
+impl<'a> cmp::Eq for RopeSliceMut<'a> {}
+impl<'a> cmp::PartialEq for RopeSliceMut<'a> {
+    /// A rope equals another rope if all the bytes in both are equal.
+
+    #[inline]
+    fn eq(&self, other: &RopeSliceMut<'a>) -> bool {
+        if self.len() == other.len() {
+            self.bytes_eq(other.bytes())
+        } else {
+            false
+        }
+    }
+}
+
+impl<'a, 'b> cmp::PartialEq<RopeSlice<'b>> for RopeSliceMut<'a> {
+    /// A rope equals another rope if all the bytes in both are equal.
+
+    #[inline]
+    fn eq(&self, other: &RopeSlice<'b>) -> bool {
+        if self.len() == other.len() {
+            self.bytes_eq(other.bytes())
+        } else {
+            false
+        }
+    }
+}
+
+impl<'a> cmp::PartialEq<str> for RopeSliceMut<'a> {
+    /// A rope equals another rope if all the bytes in both are equal.
+
+    #[inline]
+    fn eq(&self, other: &str) -> bool {
+        if self.len() == other.len() {
+            self.bytes_eq(other.bytes())
+        } else {
+            false
+        }
+    }
+}
 #[cfg(test)]
 mod tests {
     use super::*;
