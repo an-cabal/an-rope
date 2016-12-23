@@ -20,6 +20,7 @@ use std::ops;
 use std::convert;
 use std::fmt;
 use std::string;
+use std::iter;
 
 #[cfg(feature = "with_tendrils")]
 extern crate tendril;

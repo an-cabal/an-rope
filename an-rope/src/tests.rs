@@ -433,3 +433,43 @@ insert_benches! {
         at_3quarter: 0.75,
         at_end: 1
 }
+
+#[test]
+fn iter_extend_empty_iter () {
+    let mut rope = Rope::from("");
+    let empty_vec: Vec<String> = vec![];
+    rope.extend(empty_vec);
+    assert_eq!(&rope, "");
+}
+
+
+#[test]
+fn iter_extend_string_empty () {
+    let mut rope = Rope::from("");
+    rope.extend(vec![ String::from("aaaa")
+                    , String::from("bbbb")
+                    , String::from("cccc")
+                    ]);
+    assert_eq!(&rope, "aaaabbbbcccc");
+}
+
+#[test]
+fn iter_extend_string_nonempty () {
+    let mut rope = Rope::from("aaaa");
+    rope.extend(vec![String::from("bbbb"), String::from("cccc")]);
+    assert_eq!(&rope, "aaaabbbbcccc");
+}
+
+#[test]
+fn iter_extend_chars_empty () {
+    let mut rope = Rope::from("");
+    rope.extend(vec!['a', 'b', 'c', 'd']);
+    assert_eq!(&rope, "abcd");
+}
+
+#[test]
+fn iter_extend_chars_nonempty () {
+    let mut rope = Rope::from("a");
+    rope.extend(vec!['b', 'c', 'd']);
+    assert_eq!(&rope, "abcd");
+}
