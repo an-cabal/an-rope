@@ -28,7 +28,7 @@ use std::fmt;
 
 #[cfg(test)]
 mod test;
-mod slice;
+pub mod slice;
 
 use self::internals::Node;
 pub use self::slice::{RopeSlice, RopeSliceMut};
@@ -644,6 +644,26 @@ impl Rope {
         self.bytes().zip(other).all(|(a, b)| a == b)
     }
 
+    /// Returns an immutable slice of this `Rope` between the given indices.
+    ///
+    /// # Examples
+    /// ```ignore
+    //  this doctest fails to link on my macbook for Secret Reasons.
+    //  i'd really like to know why...
+    //      - eliza, 12/23/2016
+    /// #![feature(collections)]
+    /// #![feature(collections_range)]
+    ///
+    /// extern crate collections;
+    /// extern crate an_rope;
+    /// # fn main() {
+    /// use collections::range::RangeArgument;
+    /// use an_rope::Rope;
+    ///
+    /// let rope = Rope::from("this is an example string");
+    /// assert_eq!(&rope.slice(4..6), "is");
+    /// # }
+    /// ```
     #[inline]
     pub fn slice<'a, R>(&'a self, range: R) -> RopeSlice<'a>
     where R: RangeArgument<usize> {
