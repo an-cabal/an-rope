@@ -23,7 +23,6 @@ use collections::range::RangeArgument;
 use std::cmp;
 use std::ops;
 use std::convert;
-use std::mem;
 use std::fmt;
 
 #[cfg(test)]

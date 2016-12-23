@@ -114,20 +114,7 @@ impl<'a> RopeSliceMut<'a>  {
                     Some(&s[c..])
                 }
             }
-            // if curr_len > 0 {
-            //     let c = curr_offset;
-            //     let res = if c > 0 {
-            //         curr_offset -= s.len();
-            //         if c < s.len()  {
-            //             &s[c..]
-            //         } else {
-            //             ""
-            //         }
-            //     } else {
-            //         s
-            //     };
-            //     Some(res)
-            })
+        })
          .skip_while(|&s| s == "")
     }
 
@@ -365,20 +352,7 @@ impl<'a> RopeSlice<'a> {
                     Some(&s[c..])
                 }
             }
-            // if curr_len > 0 {
-            //     let c = curr_offset;
-            //     let res = if c > 0 {
-            //         curr_offset -= s.len();
-            //         if c < s.len()  {
-            //             &s[c..]
-            //         } else {
-            //             ""
-            //         }
-            //     } else {
-            //         s
-            //     };
-            //     Some(res)
-            })
+        })
          .skip_while(|&s| s == "")
     }
 

@@ -1,5 +1,4 @@
 use std::ops;
-use std::mem;
 use std::fmt;
 
 use self::Node::*;
