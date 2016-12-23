@@ -200,7 +200,8 @@ fn rope_char_indices() {
 #[test]
 fn rope_slice_char_indices() {
     let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
-    let rope_slice = Rope::from(string).slice(4..8);
+    let rope = Rope::from(string);
+    let rope_slice = rope.slice(4..8);
     let string_slice = &string[4..8];
     let indices = rope_slice.char_indices().zip(string_slice.char_indices());
     for ((ridx, rch), (sidx, sch)) in indices {
