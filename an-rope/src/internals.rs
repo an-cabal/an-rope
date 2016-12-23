@@ -38,7 +38,7 @@ pub struct BranchNode {
     /// The length of this node
     len: usize
   , /// The weight of a node is the summed weight of its left subtree
-    weight: usize
+    pub weight: usize
   , /// The left branch node
     pub left: Box<Node>
   , /// The right branch node
@@ -145,6 +145,18 @@ impl BranchNode {
 
 impl Node {
 
+
+    pub fn spanning(&self, i: usize, len: usize) -> &Node {
+        match *self {
+            _ if i < self.weight() && len < self.len() => self
+          , Branch(BranchNode { ref left, weight, .. }) if weight < i =>
+                left.spanning(i, len)
+          , Branch(BranchNode { ref right, .. }) =>
+                right.spanning(i -self.len(), len)
+          , Leaf(_) => unreachable!()
+        }
+    }
+
     /// Split this `Node`'s subtree on the specified `index`.
     ///
     /// Consumes `self`.
@@ -242,6 +254,10 @@ impl Node {
                     }
     }
 
+    pub fn weight(&self) -> usize {
+        match self { &Leaf(ref s) => s.len()
+                   , &Branch(BranchNode { ref weight, ..} ) => *weight }
+    }
 
     /// Rebalance the subrope starting at this `Node`, returning a new `Node`
     ///
@@ -358,6 +374,11 @@ impl Node {
         impl split_whitespace<&'a str> for Node {}
         #[inline]
         impl lines<&'a str> for Node {}
+    }
+
+    pub fn char_indices<'a>(&'a self)
+                        -> impl Iterator<Item=(usize, char)> + 'a {
+        self.chars().enumerate()
     }
 
     // /// Returns n iterator over the bytes of this `Node`'s subrope

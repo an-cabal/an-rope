@@ -262,3 +262,75 @@ fn with_insert_str_test_1() {
     assert_eq!(&s_1, "aaaaaccccc");
     assert_eq!(&s_2, "aaaaabbbbbccccc");
 }
+
+#[test]
+fn rope_char_indices() {
+    let rope = Rope::from("aaaaa")
+        .with_append(Rope::from("bbbbbb"))
+        .with_append(Rope::from("cccccccccccc"))
+        .with_append(Rope::from("defgdefgaabababab"));
+    let string = String::from("aaaaabbbbbbccccccccccccdefgdefgaabababab");
+    let indices = rope.char_indices().zip(string.char_indices());
+    for ((ridx, rch), (sidx, sch)) in indices {
+        assert_eq!(rch, sch);
+        assert_eq!(ridx, sidx);
+    }
+}
+
+#[test]
+fn rope_slice_char_indices() {
+    let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
+    let rope = Rope::from(string);
+    let rope_slice = rope.slice(4..8);
+    let string_slice = &string[4..8];
+    let indices = rope_slice.char_indices().zip(string_slice.char_indices());
+    for ((ridx, rch), (sidx, sch)) in indices {
+        assert_eq!(rch, sch);
+        assert_eq!(ridx, sidx);
+    }
+}
+
+#[test]
+fn rope_slice_to() {
+    let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
+    let rope = Rope::from(string);
+    let rope_slice = rope.slice(1..10);
+    let string_slice = &string[1..10];
+    assert_eq!(&rope_slice, string_slice)
+}
+
+// #[test]
+// fn rope_slice_between() {
+//     let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
+//     let rope = Rope::from(string);
+//     let rope_slice = rope.slice(1...10usize);
+//     let string_slice = &string[1...10];
+//     assert_eq!(&rope_slice, string_slice)
+// }
+
+#[test]
+fn rope_slice_until() {
+    let string = "aaaaabbbbbbccccccccccdefgdefgaabababab";
+    let rope = Rope::from(string);
+    let rope_slice = rope.slice(..10);
+    let string_slice = &string[..10];
+    assert_eq!(&rope_slice, string_slice)
+}
+
+#[test]
+fn rope_slice_from() {
+    let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
+    let rope = Rope::from(string);
+    let rope_slice = rope.slice(5..);
+    let string_slice = &string[5..];
+    assert_eq!(&rope_slice, string_slice)
+}
+
+#[test]
+fn rope_slice_full() {
+    let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
+    let rope = Rope::from(string);
+    let rope_slice = rope.slice(..);
+    let string_slice = &string[..];
+    assert_eq!(&rope_slice, string_slice)
+}
