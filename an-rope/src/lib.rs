@@ -19,6 +19,7 @@
 extern crate collections;
 
 use collections::range::RangeArgument;
+use collections::borrow::Borrow;
 
 use std::cmp;
 use std::ops;
@@ -27,7 +28,7 @@ use std::fmt;
 
 #[cfg(test)]
 mod test;
-pub mod slice;
+mod slice;
 
 use self::internals::Node;
 pub use self::slice::{RopeSlice, RopeSliceMut};
@@ -1008,6 +1009,12 @@ impl ops::IndexMut<ops::RangeTo<usize>> for Rope {
 
 impl ops::IndexMut<ops::RangeFrom<usize>> for Rope {
     fn index_mut(&mut self, i: ops::RangeFrom<usize>) -> &mut str {
+        unimplemented!()
+    }
+}
+
+impl<'a> Borrow<RopeSlice<'a>> for &'a Rope {
+    fn borrow(&self) -> &RopeSlice<'a> {
         unimplemented!()
     }
 }

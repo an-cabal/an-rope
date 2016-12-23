@@ -52,7 +52,6 @@ impl<'a> RopeSliceMut<'a>  {
     //          - eliza, 12/23/16
 
     // TODO: add mutable iterators
-
     pub fn new<R>(node: &'a mut Node, range: R) -> Self
     where R: RangeArgument<usize> {
         let len = node.len();
@@ -148,6 +147,10 @@ impl<'a> RopeSliceMut<'a>  {
         self.bytes().zip(other).all(|(a, b)| a == b)
     }
 
+    /// Returns the length of `self.`
+    ///
+    /// This length is in bytes, not chars or graphemes. In other words, it may
+    /// not be what a human considers the length of the string.
     #[inline]
     pub fn len(&self) -> usize { self.len }
 
@@ -386,6 +389,7 @@ impl<'a> RopeSlice<'a> {
         self.bytes().zip(other).all(|(a, b)| a == b)
     }
 
+
     #[inline]
     pub fn len(&self) -> usize { self.len }
 }
@@ -394,7 +398,6 @@ impl<'a> RopeSlice<'a> {
 impl<'a> cmp::Eq for RopeSlice<'a> {}
 impl<'a> cmp::PartialEq for RopeSlice<'a> {
     /// A rope equals another rope if all the bytes in both are equal.
-
     #[inline]
     fn eq(&self, other: &RopeSlice<'a>) -> bool {
         if self.len() == other.len() {
@@ -407,7 +410,6 @@ impl<'a> cmp::PartialEq for RopeSlice<'a> {
 
 impl<'a> cmp::PartialEq<str> for RopeSlice<'a> {
     /// A rope equals another rope if all the bytes in both are equal.
-
     #[inline]
     fn eq(&self, other: &str) -> bool {
         if self.len() == other.len() {
@@ -422,7 +424,6 @@ impl<'a> cmp::PartialEq<str> for RopeSlice<'a> {
 impl<'a> cmp::Eq for RopeSliceMut<'a> {}
 impl<'a> cmp::PartialEq for RopeSliceMut<'a> {
     /// A rope equals another rope if all the bytes in both are equal.
-
     #[inline]
     fn eq(&self, other: &RopeSliceMut<'a>) -> bool {
         if self.len() == other.len() {
