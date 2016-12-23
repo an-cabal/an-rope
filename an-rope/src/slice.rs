@@ -14,6 +14,7 @@ use std::cmp;
 
 use collections::range::RangeArgument;
 
+use super::Rope;
 use super::internals::Node;
 
 
@@ -162,6 +163,78 @@ impl<'a> RopeSliceMut<'a>  {
 
     #[inline]
     pub fn len(&self) -> usize { self.len }
+
+    #[inline]
+    fn take_node(&mut self) -> Node {
+        use std::mem::replace;
+        replace(self.node, Node::empty())
+    }
+
+    /// Insert `rope` into `index` in this mutable `RopeSlice`.
+    ///
+    /// Note that the index to insert into is relative to the beginning of this
+    /// _slice_, not to the beginning of the sliced `Rope`.
+    ///
+    /// Consumes `rope`.
+    ///
+    /// # Panics
+    /// * If `index` is greater than the length of this `RopeSlice`
+    ///
+    /// # Time Complexity
+    /// O(log _n_)
+    pub fn insert_rope(&mut self, index: usize, rope: Rope) {
+        assert!( index <= self.len()
+               , "RopeSliceMut::insert_rope: index {} was > length {}"
+               , index, self.len());
+        if rope.len() > 0 {
+            // split the rope at the given index
+            let (left, right) = self.take_node().split(self.offset + index);
+
+            // construct the new root node with `Rope` inserted
+            *self.node = (left + rope.root + right).rebalance();
+        }
+    }
+
+    /// Insert `ch` into `index` in this mutable `RopeSlice`.
+    ///
+    /// Note that the index to insert into is relative to the beginning of this
+    /// _slice_, not to the beginning of the sliced `Rope`.
+    ///
+    /// Consumes `ch`.
+    ///
+    /// # Panics
+    /// * If `index` is greater than the length of this `RopeSlice`
+    ///
+    /// # Time Complexity
+    /// O(log _n_)
+    pub fn insert(&mut self, index: usize, ch: char) {
+        assert!( index <= self.len()
+               , "RopeSliceMut::insert: index {} was > length {}"
+               , index, self.len());
+        // TODO: this is gross...
+        let mut s = String::new();
+        s.push(ch);
+        self.insert_rope(index, Rope::from(s))
+    }
+
+
+    /// Insert `s` into `index` in this mutable `RopeSlice`.
+    ///
+    /// Note that the index to insert into is relative to the beginning of this
+    /// _slice_, not to the beginning of the sliced `Rope`.
+    ///
+    /// # Panics
+    /// * If `index` is greater than the length of this `RopeSlice`
+    ///
+    /// # Time Complexity
+    /// O(log _n_)
+    pub fn insert_str(&mut self, index: usize, s: &str) {
+        assert!( index <= self.len()
+               , "RopeSliceMut::insert_str: index {} was > length {}"
+               , index, self.len());
+        self.insert_rope(index, Rope::from(s))
+    }
+
 }
 
 impl<'a> RopeSlice<'a> {
@@ -460,5 +533,46 @@ mod tests {
         let rope_slice = rope.slice_mut(..);
         let string_slice = &mut string[..];
         assert_eq!(&rope_slice, string_slice)
+    }
+
+    #[test]
+    fn mut_insert_rope() {
+        let mut rope = Rope::from("this is a string");
+         {
+             let slice = rope.slice_mut(8..);
+             assert_eq!(&slice, "a string");
+         }
+         {
+             let mut slice = rope.slice_mut(8..);
+             slice.insert_rope(1, Rope::from("n example"));
+         }
+        assert_eq!(&rope, "this is an example string");
+    }
+
+    fn mut_insert_str() {
+        let mut rope = Rope::from("this is a string");
+         {
+             let slice = rope.slice_mut(8..);
+             assert_eq!(&slice, "a string");
+         }
+         {
+             let mut slice = rope.slice_mut(8..);
+             slice.insert_str(1, "n example");
+         }
+        assert_eq!(&rope, "this is an example string");
+    }
+
+    #[test]
+    fn mut_insert_char() {
+        let mut rope = Rope::from("this is a string");
+         {
+             let slice = rope.slice_mut(8..);
+             assert_eq!(&slice, "a string");
+         }
+         {
+             let mut slice = rope.slice_mut(8..);
+             slice.insert(1, 'n');
+         }
+        assert_eq!(&rope, "this is an string");
     }
 }
