@@ -653,7 +653,7 @@ impl Rope {
         // is the last index in the Rope.
         let end = *range.end().unwrap_or(&self.len());
 
-        let slice_len = start - end;
+        let slice_len = end - start;
 
         // find the lowest node that contains both the slice start index and
         // the end index
