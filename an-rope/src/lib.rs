@@ -717,6 +717,15 @@ impl Rope {
         self.root.graphemes()
     }
 
+    pub fn unicode_words<'a>(&'a self) -> impl Iterator<Item=&'a str> {
+        // the compiler won't let me mark this as unimplemented using the
+        // unimplemented!() macro, due to Reasons (i suspect relating to
+        // returning `impl Trait`)
+        //  - eliza, 12/23/2016
+        panic!("Unimplemented!");
+        self.strings()
+    }
+
     /// Returns true if the bytes in `self` equal the bytes in `other`
     #[inline]
     fn bytes_eq<I>(&self, other: I) -> bool

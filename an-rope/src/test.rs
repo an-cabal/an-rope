@@ -262,3 +262,19 @@ fn with_insert_str_test_1() {
     assert_eq!(&s_1, "aaaaaccccc");
     assert_eq!(&s_2, "aaaaabbbbbccccc");
 }
+
+#[test]
+fn graphemes_iter() {
+    let r = Rope::from("a̐éö̲\r\n");
+    let g = r.graphemes().collect::<Vec<&str>>();
+    let b: &[_] = &["a̐", "é", "ö̲", "\r\n"];
+    assert_eq!(g, b);
+}
+
+#[test]
+fn unicode_words() {
+    let r = Rope::from("The quick (\"brown\") fox can't jump 32.3 feet, right?");
+    let w = r.unicode_words().collect::<Vec<&str>>();
+    let b: &[_] = &["The", "quick", "brown", "fox", "can't", "jump", "32.3", "feet", "right"];
+    assert_eq!(w, b);
+}
