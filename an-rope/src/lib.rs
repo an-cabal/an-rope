@@ -17,6 +17,7 @@ use std::cmp;
 use std::ops;
 use std::convert;
 use std::fmt;
+use std::string;
 
 #[cfg(test)]
 mod test;
@@ -71,6 +72,95 @@ mod internals;
 
 
 impl Rope {
+
+    /// Converts a vector of bytes to a `Rope`.
+    ///
+    /// If you are sure that the byte slice is valid UTF-8, and you don't want
+    /// to incur the overhead of the validity check, there is an unsafe version
+    /// of this function, `from_utf8_unchecked(),`` which has the same behavior
+    /// but skips the check.
+    ///
+    /// This method will take care to not copy the vector, for efficiency's
+    /// sake.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if the slice is not UTF-8 with a description as to why the
+    /// provided bytes are not UTF-8. The vector you moved in is also included.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// use an_rope::Rope;
+    ///
+    /// // some bytes, in a vector
+    /// let sparkle_heart = vec![240, 159, 146, 150];
+    ///
+    /// // We know these bytes are valid, so we'll use `unwrap()`.
+    /// let sparkle_heart = Rope::from_utf8(sparkle_heart).unwrap();
+    ///
+    /// assert_eq!(&sparkle_heart, "💖");
+    /// ```
+    ///
+    /// Incorrect bytes:
+    ///
+    /// ```
+    /// use an_rope::Rope;
+    ///
+    /// // some invalid bytes, in a vector
+    /// let sparkle_heart = vec![0, 159, 146, 150];
+    ///
+    /// assert!(Rope::from_utf8(sparkle_heart).is_err());
+    /// ```
+    ///
+    #[inline]
+    pub fn from_utf8(vec: Vec<u8>) -> Result<Rope, string::FromUtf8Error> {
+        String::from_utf8(vec).map(Rope::from)
+    }
+
+    /// Decode a UTF-16 encoded vector `v` into a `Rope`,
+    /// returning `Err` if `v` contains any invalid data.
+    #[inline]
+    pub fn from_utf16(v: &[u16]) -> Result<Rope, string::FromUtf16Error> {
+        String::from_utf16(v).map(Rope::from)
+    }
+
+    /// Converts a vector of bytes to a `Rope` without checking that the
+    /// vector contains valid UTF-8.
+    ///
+    /// See the safe version, [`from_utf8()`], for more details.
+    ///
+    /// [`from_utf8()`]: struct.Rope.html#method.from_utf8
+    ///
+    /// # Safety
+    ///
+    /// This function is unsafe because it does not check that the bytes passed
+    /// to it are valid UTF-8. If this constraint is violated, it may cause
+    /// memory unsafety issues with future users of the `Rope`, as the rest of
+    /// the standard library assumes that `Rope`s are valid UTF-8.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// use an_rope::Rope;
+    ///
+    /// // some bytes, in a vector
+    /// let sparkle_heart = vec![240, 159, 146, 150];
+    ///
+    /// let sparkle_heart = unsafe {
+    ///     Rope::from_utf8_unchecked(sparkle_heart)
+    /// };
+    ///
+    /// assert_eq!(&sparkle_heart, "💖");
+    /// ```
+    #[inline]
+    pub unsafe fn from_utf8_unchecked(bytes: Vec<u8>) -> Rope {
+        Rope::from(String::from_utf8_unchecked(bytes))
+    }
 
     /// Take this `Rope`s root node, leaving an empty node in its place
     #[inline]
