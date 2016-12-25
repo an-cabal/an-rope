@@ -293,8 +293,7 @@ fn rope_insert_1000(b: &mut Bencher) {
         let n = test::black_box(1000);
         (0..n).fold(
             Rope::from(iter::repeat('a').take(100_000).collect::<String>()), |mut r, b| {
-            let len = r.len();
-            r.insert_rope(len/2, Rope::from(b.to_string()));
+            r.insert_rope(2, Rope::from(b.to_string()));
             r
         })
     })
@@ -307,8 +306,7 @@ fn string_insert_1000(b: &mut Bencher) {
         let n = test::black_box(1000);
         (0..n).fold(iter::repeat('a').take(100_000).collect::<String>(),
             |mut s, b| {
-                let len = s.len();
-                s.insert_str(len/2, &b.to_string());
+                s.insert_str(2, &b.to_string());
                 s
             })
     })
