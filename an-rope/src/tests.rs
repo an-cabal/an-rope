@@ -1,3 +1,6 @@
+use super::test;
+use test::Bencher;
+
 use super::Rope;
 use std::iter;
 
@@ -261,4 +264,53 @@ fn with_insert_str_test_1() {
     assert_eq!(&s, "aaaaa");
     assert_eq!(&s_1, "aaaaaccccc");
     assert_eq!(&s_2, "aaaaabbbbbccccc");
+}
+
+#[bench]
+fn rope_add_1000(b: &mut Bencher) {
+    b.iter(|| {
+        let n = test::black_box(1000);
+        (0..n).fold(
+            Rope::from(iter::repeat('a').take(100_000).collect::<String>()),
+            |r, b| r + b.to_string())
+    })
+
+}
+
+#[bench]
+fn string_add_1000(b: &mut Bencher) {
+    b.iter(|| {
+        let n = test::black_box(1000);
+        (0..n).fold(iter::repeat('a').take(100_000).collect::<String>(),
+            |s, b| s + &b.to_string())
+    })
+
+}
+
+#[bench]
+fn rope_insert_1000(b: &mut Bencher) {
+    b.iter(|| {
+        let n = test::black_box(1000);
+        (0..n).fold(
+            Rope::from(iter::repeat('a').take(100_000).collect::<String>()), |mut r, b| {
+            let len = r.len();
+            r.insert_rope(len/2, Rope::from(b.to_string()));
+            r
+        })
+    })
+
+}
+
+#[bench]
+fn string_insert_1000(b: &mut Bencher) {
+    b.iter(|| {
+        let n = test::black_box(1000);
+        (0..n).fold(iter::repeat('a').take(100_000).collect::<String>(),
+            |mut s, b| {
+                let len = s.len();
+                s.insert_str(len/2, &b.to_string());
+                s
+            })
+    })
+
 }

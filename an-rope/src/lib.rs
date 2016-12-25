@@ -12,6 +12,8 @@
 #![feature(const_fn)]
 #![feature(box_syntax, box_patterns)]
 #![feature(conservative_impl_trait)]
+#![cfg_attr(test, feature(test))]
+#![cfg_attr(test, feature(insert_str))]
 
 use std::cmp;
 use std::ops;
@@ -20,7 +22,11 @@ use std::fmt;
 use std::string;
 
 #[cfg(test)]
-mod test;
+mod tests;
+
+#[cfg(test)]
+extern crate test;
+
 
 use self::internals::Node;
 
