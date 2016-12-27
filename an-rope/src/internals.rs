@@ -261,7 +261,7 @@ impl Node {
 
     #[inline]
     pub fn empty() -> NodeLink {
-NodeLink(Rc::new(Leaf(String::new())))
+        NodeLink(Rc::new(Leaf(String::new())))
     }
 
     /// Concatenate two `Node`s to return a new `Branch` node.
@@ -306,6 +306,7 @@ NodeLink(Rc::new(Leaf(String::new())))
 
     /// Returns the length of a node
     //  TODO: do we want to cache this?
+    #[inline]
     pub fn len(&self) -> usize {
         match self { &Leaf(ref s) => s.len()
                    , &Branch(BranchNode { ref left, ref right, .. }) =>
