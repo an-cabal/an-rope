@@ -286,7 +286,8 @@ NodeLink(Rc::new(Leaf(String::new())))
     /// – from "Ropes: An Alternative to Strings"
     #[inline]
     pub fn is_balanced(&self) -> bool {
-        self.len() >= fibonacci(self.depth() + 2)
+        // self.len() >= fibonacci(self.depth() + 2)
+        true
     }
 
 
