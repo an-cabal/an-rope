@@ -180,7 +180,7 @@ impl Rope {
     /// # Examples
     /// ```
     /// use an_rope::Rope;
-    /// let mut an_rope = Rope::new();
+    /// let an_rope = Rope::new();
     /// assert_eq!(an_rope.len(), 0);
     /// ```
     pub fn new() -> Rope {
@@ -195,13 +195,13 @@ impl Rope {
     ///
     /// ```
     /// use an_rope::Rope;
-    /// let mut an_empty_rope = Rope::new();
+    /// let an_empty_rope = Rope::new();
     /// assert_eq!(an_empty_rope.len(), 0);
     /// ```
     ///
     /// ```
     /// use an_rope::Rope;
-    /// let mut an_empty_rope = Rope::from(String::from(""));
+    /// let an_empty_rope = Rope::from(String::from(""));
     /// assert_eq!(an_empty_rope.len(), 0);
     /// ```
     ///
@@ -210,7 +210,7 @@ impl Rope {
     ///
     /// ```
     /// use an_rope::Rope;
-    /// let mut an_rope = Rope::from(String::from("a string"));
+    /// let an_rope = Rope::from(String::from("a string"));
     /// assert_eq!(an_rope.len(), "a string".len());
     /// ```
     pub fn len(&self) -> usize { self.root.len() }
@@ -229,8 +229,8 @@ impl Rope {
     ///
     /// ```
     /// use an_rope::Rope;
-    /// let mut an_rope = Rope::from("bcd");
-    /// an_rope.insert(0, 'a');
+    /// let an_rope = Rope::from("bcd");
+    /// let an_rope = an_rope.insert(0, 'a');
     /// assert_eq!(an_rope, Rope::from("abcd"));
     /// ```
     ///
@@ -238,8 +238,8 @@ impl Rope {
     ///
     /// ```
     /// use an_rope::Rope;
-    /// let mut an_rope = Rope::from("abc");
-    /// an_rope.insert(3, 'd');
+    /// let an_rope = Rope::from("abc");
+    /// let an_rope = an_rope.insert(3, 'd');
     /// assert_eq!(an_rope, Rope::from("abcd"));
     /// ```
     ///
@@ -247,8 +247,8 @@ impl Rope {
     ///
     /// ```
     /// use an_rope::Rope;
-    /// let mut an_rope = Rope::from("acd");
-    /// an_rope.insert(1, 'b');
+    /// let an_rope = Rope::from("acd");
+    /// let an_rope = an_rope.insert(1, 'b');
     /// assert_eq!(an_rope, Rope::from("abcd"));
     /// ```
     #[inline]
@@ -279,8 +279,8 @@ impl Rope {
     ///
     /// ```
     /// use an_rope::Rope;
-    /// let mut an_rope = Rope::from("cd");
-    /// an_rope.insert_rope(0, Rope::from("ab"));
+    /// let an_rope = Rope::from("cd");
+    /// let an_rope = an_rope.insert_rope(0, Rope::from("ab"));
     /// assert_eq!(an_rope, Rope::from("abcd"));
     /// ```
     ///
@@ -288,8 +288,8 @@ impl Rope {
     ///
     /// ```
     /// use an_rope::Rope;
-    /// let mut an_rope = Rope::from("ab");
-    /// an_rope.insert_rope(2, Rope::from("cd"));
+    /// let an_rope = Rope::from("ab");
+    /// let an_rope = an_rope.insert_rope(2, Rope::from("cd"));
     /// assert_eq!(an_rope, Rope::from("abcd"));
     /// ```
     ///
@@ -297,8 +297,8 @@ impl Rope {
     ///
     /// ```
     /// use an_rope::Rope;
-    /// let mut an_rope = Rope::from("ad");
-    /// an_rope.insert_rope(1, Rope::from("bc"));
+    /// let an_rope = Rope::from("ad");
+    /// let an_rope = an_rope.insert_rope(1, Rope::from("bc"));
     /// assert_eq!(an_rope, Rope::from("abcd"));
     /// ```
     pub fn insert_rope(&self, index: usize, rope: Rope) -> Rope {
@@ -336,8 +336,8 @@ impl Rope {
     ///
     /// ```
     /// use an_rope::Rope;
-    /// let mut an_rope = Rope::from("cd");
-    /// an_rope.insert_str(0, "ab");
+    /// let an_rope = Rope::from("cd");
+    /// let an_rope = an_rope.insert_str(0, "ab");
     /// assert_eq!(an_rope, Rope::from("abcd"));
     /// ```
     ///
@@ -345,8 +345,8 @@ impl Rope {
     ///
     /// ```
     /// use an_rope::Rope;
-    /// let mut an_rope = Rope::from("ab");
-    /// an_rope.insert_str(2, "cd");
+    /// let an_rope = Rope::from("ab");
+    /// let an_rope = an_rope.insert_str(2, "cd");
     /// assert_eq!(an_rope, Rope::from("abcd"));
     /// ```
     ///
@@ -354,8 +354,8 @@ impl Rope {
     ///
     /// ```
     /// use an_rope::Rope;
-    /// let mut an_rope = Rope::from("ad");
-    /// an_rope.insert_str(1, "bc");
+    /// let an_rope = Rope::from("ad");
+    /// let an_rope = an_rope.insert_str(1, "bc");
     /// assert_eq!(an_rope, Rope::from("abcd"));
     /// ```
     #[inline]
@@ -375,8 +375,8 @@ impl Rope {
     ///
     /// ```
     /// use an_rope::Rope;
-    /// let mut an_rope = Rope::from(String::from("abcd"));
-    /// an_rope.append(Rope::from(String::from("efgh")));
+    /// let an_rope = Rope::from(String::from("abcd"));
+    /// let an_rope = an_rope.append(Rope::from(String::from("efgh")));
     /// assert_eq!(an_rope, Rope::from(String::from("abcdefgh")) );
     /// ```
     pub fn append(&self, other: Rope) -> Rope {
@@ -392,30 +392,11 @@ impl Rope {
     /// Consumes `other`.
     ///
     /// # Examples
-    /// ```
-    /// use an_rope::Rope;
-    /// let mut an_rope = Rope::from(String::from("efgh"));
-    /// an_rope.prepend(Rope::from(String::from("abcd")));
-    /// assert_eq!(&an_rope, "abcdefgh");
-    /// ```
-    pub fn prepend(&self, other: Rope) -> Rope {
-        if other.len() > 0 {
-            Rope { root: (other.root + self.root.clone()).rebalance() }
-        } else {
-            Rope { root: self.root.clone() }
-        }
-    }
-
-    /// Prepends a `Rope` to the end of this `Rope`, returning a new `Rope`
-    ///
-    /// Consumes `other`.
-    ///
-    /// # Examples
     ///
     /// ```
     /// use an_rope::Rope;
     /// let an_rope = Rope::from("efgh");
-    /// let another_rope = an_rope.with_prepend(Rope::from("abcd"));
+    /// let another_rope = an_rope.prepend(Rope::from("abcd"));
     /// assert_eq!(&an_rope, "efgh");
     /// assert_eq!(&another_rope, "abcdefgh");
     /// ```
@@ -423,7 +404,7 @@ impl Rope {
     /// ```
     /// use an_rope::Rope;
     /// let an_rope = Rope::from("");
-    /// let another_rope = an_rope.with_prepend(Rope::from("abcd"));
+    /// let another_rope = an_rope.prepend(Rope::from("abcd"));
     /// assert_eq!(&an_rope, "");
     /// assert_eq!(&another_rope, "abcd");
     /// ```
@@ -431,23 +412,16 @@ impl Rope {
     /// ```
     /// use an_rope::Rope;
     /// let an_rope = Rope::from("abcd");
-    /// let another_rope = an_rope.with_prepend(Rope::from(""));
+    /// let another_rope = an_rope.prepend(Rope::from(""));
     /// assert_eq!(&an_rope, "abcd");
     /// assert_eq!(&another_rope, &an_rope);
     /// assert_eq!(&another_rope, "abcd");
     /// ```
-    pub fn with_prepend(&self, other: Rope) -> Rope {
-        if other.len() == 0 {
-            self.clone()
+    pub fn prepend(&self, other: Rope) -> Rope {
+        if other.len() > 0 {
+            Rope { root: (other.root + self.root.clone()).rebalance() }
         } else {
-            // let mut rope = Rope {
-            //     root: Node::new_branch(self.root.clone(), other.root)
-            // };
-            // rope.rebalance();
-            // rope
-            let mut rope = self.clone();
-            rope.prepend(other);
-            rope
+            Rope { root: self.root.clone() }
         }
     }
 
@@ -458,7 +432,7 @@ impl Rope {
     /// # Examples
     /// ```
     /// use an_rope::Rope;
-    /// let mut an_rope = Rope::from(String::from("abcd"));
+    /// let an_rope = Rope::from(String::from("abcd"));
     /// let (ab, cd) = an_rope.split(2);
     /// assert_eq!(ab, Rope::from(String::from("ab")));
     /// assert_eq!(cd, Rope::from(String::from("cd")));
