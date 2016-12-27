@@ -2,7 +2,12 @@ use std::ops;
 use std::mem;
 use std::fmt;
 
+use std::rc::Rc;
+
 use self::Node::*;
+
+#[derive(Clone)]
+pub struct NodeLink(Rc<Node>);
 
 /// A `Node` in the `Rope`'s tree.
 ///
@@ -14,6 +19,111 @@ pub enum Node {
     Leaf(String)
   , /// A branch concatenating together `l`eft and `r`ight nodes.
     Branch(BranchNode)
+}
+
+impl NodeLink {
+    /// Split this `Node`'s subtree on the specified `index`.
+    ///
+    /// Consumes `self`.
+    ///
+    /// This function walks the tree from this node until it reaches the index
+    /// to split on, and then it splits the leaf node containing that index.
+    ///
+    /// # Returns
+    /// A tuple containing the left and right sides of the split node. These are
+    /// returned as a tuple rather than as a new branch, since the expected use
+    /// case for this function is splitting a node so that new text can be
+    /// inserted between the two split halves.
+    ///
+    /// # Time complexity
+    /// O(log _n_)
+    pub fn split(&self, index: usize) -> (NodeLink, NodeLink) {
+        match *self.0 {
+            Leaf(ref s) if s.len() == 0 =>
+                // splitting an empty leaf node returns two empty leaf nodes
+                (Node::empty(), Node::empty())
+          , Leaf(ref s) if s.len() == 1 =>
+                (self.clone(), Node::empty())
+          , Leaf(ref s) => {
+                // splitting a leaf node with length >= 2 returns two new Leaf
+                // nodes, one with the left half of the string, and one with
+                // the right
+                let left = Leaf(s[..index].to_string());
+                let right = Leaf(s[index..].to_string());
+                (NodeLink::new(left), NodeLink::new(right))
+            }
+          , Branch(ref node) =>
+                // otherwise, just delegate out to `BranchNode::split()`
+                node.split(index)
+        }
+    }
+
+    pub fn new(node: Node) -> Self { NodeLink(Rc::new(node))}
+
+    /// Rebalance the subrope starting at this `Node`, returning a new `Node`
+    ///
+    /// From "Ropes: An Alternative to Strings":
+    /// > "The rebalancing operation maintains an ordered sequence of (empty
+    /// > or) balanced ropes, one for each length interval [_Fn_, _Fn_+1), for
+    /// > _n_ >= 2. We traverse the rope from left to right, inserting each
+    /// > leaf into the appropriate sequence position, depending on its length.
+    ///
+    /// > The concatenation of the sequence of ropes in order of decreasing
+    /// > length is equivalent to the prefix of the rope we have traversed so
+    /// > far. Each new leaf _x_ is with_insert_ropeed into the appropriate entry of the
+    /// > sequence. Assume that _x_’s length is in the interval [_Fn_, _Fn_+1),
+    /// > and thus it should be put in slot _n_ (which also corresponds to
+    /// > maximum depth _n_ − 2). If all lower and equal numbered levels are
+    /// > empty, then this can be done directly. If not, then we concatenate
+    /// > ropes in slots 2, ... ,(_n_ − 1) (concatenating onto the left), and
+    /// > concatenate _x_ to the right of the result. We then continue to
+    /// > concatenate ropes from the sequence in increasing order to the left
+    /// > of this result, until the result fits into an empty slot in the
+    /// > sequence."
+    pub fn rebalance(self) -> Self {
+        // TODO: this is a huge mess, I based it on the IBM Java implementation
+        //       please refactor until it stops being ugly!
+        //        - eliza, 12/17/2016
+
+        if self.is_balanced() {
+            // the subrope is already balanced, do nothing
+            self
+        } else {
+            // let mut leaves: Vec<Option<Node>> =
+            //     self.into_leaves().map(Option::Some).collect();
+            // let len = leaves.len();
+            // fn _rebalance(l: &mut Vec<Option<Node>>, start: usize, end: usize)
+            //               -> Node {
+            //     match end - start {
+            //         1 => l[start].take().unwrap()
+            //       , 2 => l[start].take().unwrap() + l[start + 1].take().unwrap()
+            //       , n => {
+            //             let mid = start + (n / 2);
+            //             _rebalance(l, start, mid) + _rebalance(l, mid, end)
+            //
+            //         }
+            //     }
+            // };
+            // _rebalance(&mut leaves, 0, len)
+            self
+        }
+    }
+}
+
+impl ops::Deref for NodeLink {
+    type Target = Node;
+    fn deref(&self) -> &Node { self.0.as_ref() }
+}
+
+impl fmt::Debug for NodeLink {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self.0)
+    }
+}
+impl fmt::Display for NodeLink {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
 }
 
 impl fmt::Debug for Node {
@@ -40,9 +150,9 @@ pub struct BranchNode {
   , /// The weight of a node is the summed weight of its left subtree
     weight: usize
   , /// The left branch node
-    pub left: Box<Node>
+    pub left: NodeLink
   , /// The right branch node
-    pub right: Box<Node>
+    pub right: NodeLink
 }
 
 
@@ -59,9 +169,9 @@ impl fmt::Display for BranchNode {
 }
 
 
-impl Default for Node {
-    fn default() -> Self { Node::empty() }
-}
+// impl Default for Node {
+//     fn default() -> Self { Node::empty() }
+// }
 
 const FIB_LOOKUP: [usize; 93] = [
  0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181, 6765, 10946, 17711, 28657, 46368, 75025, 121393, 196418, 317811, 514229, 832040, 1346269, 2178309, 3524578, 5702887, 9227465, 14930352, 24157817, 39088169, 63245986, 102334155, 165580141, 267914296, 433494437, 701408733, 1134903170, 1836311903, 2971215073, 4807526976, 7778742049, 12586269025, 20365011074, 32951280099, 53316291173, 86267571272, 139583862445, 225851433717, 365435296162, 591286729879, 956722026041, 1548008755920, 2504730781961, 4052739537881, 6557470319842, 10610209857723, 17167680177565, 27777890035288, 44945570212853, 72723460248141, 117669030460994, 190392490709135, 308061521170129, 498454011879264, 806515533049393, 1304969544928657, 2111485077978050, 3416454622906707, 5527939700884757, 8944394323791464, 14472334024676221, 23416728348467685, 37889062373143906, 61305790721611591, 99194853094755497, 160500643816367088, 259695496911122585, 420196140727489673, 679891637638612258, 1100087778366101931, 1779979416004714189, 2880067194370816120, 4660046610375530309, 7540113804746346429 ];
@@ -69,20 +179,21 @@ const FIB_LOOKUP: [usize; 93] = [
 
 /// Returns the _n_th fibonacci number.
 // TODO: replace with an iterative implementation and/or lookup table?
-#[inline]
+#[inline(always)]
 fn fibonacci(n: usize) -> usize {
-    if n <= 93 { FIB_LOOKUP[n] }
-    else { fibonacci(n - 1) + fibonacci(n - 2) }
+    match n { i if i <= 92 => FIB_LOOKUP[i]
+            , _ => fibonacci(n - 1) + fibonacci(n - 2)
+            }
 }
 
 impl BranchNode {
 
     #[inline]
-    fn new(left: Node, right: Node) -> Self {
+    fn new(left: NodeLink, right: NodeLink) -> Self {
         BranchNode { len: left.len() + right.len()
                    , weight: left.subtree_weight()
-                   , left: box left
-                   , right: box right
+                   , left: left
+                   , right: right
                    }
     }
 
@@ -99,8 +210,8 @@ impl BranchNode {
     ///
     /// # Time complexity
     /// O(log _n_)
-    fn split(self, index: usize) -> (Node, Node) {
-        let weight = (&self).weight;
+    fn split(&self, index: usize) -> (NodeLink, NodeLink) {
+        let weight = self.weight;
         // to determine which side of this node we are splitting on, we compare
         // the index to split to this node's weight.
         if index < weight {
@@ -110,15 +221,15 @@ impl BranchNode {
             let (left, left_right) = self.left.split(index);
             // the left side of the split left child will become the left side
             // of the split pair.
-            let right = if (&left_right).len() == 0 {
+            let right = if left_right.len() == 0 {
                 // if the right side of the split is empty, then the right
                 // side of the returned pair is just this node's right child
-                *self.right
+                self.right.clone()
             } else {
                 // otherwise, the right side of the returned pair is a branch
                 // containing the right side of the split node on the left,
                 // and this node's right child on the right
-                Node::new_branch(left_right, *self.right)
+                Node::new_branch(left_right, self.right.clone())
             };
             (left, right)
         } else {
@@ -130,15 +241,15 @@ impl BranchNode {
             // the right side of the split right child will become the right
             // side of the split
 
-            let left = if (&right_left).len() == 0 {
+            let left = if right_left.len() == 0 {
                 // if the left side of the split right child is empty, then the
                 // left side of the returned pair is just this node's left child
-                *self.left
+                self.left.clone()
             } else {
                 // otherwise, the left side of the returned pair is a branch
                 // containing the left side of the split node on the right,
                 // and this node's left child on the left
-                Node::new_branch(*self.left, right_left)
+                Node::new_branch(self.left.clone(), right_left)
             };
             (left, right)
         }
@@ -148,51 +259,15 @@ impl BranchNode {
 
 impl Node {
 
-    /// Split this `Node`'s subtree on the specified `index`.
-    ///
-    /// Consumes `self`.
-    ///
-    /// This function walks the tree from this node until it reaches the index
-    /// to split on, and then it splits the leaf node containing that index.
-    ///
-    /// # Returns
-    /// A tuple containing the left and right sides of the split node. These are
-    /// returned as a tuple rather than as a new branch, since the expected use
-    /// case for this function is splitting a node so that new text can be
-    /// inserted between the two split halves.
-    ///
-    /// # Time complexity
-    /// O(log _n_)
-    pub fn split(self, index: usize) -> (Node, Node) {
-        match self {
-            Leaf(ref s) if s.len() == 0 =>
-                // splitting an empty leaf node returns two empty leaf nodes
-                (Node::empty(), Node::empty())
-          , Leaf(ref s) if s.len() == 1 =>
-                (Leaf(s.clone()), Node::empty())
-          , Leaf(s) => {
-                // splitting a leaf node with length >= 2 returns two new Leaf
-                // nodes, one with the left half of the string, and one with
-                // the right
-                let left = Leaf(s[..index].to_string());
-                let right = Leaf(s[index..].to_string());
-                (left, right)
-            }
-          , Branch(node) =>
-                // otherwise, just delegate out to `BranchNode::split()`
-                node.split(index)
-        }
-    }
-
     #[inline]
-    pub fn empty() -> Self {
-        Leaf(String::new())
+    pub fn empty() -> NodeLink {
+NodeLink(Rc::new(Leaf(String::new())))
     }
 
     /// Concatenate two `Node`s to return a new `Branch` node.
     #[inline]
-    pub fn new_branch(left: Self, right: Self) -> Self {
-        Branch(BranchNode::new(left, right))
+    pub fn new_branch(left: NodeLink, right: NodeLink) -> NodeLink {
+        NodeLink::new(Branch(BranchNode::new(left, right)))
     }
 
     #[inline]
@@ -245,65 +320,16 @@ impl Node {
                     }
     }
 
-
-    /// Rebalance the subrope starting at this `Node`, returning a new `Node`
-    ///
-    /// From "Ropes: An Alternative to Strings":
-    /// > "The rebalancing operation maintains an ordered sequence of (empty
-    /// > or) balanced ropes, one for each length interval [_Fn_, _Fn_+1), for
-    /// > _n_ >= 2. We traverse the rope from left to right, inserting each
-    /// > leaf into the appropriate sequence position, depending on its length.
-    ///
-    /// > The concatenation of the sequence of ropes in order of decreasing
-    /// > length is equivalent to the prefix of the rope we have traversed so
-    /// > far. Each new leaf _x_ is with_insert_ropeed into the appropriate entry of the
-    /// > sequence. Assume that _x_’s length is in the interval [_Fn_, _Fn_+1),
-    /// > and thus it should be put in slot _n_ (which also corresponds to
-    /// > maximum depth _n_ − 2). If all lower and equal numbered levels are
-    /// > empty, then this can be done directly. If not, then we concatenate
-    /// > ropes in slots 2, ... ,(_n_ − 1) (concatenating onto the left), and
-    /// > concatenate _x_ to the right of the result. We then continue to
-    /// > concatenate ropes from the sequence in increasing order to the left
-    /// > of this result, until the result fits into an empty slot in the
-    /// > sequence."
-    pub fn rebalance(self) -> Self {
-        // TODO: this is a huge mess, I based it on the IBM Java implementation
-        //       please refactor until it stops being ugly!
-        //        - eliza, 12/17/2016
-
-        if self.is_balanced() {
-            // the subrope is already balanced, do nothing
-            self
-        } else {
-            let mut leaves: Vec<Option<Node>> =
-                self.into_leaves().map(Option::Some).collect();
-            let len = leaves.len();
-            fn _rebalance(l: &mut Vec<Option<Node>>, start: usize, end: usize)
-                          -> Node {
-                match end - start {
-                    1 => l[start].take().unwrap()
-                  , 2 => l[start].take().unwrap() + l[start + 1].take().unwrap()
-                  , n => {
-                        let mid = start + (n / 2);
-                        _rebalance(l, start, mid) + _rebalance(l, mid, end)
-
-                    }
-                }
-            };
-            _rebalance(&mut leaves, 0, len)
-        }
-    }
-
     /// Returns an iterator over all leaf nodes in this `Node`'s subrope
     fn leaves<'a>(&'a self) -> Leaves<'a> {
         Leaves(vec![self])
     }
 
-    /// Returns a move iterator over all leaf nodes in this `Node`'s subrope
-    fn into_leaves(self) -> IntoLeaves {
-        IntoLeaves(vec![self])
-    }
-
+    // /// Returns a move iterator over all leaf nodes in this `Node`'s subrope
+    // fn into_leaves(self) -> IntoLeaves {
+    //     IntoLeaves(vec![self])
+    // }
+    //
 
     /// Returns an iterator over all the strings in this `Node`s subrope'
     #[inline]
@@ -316,19 +342,25 @@ impl Node {
         })
     }
 
-    /// Returns a move iterator over all the strings in this `Node`s subrope'
-    ///
-    /// Consumes `self`.
-    #[inline]
-    pub fn into_strings(self) -> impl Iterator<Item=String> {
-        box self.into_leaves().map(|n| match n {
-            Leaf(s) => s
-            , _ => unreachable!("Node.into_leaves() iterator contained \
-                                 something  that wasn't a leaf. Barring _force \
-                                 majeure_, this should be impossible. \
-                                 Something's broken.")
-        })
-    }
+    // /// Returns a move iterator over all the strings in this `Node`s subrope'
+    // ///
+    // /// Consumes `self`.
+    // #[inline]
+    // pub fn into_strings(self) -> impl Iterator<Item=String> {
+        // box self.into_leaves().map(|n| match n {
+        //     Leaf(s) => s
+        //     , _ => unreachable!("Node.into_leaves() iterator contained \
+        //                          something  that wasn't a leaf. Barring _force \
+        //                          majeure_, this should be impossible. \
+        //                          Something's broken.")
+        // })
+
+
+        // the compiler won't let me mark this as unimplemented using the
+        // unimplemented!() macro, due to Reasons (i suspect relating to
+        // returning `impl Trait`)
+        //  - eliza, 12/27/2016
+    // }
 
     str_iters! {
         #[doc="Returns an iterator over all the bytes in this `Node`'s \
@@ -404,40 +436,40 @@ impl<'a> Iterator for Leaves<'a> {
     }
 }
 
-/// A move iterator over a series of leaf `Node`s
-struct IntoLeaves(Vec<Node>);
+// /// A move iterator over a series of leaf `Node`s
+// struct IntoLeaves(Vec<Node>);
+//
+// impl Iterator for IntoLeaves {
+//     type Item = Node;
+//     fn next(&mut self) -> Option<Self::Item> {
+//         match self.0.pop() {
+//             None => None
+//           , Some(leaf @ Leaf(_)) => Some(leaf)
+//           , Some(Branch(BranchNode { left, right, .. })) => {
+//                 self.0.push(right);
+//                 self.0.push(left);
+//                 self.next()
+//             }
+//         }
+//     }
+// }
 
-impl Iterator for IntoLeaves {
-    type Item = Node;
-    fn next(&mut self) -> Option<Self::Item> {
-        match self.0.pop() {
-            None => None
-          , Some(leaf @ Leaf(_)) => Some(leaf)
-          , Some(Branch(BranchNode { box left, box right, .. })) => {
-                self.0.push(right);
-                self.0.push(left);
-                self.next()
-            }
-        }
-    }
-}
 
-
-impl ops::Add for Node {
+impl ops::Add for NodeLink {
     type Output = Self;
     /// Concatenate two `Node`s, returning a `Branch` node.
     fn add(self, right: Self) -> Self { Node::new_branch(self, right) }
 }
 
 
-impl ops::AddAssign for Node {
-    /// Concatenate two `Node`s
-    fn add_assign(&mut self, right: Self) {
-        use std::mem::replace;
-        *self = Node::new_branch(replace(self, Node::empty()), right)
-     }
-
-}
+// impl ops::AddAssign for Node {
+//     /// Concatenate two `Node`s
+//     fn add_assign(&mut self, right: Self) {
+//         use std::mem::replace;
+//         *self = Node::new_branch(replace(self, Node::empty()), right)
+//      }
+//
+// }
 
 
 impl ops::Index<usize> for Node {
@@ -449,9 +481,9 @@ impl ops::Index<usize> for Node {
                , "Node::index: index {} out of bounds (length {})", i, len);
         match *self {
             Leaf(ref vec) => { &vec[i..i+1] }
-          , Branch(BranchNode { box ref right, .. }) if len < i =>
+          , Branch(BranchNode { ref right, .. }) if len < i =>
                 &right[i - len]
-          , Branch(BranchNode { box ref left, .. }) => &left[i]
+          , Branch(BranchNode { ref left, .. }) => &left[i]
         }
     }
 }
