@@ -7,9 +7,8 @@ authors = ["Eliza Weisman <hi@hawkweisman.me>", "Chris McDonald <mail.chris.mcdo
 [features]
 # no features by default
 default = []
-
+atomic = []
 with_tendrils = ["tendril"]
-
 
 [dependencies.tendril]
 version = "0.2.3"
