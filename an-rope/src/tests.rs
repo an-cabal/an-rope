@@ -59,82 +59,44 @@ fn repeated_concat_right_rebalance() {
 
 #[test]
 fn append_empty_rope() {
-    let mut an_rope = Rope::from("");
-    an_rope.append(Rope::from("abcd"));
-    assert_eq!(&an_rope, "abcd");
+    let an_rope = Rope::from("");
+    let another_rope = an_rope.append(Rope::from("abcd"));
+    assert_eq!(&another_rope, "abcd");
+    assert_eq!(&an_rope, "");
 
-    let mut an_rope = Rope::from("abcd");
-    an_rope.append(Rope::from(""));
+    let an_rope = Rope::from("abcd");
+    let an_rope = an_rope.append(Rope::from(""));
     assert_eq!(&an_rope, "abcd");
 }
 
 #[test]
 fn append() {
-    let mut an_rope = Rope::from(String::from("abcd"));
-    an_rope.append(Rope::from(String::from("efgh")));
-    assert_eq!(an_rope, Rope::from(String::from("abcdefgh")) );
-}
-
-#[test]
-fn with_append_empty_rope() {
-    let an_rope = Rope::from("");
-    let another_rope = an_rope.with_append(Rope::from("abcd"));
-    assert_eq!(&another_rope, "abcd");
-    assert_eq!(&an_rope, "");
-
     let an_rope = Rope::from("abcd");
-    let an_rope = an_rope.with_append(Rope::from(""));
-    assert_eq!(&an_rope, "abcd");
-}
-
-#[test]
-fn with_append() {
-    let an_rope = Rope::from("abcd");
-    let another_rope = an_rope.with_append(Rope::from("efgh"));
+    let another_rope = an_rope.append(Rope::from("efgh"));
     assert_eq!(&another_rope, "abcdefgh");
     assert_eq!(&an_rope, "abcd");
 }
 
 #[test]
 fn prepend_empty_rope() {
-    let mut an_rope = Rope::from("");
-    an_rope.prepend(Rope::from("abcd"));
-    assert_eq!(&an_rope, "abcd");
-
-
-    let mut an_rope = Rope::from("abcd");
-    an_rope.prepend(Rope::from(""));
-    assert_eq!(&an_rope, "abcd");
-}
-
-
-#[test]
-fn with_prepend_empty_rope() {
     let an_rope = Rope::from("");
-    let another_rope = an_rope.with_prepend(Rope::from("abcd"));
+    let another_rope = an_rope.prepend(Rope::from("abcd"));
     assert_eq!(&an_rope, "");
     assert_eq!(&another_rope, "abcd");
 
     let an_rope = Rope::from("abcd");
-    let another_rope = an_rope.with_prepend(Rope::from(""));
+    let another_rope = an_rope.prepend(Rope::from(""));
     assert_eq!(&an_rope, "abcd");
     assert_eq!(&another_rope, &an_rope);
     assert_eq!(&another_rope, "abcd");
 }
 
 #[test]
-fn with_prepend() {
+fn prepend() {
     let an_rope = Rope::from("efgh");
-    let another_rope = an_rope.with_prepend(Rope::from("abcd"));
+    let another_rope = an_rope.prepend(Rope::from("abcd"));
     assert_eq!(&an_rope, "efgh");
     assert_eq!(&another_rope, "abcdefgh");
-}
-
-#[test]
-fn prepend() {
-    let mut an_rope = Rope::from(String::from("efgh"));
-    an_rope.prepend(Rope::from(String::from("abcd")));
-    assert_eq!(&an_rope, "abcdefgh");
 }
 
 #[test]
@@ -156,97 +118,97 @@ fn merge_rebalance_test() {
 }
 
 #[test]
-fn with_insert_rope_balance_test() {
+fn insert_rope_balance_test() {
     let s: String = iter::repeat('a').take(10).collect();
     let mut r_1 = Rope::from(s);
     for _ in 0..99 {
         let t: String = iter::repeat('a').take(10).collect();
-        r_1 = r_1.with_insert_rope(5, Rope::from(t));
+        r_1 = r_1.insert_rope(5, Rope::from(t));
     }
-    //  this isn't necessary, with_insert_rope() will automatically rebalance
+    //  this isn't necessary, insert_rope() will automatically rebalance
     //      - eliza, 12/18/2016
     // r_1.rebalance();
     assert!(r_1.is_balanced());
 }
 
 #[test]
-fn with_insert_rope_test_1() {
+fn insert_rope_test_1() {
     let s: String = iter::repeat('a').take(1_000).collect();
     let r_1 = Rope::from(s);
     let mut r_2 = Rope::new();
     for _ in 0..100 {
         let t: String = iter::repeat('a').take(10).collect();
-        r_2 = r_2.with_insert_rope(0, Rope::from(t));
+        r_2 = r_2.insert_rope(0, Rope::from(t));
     }
     assert_eq!(r_1, r_2);
 }
 
 #[test]
-fn with_insert_rope_test_2() {
+fn insert_rope_test_2() {
     let s: String = iter::repeat('a').take(10).collect();
     let mut r_1 = Rope::from(s);
     for _ in 0..99 {
         let t: String = iter::repeat('a').take(10).collect();
-        r_1 = r_1.with_insert_rope(5, Rope::from(t));
+        r_1 = r_1.insert_rope(5, Rope::from(t));
     }
 
     let q: String = iter::repeat('a').take(1_000).collect();
     let r_2 = Rope::from(q);
     assert_eq!(r_1, r_2);
 }
+//
+// #[test]
+// fn mutable_insert_rope_test_1() {
+//     let mut s_1 = Rope::from(String::from("aaaaa"));
+//     let mut s_2 = Rope::from(String::from("bbbbb"));
+//     let s_3 = Rope::from(String::from("ccccc"));
+//     s_2.insert_rope(0, s_3);
+//     s_1.insert_rope(0, s_2);
+//     assert_eq!(&s_1, "cccccbbbbbaaaaa");
+// }
+//
+// #[test]
+// fn mutable_insert_str_test_1() {
+//     let mut s = Rope::from("aaaaa");
+//     s.insert_str(0, "bbbbb");
+//     s.insert_str(10, "ccccc");
+//     assert_eq!(&s, "bbbbbaaaaaccccc");
+// }
+//
+// #[test]
+// fn mutable_insert_char_test_1() {
+//     let mut s = Rope::from("aaaaa");
+//     for _ in 0..5 { s.insert(0, 'b')}
+//     for _ in 0..5 { s.insert(10, 'c')}
+//     assert_eq!(&s, "bbbbbaaaaaccccc");
+// }
+//
+// #[test]
+// fn mutable_insert_char_test_2() {
+//     // this is the same as insert_char_test1() except mutable
+//     let mut s = Rope::from("aaaaa");
+//     assert_eq!(&s, "aaaaa");
+//     s.insert(5, 'b');
+//     assert_eq!(&s, "aaaaab");
+//     s.insert(4, 'b');
+//     assert_eq!(&s, "aaaabab");
+//     s.insert(3, 'b');
+//     assert_eq!(&s, "aaababab");
+//     s.insert(2, 'b');
+//     assert_eq!(&s, "aabababab");
+//     s.insert(1, 'b');
+//     assert_eq!(&s, "ababababab");
+//
+// }
 
 #[test]
-fn mutable_insert_rope_test_1() {
-    let mut s_1 = Rope::from(String::from("aaaaa"));
-    let mut s_2 = Rope::from(String::from("bbbbb"));
-    let s_3 = Rope::from(String::from("ccccc"));
-    s_2.insert_rope(0, s_3);
-    s_1.insert_rope(0, s_2);
-    assert_eq!(&s_1, "cccccbbbbbaaaaa");
-}
-
-#[test]
-fn mutable_insert_str_test_1() {
-    let mut s = Rope::from("aaaaa");
-    s.insert_str(0, "bbbbb");
-    s.insert_str(10, "ccccc");
-    assert_eq!(&s, "bbbbbaaaaaccccc");
-}
-
-#[test]
-fn mutable_insert_char_test_1() {
-    let mut s = Rope::from("aaaaa");
-    for _ in 0..5 { s.insert(0, 'b')}
-    for _ in 0..5 { s.insert(10, 'c')}
-    assert_eq!(&s, "bbbbbaaaaaccccc");
-}
-
-#[test]
-fn mutable_insert_char_test_2() {
-    // this is the same as with_insert_char_test1() except mutable
-    let mut s = Rope::from("aaaaa");
-    assert_eq!(&s, "aaaaa");
-    s.insert(5, 'b');
-    assert_eq!(&s, "aaaaab");
-    s.insert(4, 'b');
-    assert_eq!(&s, "aaaabab");
-    s.insert(3, 'b');
-    assert_eq!(&s, "aaababab");
-    s.insert(2, 'b');
-    assert_eq!(&s, "aabababab");
-    s.insert(1, 'b');
-    assert_eq!(&s, "ababababab");
-
-}
-
-#[test]
-fn with_insert_char_test_1() {
+fn insert_char_test_1() {
     let s = Rope::from("aaaaa");
-    let s_1 = s.with_insert(5, 'b');
-    let s_2 = s_1.with_insert(4, 'b');
-    let s_3 = s_2.with_insert(3, 'b');
-    let s_4 = s_3.with_insert(2, 'b');
-    let s_5 = s_4.with_insert(1, 'b');
+    let s_1 = s.insert(5, 'b');
+    let s_2 = s_1.insert(4, 'b');
+    let s_3 = s_2.insert(3, 'b');
+    let s_4 = s_3.insert(2, 'b');
+    let s_5 = s_4.insert(1, 'b');
     assert_eq!(&s, "aaaaa");
     assert_eq!(&s_1, "aaaaab");
     assert_eq!(&s_2, "aaaabab");
@@ -257,10 +219,10 @@ fn with_insert_char_test_1() {
 }
 
 #[test]
-fn with_insert_str_test_1() {
+fn insert_str_test_1() {
     let s = Rope::from("aaaaa");
-    let s_1 = s.with_insert_str(5, "ccccc");
-    let s_2 = s_1.with_insert_str(5, "bbbbb");
+    let s_1 = s.insert_str(5, "ccccc");
+    let s_2 = s_1.insert_str(5, "bbbbb");
     assert_eq!(&s, "aaaaa");
     assert_eq!(&s_1, "aaaaaccccc");
     assert_eq!(&s_2, "aaaaabbbbbccccc");
@@ -305,7 +267,7 @@ fn rope_insert_1000(b: &mut Bencher) {
         // let n = test::black_box(1000);
         // let mut rope = Rope::from("aaaa");
         for i in 0..1000 {
-            rope.insert_str(2, &i.to_string());
+            rope = rope.insert_str(2, &i.to_string());
         }
     })
 
@@ -318,7 +280,7 @@ fn string_insert_1000(b: &mut Bencher) {
         // let n = test::black_box(1000);
         // let mut string = String::from("aaaa");
         for i in 0..1000 {
-            string.insert_str(2, &i.to_string());
+            string = string.insert_str(2, &i.to_string());
         }
     })
 
