@@ -182,7 +182,7 @@ const FIB_LOOKUP: [usize; 93] = [
 #[inline(always)]
 fn fibonacci(n: usize) -> usize {
     match n { i if i <= 92 => FIB_LOOKUP[i]
-            , _ => fibonacci(n - 1) + fibonacci(n - 2)
+            , _ => panic!("large fibonacci number {} doesn't fit in usize!", n)
             }
 }
 
