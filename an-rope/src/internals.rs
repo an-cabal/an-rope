@@ -1,19 +1,30 @@
 use std::ops;
 use std::mem;
 use std::fmt;
-
 use std::rc::Rc;
+
+#[cfg(features = "with_tendrils")]
+use tendril::StrTendril;
 
 use self::Node::*;
 
 #[derive(Clone)]
 pub struct NodeLink(Rc<Node>);
 
+#[cfg(features = "with_tendrils")]
+pub enum Node {
+    /// A leaf node
+    Leaf(StrTendril)
+  , /// A branch concatenating together `l`eft and `r`ight nodes.
+    Branch(BranchNode)
+}
+
 /// A `Node` in the `Rope`'s tree.
 ///
 /// A `Node` is either a `Leaf` holding a `String`, or a
 /// a `Branch` concatenating together two `Node`s.
 #[derive(Clone)]
+#[cfg(not(features = "with_tendrils"))]
 pub enum Node {
     /// A leaf node
     Leaf(String)

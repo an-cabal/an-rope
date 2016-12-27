@@ -27,6 +27,8 @@ mod tests;
 #[cfg(test)]
 extern crate test;
 
+#[cfg(features = "with_tendrils")]
+extern crate tendril;
 
 use self::internals::{ Node, NodeLink };
 
