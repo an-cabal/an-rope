@@ -1,36 +1,44 @@
 use std::ops;
 use std::mem;
 use std::fmt;
+
+
+#[cfg(all(features = "atomic", not(feature = "with_tendrils")))]
+use std::sync::Arc;
+
+#[cfg(any(not(features = "atomic"), feature = "with_tendrils"))]
 use std::rc::Rc;
 
 #[cfg(features = "with_tendrils")]
-use tendril::StrTendril;
+use tendril;
 
 use self::Node::*;
 
+#[cfg(not(features = "with_tendrils"))]
+type LeafRepr = String;
+
+#[cfg(all(features = "with_tendrils", not(features = "atomic") ))]
+type LeafRepr = tendril::StrTendril;
+
+#[cfg(all(features = "with_tendrils", features = "atomic"))]
+type LeafRepr = tendril::tendril::Tendril<tendril::tendril::Atomic, tendril::fmt::UTF8>;
+
+#[cfg(any(not(features = "atomic"), feature = "with_tendrils"))]
 #[derive(Clone)]
 pub struct NodeLink(Rc<Node>);
 
-#[cfg(features = "with_tendrils")]
+
+#[cfg(all(features = "atomic", not(feature = "with_tendrils")))]
+#[derive(Clone)]
+pub struct NodeLink(Arc<Node>);
+
 pub enum Node {
     /// A leaf node
-    Leaf(StrTendril)
+    Leaf(LeafRepr)
   , /// A branch concatenating together `l`eft and `r`ight nodes.
     Branch(BranchNode)
 }
 
-/// A `Node` in the `Rope`'s tree.
-///
-/// A `Node` is either a `Leaf` holding a `String`, or a
-/// a `Branch` concatenating together two `Node`s.
-#[derive(Clone)]
-#[cfg(not(features = "with_tendrils"))]
-pub enum Node {
-    /// A leaf node
-    Leaf(String)
-  , /// A branch concatenating together `l`eft and `r`ight nodes.
-    Branch(BranchNode)
-}
 
 impl NodeLink {
     /// Split this `Node`'s subtree on the specified `index`.
@@ -69,7 +77,11 @@ impl NodeLink {
         }
     }
 
-    pub fn new(node: Node) -> Self { NodeLink(Rc::new(node))}
+    #[cfg(any(not(features = "atomic"), feature = "with_tendrils"))]
+    pub fn new(node: Node) -> Self { NodeLink(Rc::new(node)) }
+
+    #[cfg(all(features = "atomic", not(feature = "with_tendrils")))]
+    pub fn new(node: Node) -> Self { NodeLink(Arc::new(node)) }
 
     /// Rebalance the subrope starting at this `Node`, returning a new `Node`
     ///
@@ -270,9 +282,14 @@ impl BranchNode {
 
 impl Node {
 
-    #[inline]
+    #[cfg(any(not(features = "atomic"), feature = "with_tendrils"))]
     pub fn empty() -> NodeLink {
-        NodeLink(Rc::new(Leaf(String::new())))
+        NodeLink(Rc::new(Leaf(LeafRepr::new())))
+    }
+
+    #[cfg(all(features = "atomic", not(feature = "with_tendrils")))]
+    pub fn empty() -> NodeLink {
+        NodeLink(Arc::new(Leaf(LeafRepr::new())))
     }
 
     /// Concatenate two `Node`s to return a new `Branch` node.
@@ -282,7 +299,7 @@ impl Node {
     }
 
     #[inline]
-    pub const fn new_leaf(string: String) -> Self {
+    pub const fn new_leaf(string: LeafRepr) -> Self {
         Leaf(string)
     }
 
