@@ -311,131 +311,118 @@ fn rope_insert_1000(b: &mut Bencher) {
 
 }
 
-#[bench]
-fn string_insert_1000(b: &mut Bencher) {
-    let mut string = iter::repeat('a').take(100_000).collect::<String>();
-    b.iter(|| {
-        // let n = test::black_box(1000);
-        // let mut string = String::from("aaaa");
-        for i in 0..1000 {
-            string.insert_str(2, &i.to_string());
+macro_rules! insert_benches {
+    ( long: $lenl:expr, short: $lens:expr, $($name:ident: $frac:expr),* ) => {
+        mod insert {
+        mod rope {
+            $(
+                mod $name {
+                    use ::Rope;
+                    use ::test::Bencher;
+                    use std::iter;
+
+                    #[bench]
+                    fn long(b: &mut Bencher) {
+                        let mut rope = Rope::from(iter::repeat('a')
+                                                        .take($lenl)
+                                                        .collect::<String>());
+                        b.iter(|| {
+                            rope.insert_str( ($lenl as f64 * $frac as f64) as usize
+                                            , "bbbbbbb") })
+                    }
+
+                    #[bench]
+                    fn short(b: &mut Bencher) {
+                        let mut rope = Rope::from(iter::repeat('a')
+                                                        .take($lens)
+                                                        .collect::<String>());
+
+                        b.iter(|| {
+                            rope.insert_str( ($lens as f64 * $frac as f64) as usize
+                                            , "bb") })
+                    }
+                }
+            )*
         }
-    })
+        mod string {
+            $(
+                mod $name {
+                    use ::test::Bencher;
+                    use std::iter;
 
+                    #[bench]
+                    fn long(b: &mut Bencher) {
+                        let mut string = iter::repeat('a').take($lenl)
+                                                          .collect::<String>();
+                        b.iter(|| {
+                            string.insert_str( ($lenl as f64 * $frac as f64) as usize
+                                             , "bb")
+                        })
+                    }
+
+                    #[bench]
+                    fn short(b: &mut Bencher) {
+                        let mut string = iter::repeat('a').take($lens)
+                                                          .collect::<String>();
+                        b.iter(|| {
+                            string.insert_str( ($lens as f64 * $frac as f64) as usize
+                                             , "bb")
+                        })
+                    }
+                }
+            )*
+        }
+    }}
 }
 
-#[bench]
-fn string_insert_at_half_long(b: &mut Bencher) {
-    let mut string = iter::repeat('a').take(100_000).collect::<String>();
-    b.iter(|| { string.insert_str(50_000, "bbbbbbb") })
+macro_rules! split_benches {
+    ( long: $lenl:expr, short: $lens:expr, $($name:ident: $frac:expr),* ) => {
+        mod split {
+            $(
+                mod $name {
+                    use ::Rope;
+                    use ::test::Bencher;
+                    use std::iter;
+                    #[bench]
+                    fn long(b: &mut Bencher) {
+                        let mut rope = Rope::from(iter::repeat('a')
+                                                        .take($lenl)
+                                                        .collect::<String>());
+                        let split = || {
+                            rope.clone()
+                                .split(($lenl as f64 * $frac as f64) as usize) };
+                        b.iter(split)
+                    }
+                    #[bench]
+                    fn short(b: &mut Bencher) {
+                        let mut rope = Rope::from(iter::repeat('a')
+                                                        .take($lens)
+                                                        .collect::<String>());
+                        let split = || {
+                            rope.clone()
+                                .split(($lens as f64 * $frac as f64) as usize) };
+                        b.iter(split)
+                    }
+                }
+            )*
+        }
+    }
 }
 
-#[bench]
-fn rope_insert_at_half_long(b: &mut Bencher) {
-    let mut rope = Rope::from(iter::repeat('a')
-                                    .take(100_000)
-                                    .collect::<String>());
-    b.iter(|| { rope.insert_str(50_000, "bbbbbbb") })
+split_benches! {
+    long: 100_000, short: 100,
+        at_start: 0,
+        at_quarter: 0.25,
+        at_half: 0.5,
+        at_3quarter: 0.75,
+        at_end: 1
 }
 
-#[bench]
-fn string_insert_at_start_long(b: &mut Bencher) {
-    let mut string = iter::repeat('a').take(100_000).collect::<String>();
-    b.iter(|| { string.insert_str(1, "bbbbbbb") })
-}
-
-#[bench]
-fn rope_insert_at_start_long(b: &mut Bencher) {
-    let mut rope = Rope::from(iter::repeat('a')
-                                    .take(100_000)
-                                    .collect::<String>());
-    b.iter(|| { rope.insert_str(1, "bbbbbbb") })
-}
-
-
-#[bench]
-fn string_insert_at_half_short(b: &mut Bencher) {
-    let mut string = iter::repeat('a').take(100).collect::<String>();
-    b.iter(|| { string.insert_str(50, "bbbbbbb") })
-}
-
-#[bench]
-fn rope_insert_at_half_short(b: &mut Bencher) {
-    let mut rope = Rope::from(iter::repeat('a')
-                                    .take(100)
-                                    .collect::<String>());
-    b.iter(|| { rope.insert_str(50, "bbbbbbb") })
-}
-
-
-#[bench]
-fn string_insert_at_start_short(b: &mut Bencher) {
-    let mut string = iter::repeat('a').take(100).collect::<String>();
-    b.iter(|| { string.insert_str(1, "bbbbbbb") })
-}
-
-#[bench]
-fn rope_insert_at_start_short(b: &mut Bencher) {
-    let mut rope = Rope::from(iter::repeat('a')
-                                    .take(100)
-                                    .collect::<String>());
-    b.iter(|| { rope.insert_str(1, "bbbbbbb") })
-}
-
-#[bench]
-fn string_insert_char_at_half_long(b: &mut Bencher) {
-    let mut string = iter::repeat('a').take(100_000).collect::<String>();
-    b.iter(|| { string.insert(50_000, 'b') })
-}
-
-#[bench]
-fn rope_insert_char_at_half_long(b: &mut Bencher) {
-    let mut rope = Rope::from(iter::repeat('a')
-                                    .take(100_000)
-                                    .collect::<String>());
-    b.iter(|| { rope.insert(50_000, 'b') })
-}
-
-#[bench]
-fn string_insert_char_at_start_long(b: &mut Bencher) {
-    let mut string = iter::repeat('a').take(100_000).collect::<String>();
-    b.iter(|| { string.insert(1, 'b') })
-}
-
-#[bench]
-fn rope_insert_char_at_start_long(b: &mut Bencher) {
-    let mut rope = Rope::from(iter::repeat('a')
-                                    .take(100_000)
-                                    .collect::<String>());
-    b.iter(|| { rope.insert(1, 'b') })
-}
-
-
-#[bench]
-fn string_insert_char_at_half_short(b: &mut Bencher) {
-    let mut string = iter::repeat('a').take(100).collect::<String>();
-    b.iter(|| { string.insert(50, 'b') })
-}
-
-#[bench]
-fn rope_insert_char_at_half_short(b: &mut Bencher) {
-    let mut rope = Rope::from(iter::repeat('a')
-                                    .take(100)
-                                    .collect::<String>());
-    b.iter(|| { rope.insert(50, 'b') })
-}
-
-
-#[bench]
-fn string_insert_char_at_start_short(b: &mut Bencher) {
-    let mut string = iter::repeat('a').take(100).collect::<String>();
-    b.iter(|| { string.insert(1, 'b') })
-}
-
-#[bench]
-fn rope_insert_char_at_start_short(b: &mut Bencher) {
-    let mut rope = Rope::from(iter::repeat('a')
-                                    .take(100)
-                                    .collect::<String>());
-    b.iter(|| { rope.insert(1, 'b') })
+insert_benches! {
+    long: 100_000, short: 100,
+        at_start: 0,
+        at_quarter: 0.25,
+        at_half: 0.5,
+        at_3quarter: 0.75,
+        at_end: 1
 }
