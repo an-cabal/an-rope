@@ -251,6 +251,7 @@ impl Node {
 
     /// Returns the depth in the tree of a node
     #[inline]
+    #[cfg(feature = "rebalance")]
     fn depth(&self) -> usize {
         use std::cmp::max;
 
