@@ -268,20 +268,24 @@ fn with_insert_str_test_1() {
 
 #[bench]
 fn rope_add_1000(b: &mut Bencher) {
+    let mut rope = Rope::from(iter::repeat('a')
+                                    .take(100_000)
+                                    .collect::<String>());
+    rope.rebalance();
     b.iter(|| {
         let n = test::black_box(1000);
-        (0..n).fold(
-            Rope::from(iter::repeat('a').take(100_000).collect::<String>()),
-            |r, b| r + b.to_string())
+        (0..n).fold(rope.clone()
+        , |r, b| r + b.to_string())
     })
 
 }
 
 #[bench]
 fn string_add_1000(b: &mut Bencher) {
+    let string = iter::repeat('a').take(100_000).collect::<String>();
     b.iter(|| {
         let n = test::black_box(1000);
-        (0..n).fold(iter::repeat('a').take(100_000).collect::<String>(),
+        (0..n).fold(string.clone(),
             |s, b| s + &b.to_string())
     })
 
@@ -289,10 +293,14 @@ fn string_add_1000(b: &mut Bencher) {
 
 #[bench]
 fn rope_insert_1000(b: &mut Bencher) {
+    let mut rope = Rope::from(iter::repeat('a')
+                                    .take(100_000)
+                                    .collect::<String>());
+    rope.rebalance();
     b.iter(|| {
         let n = test::black_box(1000);
-        (0..n).fold(
-            Rope::from(iter::repeat('a').take(100_000).collect::<String>()), |mut r, b| {
+        (0..n).fold(rope.clone()
+            , |mut r, b| {
             r.insert_rope(2, Rope::from(b.to_string()));
             r
         })
@@ -302,9 +310,10 @@ fn rope_insert_1000(b: &mut Bencher) {
 
 #[bench]
 fn string_insert_1000(b: &mut Bencher) {
+    let mut string = iter::repeat('a').take(100_000).collect::<String>();
     b.iter(|| {
         let n = test::black_box(1000);
-        (0..n).fold(iter::repeat('a').take(100_000).collect::<String>(),
+        (0..n).fold(string.clone(),
             |mut s, b| {
                 s.insert_str(2, &b.to_string());
                 s
