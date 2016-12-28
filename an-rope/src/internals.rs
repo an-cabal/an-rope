@@ -83,7 +83,6 @@ const FIB_LOOKUP: [usize; 93] = [
 
 
 /// Returns the _n_th fibonacci number.
-// TODO: replace with an iterative implementation and/or lookup table?
 #[inline]
 fn fibonacci(n: usize) -> usize {
     if n <= 93 { FIB_LOOKUP[n] }
@@ -226,8 +225,8 @@ impl Node {
     /// – from "Ropes: An Alternative to Strings"
     #[inline]
     pub fn is_balanced(&self) -> bool {
-        // self.len() >= fibonacci(self.depth() + 2)
-        true
+        self.len() >= fibonacci(self.depth() + 2)
+        // true
     }
 
 
@@ -293,6 +292,7 @@ impl Node {
             let mut leaves: Vec<Option<Node>> =
                 self.into_leaves().map(Option::Some).collect();
             let len = leaves.len();
+            #[inline]
             fn _rebalance(l: &mut Vec<Option<Node>>, start: usize, end: usize)
                           -> Node {
                 match end - start {
@@ -434,13 +434,15 @@ impl<'a> Iterator for Leaves<'a> {
     type Item = &'a Node;
 
     fn next(&mut self) -> Option<Self::Item> {
-        match self.0.pop() {
-            None => None
-          , Some(leaf @ &Leaf(_)) => Some(leaf)
-          , Some(&Branch(BranchNode { ref left, ref right, .. })) => {
-                self.0.push(right);
-                self.0.push(left);
-                self.next()
+        loop {
+            match self.0.pop() {
+                None => return None
+              , Some(&Leaf(ref s)) if s.len() == 0 => {}
+              , leaf @ Some(&Leaf(_))=> return leaf
+              , Some(&Branch(BranchNode { ref left, ref right, .. })) => {
+                    self.0.push(right);
+                    self.0.push(left);
+                }
             }
         }
     }
@@ -451,14 +453,17 @@ struct IntoLeaves(Vec<Node>);
 
 impl Iterator for IntoLeaves {
     type Item = Node;
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        match self.0.pop() {
-            None => None
-          , Some(leaf @ Leaf(_)) => Some(leaf)
-          , Some(Branch(BranchNode { box left, box right, .. })) => {
-                self.0.push(right);
-                self.0.push(left);
-                self.next()
+        loop {
+            match self.0.pop() {
+                None => return None
+              , Some(Leaf(ref s)) if s.len() == 0 => {}
+              , leaf @ Some(Leaf(_))=> return leaf
+              , Some(Branch(BranchNode { box left, box right, .. })) => {
+                    self.0.push(right);
+                    self.0.push(left);
+                }
             }
         }
     }
