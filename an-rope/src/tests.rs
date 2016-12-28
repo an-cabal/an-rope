@@ -230,16 +230,14 @@ fn insert_str_test_1() {
 
 #[bench]
 fn rope_add_1000(b: &mut Bencher) {
-    let mut rope = Rope::from(iter::repeat('a')
+    let rope = Rope::from(iter::repeat('a')
                                     .take(100_000)
                                     .collect::<String>());
     // rope.rebalance();
     b.iter(|| {
         let n = test::black_box(1000);
         // let mut rope = Rope::new();
-        for i in 0..n {
-            rope += i.to_string();
-        }
+        (0..n).fold(rope.clone(), |ref r, i| r + &i.to_string()[..] )
     })
 
 }
@@ -280,7 +278,7 @@ fn string_insert_1000(b: &mut Bencher) {
         // let n = test::black_box(1000);
         // let mut string = String::from("aaaa");
         for i in 0..1000 {
-            string = string.insert_str(2, &i.to_string());
+            string.insert_str(2, &i.to_string());
         }
     })
 
