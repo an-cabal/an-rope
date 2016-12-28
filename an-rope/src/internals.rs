@@ -1,5 +1,4 @@
 use std::ops;
-use std::mem;
 use std::fmt;
 
 use self::Node::*;
@@ -24,6 +23,7 @@ impl fmt::Debug for Node {
         }
     }
 }
+
 impl fmt::Display for Node {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
