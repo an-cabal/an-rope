@@ -333,12 +333,12 @@ macro_rules! insert_benches {
                 mod $name {
                     use ::Rope;
                     use ::test::Bencher;
-                    use std::iter;
+                    use std::iter::repeat;
                     macro_rules! mk_bench {
                         ( $n:ident: $fun:ident, $l:expr, $ins:expr) => {
                             #[bench] fn $n(b: &mut Bencher) {
-                                let mut rope = Rope::from(iter::repeat('a')
-                                                    .take($l).collect::<String>());
+                                let mut rope = Rope::from(repeat('a').take($l)
+                                                        .collect::<String>());
                                 b.iter(|| { rope.$fun(
                                     ($l as f64 * $frac as f64) as usize, $ins)
                                 })
@@ -350,10 +350,10 @@ macro_rules! insert_benches {
                     mk_bench! { char_long: insert, $lenl, 'c' }
                     mk_bench! { char_short: insert, $lens, 'c' }
                     mk_bench! { rope_long: insert_rope, $lenl,
-                        Rope::from(iter::repeat('a').take($lenl)
+                        Rope::from(repeat('a').take($lenl)
                                     .collect::<String>()) }
-                    mk_bench! { rope_short: insert_rope, $lenl,
-                        Rope::from(iter::repeat('a').take($lens)
+                    mk_bench! { rope_short: insert_rope, $lens,
+                        Rope::from(repeat('a').take($lens)
                                     .collect::<String>()) }
                 }
             )*
@@ -362,12 +362,12 @@ macro_rules! insert_benches {
             $(
                 mod $name {
                     use ::test::Bencher;
-                    use std::iter;
+                    use std::iter::repeat;
                     macro_rules! mk_bench {
                         ( $n:ident: $fun:ident, $l:expr, $ins:expr) => {
                             #[bench] fn $n(b: &mut Bencher) {
-                                let mut string = iter::repeat('a').take($l)
-                                                    .collect::<String>();
+                                let mut string = repeat('a').take($l)
+                                                .collect::<String>();
                                 b.iter(|| { string.$fun(
                                     ($l as f64 * $frac as f64) as usize, $ins)
                                 })
@@ -391,12 +391,11 @@ macro_rules! split_benches {
                 mod $name {
                     use ::Rope;
                     use ::test::Bencher;
-                    use std::iter;
+                    use std::iter::repeat;
                     #[bench]
                     fn long(b: &mut Bencher) {
-                        let mut rope = Rope::from(iter::repeat('a')
-                                                        .take($lenl)
-                                                        .collect::<String>());
+                        let rope = Rope::from(repeat('a').take($lenl)
+                                                         .collect::<String>());
                         let split = || {
                             rope.clone()
                                 .split(($lenl as f64 * $frac as f64) as usize) };
@@ -404,9 +403,8 @@ macro_rules! split_benches {
                     }
                     #[bench]
                     fn short(b: &mut Bencher) {
-                        let mut rope = Rope::from(iter::repeat('a')
-                                                        .take($lens)
-                                                        .collect::<String>());
+                        let rope = Rope::from(repeat('a').take($lens)
+                                                         .collect::<String>());
                         let split = || {
                             rope.clone()
                                 .split(($lens as f64 * $frac as f64) as usize) };
