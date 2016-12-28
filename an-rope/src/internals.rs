@@ -191,8 +191,8 @@ impl Node {
                 // splitting a leaf node with length >= 2 returns two new Leaf
                 // nodes, one with the left half of the string, and one with
                 // the right
-                let left = Leaf(s[..index].to_string());
-                let right = Leaf(s[index..].to_string());
+                let left = Leaf(s[..index].into());
+                let right = Leaf(s[index..].into());
                 (left, right)
             }
           , Branch(node) =>
@@ -203,7 +203,7 @@ impl Node {
 
     #[inline]
     pub fn empty() -> Self {
-        Leaf(String::new())
+        Leaf("".into())
     }
 
     /// Concatenate two `Node`s to return a new `Branch` node.
@@ -213,9 +213,10 @@ impl Node {
     }
 
     #[inline]
-    pub const fn new_leaf(string: String) -> Self {
+    pub const fn new_leaf(string: LeafRepr) -> Self {
         Leaf(string)
     }
+
 
     /// Returns true if this node is balanced
     ///
@@ -362,9 +363,26 @@ impl Node {
     ///
     /// Consumes `self`.
     #[inline]
+    #[cfg(not(feature = "with_tendrils"))]
     pub fn into_strings(self) -> impl Iterator<Item=String> {
         self.into_leaves().map(|n| match n {
             Leaf(s) => s
+            , _ => unreachable!("Node.into_leaves() iterator contained \
+                                 something  that wasn't a leaf. Barring _force \
+                                 majeure_, this should be impossible. \
+                                 Something's broken.")
+        })
+    }
+
+
+    /// Returns a move iterator over all the strings in this `Node`s subrope'
+    ///
+    /// Consumes `self`.
+    #[inline]
+    #[cfg(feature = "with_tendrils")]
+    pub fn into_strings(self) -> impl Iterator<Item=String> {
+        self.into_leaves().map(|n| match n {
+            Leaf(s) => s.into()
             , _ => unreachable!("Node.into_leaves() iterator contained \
                                  something  that wasn't a leaf. Barring _force \
                                  majeure_, this should be impossible. \

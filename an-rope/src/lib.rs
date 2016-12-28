@@ -20,8 +20,11 @@ use std::ops;
 use std::convert;
 use std::fmt;
 use std::string;
+
 #[cfg(feature = "with_tendrils")]
 extern crate tendril;
+#[cfg(feature = "with_tendrils")]
+use tendril::StrTendril;
 
 #[cfg(test)]
 mod tests;
@@ -740,7 +743,27 @@ impl convert::Into<Vec<u8>> for Rope {
 
 }
 
+#[cfg(feature = "with_tendrils")]
+impl convert::From<StrTendril> for Rope {
+    fn from(tendril: StrTendril) -> Rope {
+        Rope { root: Node::new_leaf(tendril) }
+    }
+}
+
 impl convert::From<String> for Rope {
+
+
+    #[cfg(feature = "with_tendrils")]
+    #[inline]
+    fn from(string: String) -> Rope {
+        Rope {
+            root: if string.len() == 0 { Node::empty() }
+                  else { Node::new_leaf(StrTendril::from(string)) }
+        }
+    }
+
+
+    #[cfg(not(feature = "with_tendrils"))]
     #[inline]
     fn from(string: String) -> Rope {
         Rope {
@@ -750,7 +773,15 @@ impl convert::From<String> for Rope {
     }
 }
 
+
 impl<'a> convert::From<&'a str> for Rope {
+    #[cfg(feature = "with_tendrils")]
+    #[inline]
+    fn from(string: &'a str) -> Rope {
+         Rope::from(StrTendril::from_slice(string))
+     }
+
+    #[cfg(not(feature = "with_tendrils"))]
     #[inline]
     fn from(string: &'a str) -> Rope { Rope::from(String::from(string)) }
 }
