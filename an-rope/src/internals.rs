@@ -8,7 +8,7 @@ use self::Node::*;
 #[cfg(not(features = "with_tendrils"))]
 type LeafRepr = String;
 
-#[cfg(all(features = "with_tendrils", not(features = "atomic") ))]
+#[cfg(all(features = "with_tendrils"))]
 type LeafRepr = tendril::StrTendril;
 
 /// A `Node` in the `Rope`'s tree.
@@ -217,12 +217,12 @@ impl Node {
 
     /// Returns true if this node is balanced
     ///
-    /// "We define the depth of a leaf to be 0, and the depth of a
-    /// concatenation to be one plus the maximum depth of its children. Let
-    /// _Fn_ be the _n_th Fibonacci number. A rope of depth _n_ is balanced if
-    /// its length is at least _Fn_+2, e.g. a balanced rope of depth 1 must
-    /// have length at least 2. Note that balanced ropes may contain unbalanced
-    /// subropes."
+    /// > We define the depth of a leaf to be 0, and the depth of a
+    /// > concatenation to be one plus the maximum depth of its children. Let
+    /// > _Fn_ be the _n_th Fibonacci number. A rope of depth _n_ is balanced if
+    /// > its length is at least _Fn_+2, e.g. a balanced rope of depth 1 must
+    /// > have length at least 2. Note that balanced ropes may contain
+    /// > unbalanced subropes.
     /// – from "Ropes: An Alternative to Strings"
     #[inline]
     pub fn is_balanced(&self) -> bool {
@@ -245,7 +245,6 @@ impl Node {
 
 
     /// Returns the length of a node
-    //  TODO: do we want to cache this?
     #[inline]
     pub fn len(&self) -> usize {
         match self { &Leaf(ref s) => s.len()
