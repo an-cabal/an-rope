@@ -1,5 +1,6 @@
 use std::ops;
 use std::fmt;
+use std::iter;
 
 use self::Node::*;
 
@@ -15,23 +16,30 @@ pub enum Node {
     Branch(BranchNode)
 }
 
+
 impl fmt::Debug for Node {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            Leaf(ref string) => write!(f, "{:?}", string)
-          , Branch(ref branch) => write!(f, "{:?}", branch)
-        }
+        self.nodes()
+            .fold(Ok(()), |r, node| r.and_then(|_| write!(f, "{:?}", node)))
     }
 }
 
+
 impl fmt::Display for Node {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            Leaf(ref string) => write!(f, "{}", string)
-          , Branch(ref branch) => write!(f, "{}", branch)
-        }
+        self.strings()
+            .fold(Ok(()), |r, string| r.and_then(|_| write!(f, "{}", string)))
     }
 }
+
+// impl fmt::Display for Node {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         match *self {
+//             Leaf(ref string) => write!(f, "{}", string)
+//           , Branch(ref branch) => write!(f, "{}", branch)
+//         }
+//     }
+// }
 
 #[derive(Clone)]
 pub struct BranchNode {
@@ -295,12 +303,20 @@ impl Node {
         }
     }
 
+    /// Returns an iterator over all the `Nodes` in this `Node`'s subtree
+    #[inline]
+    fn nodes<'a>(&'a self) -> Nodes<'a> {
+        Nodes(vec!(self))
+    }
+
     /// Returns an iterator over all leaf nodes in this `Node`'s subrope
+    #[inline]
     fn leaves<'a>(&'a self) -> Leaves<'a> {
         Leaves(vec![self])
     }
 
     /// Returns a move iterator over all leaf nodes in this `Node`'s subrope
+    #[inline]
     fn into_leaves(self) -> IntoLeaves {
         IntoLeaves(vec![self])
     }
@@ -309,7 +325,7 @@ impl Node {
     /// Returns an iterator over all the strings in this `Node`s subrope'
     #[inline]
     pub fn strings<'a>(&'a self) -> impl Iterator<Item=&'a str> {
-        box self.leaves().map(|n| match n {
+        self.leaves().map(|n| match n {
             &Leaf(ref s) => s.as_ref()
           , _ => unreachable!("Node.leaves() iterator contained something \
                                that wasn't a leaf. Barring _force majeure_, \
@@ -322,7 +338,7 @@ impl Node {
     /// Consumes `self`.
     #[inline]
     pub fn into_strings(self) -> impl Iterator<Item=String> {
-        box self.into_leaves().map(|n| match n {
+        self.into_leaves().map(|n| match n {
             Leaf(s) => s
             , _ => unreachable!("Node.into_leaves() iterator contained \
                                  something  that wasn't a leaf. Barring _force \
@@ -387,7 +403,7 @@ impl Node {
 
 }
 
-/// An iterator over a series of `Node`s
+/// An that performs a left traversal over a series of `Node`s
 struct Nodes<'a>(Vec<&'a Node>);
 
 impl<'a> Iterator for Nodes<'a> {
@@ -404,6 +420,7 @@ impl<'a> Iterator for Nodes<'a> {
 }
 
 /// An iterator over a series of leaf `Node`s
+// TODO: this _could_ be implemented as `nodes.filter(node.is_leaf)`
 struct Leaves<'a>(Vec<&'a Node>);
 
 impl<'a> Iterator for Leaves<'a> {
