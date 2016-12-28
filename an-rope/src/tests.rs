@@ -311,36 +311,50 @@ fn rope_insert_1000(b: &mut Bencher) {
 
 }
 
+#[bench]
+fn string_insert_1000(b: &mut Bencher) {
+    let mut string = iter::repeat('a').take(100_000).collect::<String>();
+    b.iter(|| {
+        // let n = test::black_box(1000);
+        // let mut string = String::from("aaaa");
+        for i in 0..1000 {
+            string.insert_str(2, &i.to_string());
+        }
+    })
+
+}
+
 macro_rules! insert_benches {
     ( long: $lenl:expr, short: $lens:expr, $($name:ident: $frac:expr),* ) => {
         mod insert {
         mod rope {
             $(
+
                 mod $name {
                     use ::Rope;
                     use ::test::Bencher;
                     use std::iter;
-
-                    #[bench]
-                    fn long(b: &mut Bencher) {
-                        let mut rope = Rope::from(iter::repeat('a')
-                                                        .take($lenl)
-                                                        .collect::<String>());
-                        b.iter(|| {
-                            rope.insert_str( ($lenl as f64 * $frac as f64) as usize
-                                            , "bbbbbbb") })
+                    macro_rules! mk_bench {
+                        ( $n:ident: $fun:ident, $l:expr, $ins:expr) => {
+                            #[bench] fn $n(b: &mut Bencher) {
+                                let mut rope = Rope::from(iter::repeat('a')
+                                                    .take($l).collect::<String>());
+                                b.iter(|| { rope.$fun(
+                                    ($l as f64 * $frac as f64) as usize, $ins)
+                                })
+                            }
+                        }
                     }
-
-                    #[bench]
-                    fn short(b: &mut Bencher) {
-                        let mut rope = Rope::from(iter::repeat('a')
-                                                        .take($lens)
-                                                        .collect::<String>());
-
-                        b.iter(|| {
-                            rope.insert_str( ($lens as f64 * $frac as f64) as usize
-                                            , "bb") })
-                    }
+                    mk_bench! { long: insert_str, $lenl, "bbbbbbb" }
+                    mk_bench! { short: insert_str, $lens, "bb" }
+                    mk_bench! { char_long: insert, $lenl, 'c' }
+                    mk_bench! { char_short: insert, $lens, 'c' }
+                    mk_bench! { rope_long: insert_rope, $lenl,
+                        Rope::from(iter::repeat('a').take($lenl)
+                                    .collect::<String>()) }
+                    mk_bench! { rope_short: insert_rope, $lenl,
+                        Rope::from(iter::repeat('a').take($lens)
+                                    .collect::<String>()) }
                 }
             )*
         }
@@ -349,26 +363,21 @@ macro_rules! insert_benches {
                 mod $name {
                     use ::test::Bencher;
                     use std::iter;
-
-                    #[bench]
-                    fn long(b: &mut Bencher) {
-                        let mut string = iter::repeat('a').take($lenl)
-                                                          .collect::<String>();
-                        b.iter(|| {
-                            string.insert_str( ($lenl as f64 * $frac as f64) as usize
-                                             , "bb")
-                        })
+                    macro_rules! mk_bench {
+                        ( $n:ident: $fun:ident, $l:expr, $ins:expr) => {
+                            #[bench] fn $n(b: &mut Bencher) {
+                                let mut string = iter::repeat('a').take($l)
+                                                    .collect::<String>();
+                                b.iter(|| { string.$fun(
+                                    ($l as f64 * $frac as f64) as usize, $ins)
+                                })
+                            }
+                        }
                     }
-
-                    #[bench]
-                    fn short(b: &mut Bencher) {
-                        let mut string = iter::repeat('a').take($lens)
-                                                          .collect::<String>();
-                        b.iter(|| {
-                            string.insert_str( ($lens as f64 * $frac as f64) as usize
-                                             , "bb")
-                        })
-                    }
+                    mk_bench! { long: insert_str, $lenl, "bbbbbbb" }
+                    mk_bench! { short: insert_str, $lens, "bb" }
+                    mk_bench! { char_long: insert, $lenl, 'c' }
+                    mk_bench! { char_short: insert, $lens, 'c'  }
                 }
             )*
         }
