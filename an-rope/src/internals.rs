@@ -211,7 +211,8 @@ impl Node {
     /// – from "Ropes: An Alternative to Strings"
     #[inline]
     pub fn is_balanced(&self) -> bool {
-        self.len() >= fibonacci(self.depth() + 2)
+        // self.len() >= fibonacci(self.depth() + 2)
+        true
     }
 
 
@@ -386,11 +387,28 @@ impl Node {
 
 }
 
+/// An iterator over a series of `Node`s
+struct Nodes<'a>(Vec<&'a Node>);
+
+impl<'a> Iterator for Nodes<'a> {
+    type Item = &'a Node;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let node = self.0.pop();
+        if let Some(&Branch(BranchNode { ref left, ref right, ..})) = node {
+            self.0.push(right);
+            self.0.push(left);
+        };
+        node
+    }
+}
+
 /// An iterator over a series of leaf `Node`s
 struct Leaves<'a>(Vec<&'a Node>);
 
 impl<'a> Iterator for Leaves<'a> {
     type Item = &'a Node;
+
     fn next(&mut self) -> Option<Self::Item> {
         match self.0.pop() {
             None => None
