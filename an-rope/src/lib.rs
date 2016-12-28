@@ -20,7 +20,7 @@ use std::ops;
 use std::convert;
 use std::fmt;
 use std::string;
-#[cfg(features = "with_tendrils")]
+#[cfg(feature = "with_tendrils")]
 extern crate tendril;
 
 #[cfg(test)]
