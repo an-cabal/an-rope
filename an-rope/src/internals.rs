@@ -1,6 +1,5 @@
 use std::ops;
 use std::fmt;
-use std::iter;
 
 use self::Node::*;
 
@@ -241,9 +240,8 @@ impl Node {
     //  TODO: do we want to cache this?
     pub fn len(&self) -> usize {
         match self { &Leaf(ref s) => s.len()
-                   , &Branch(BranchNode { ref left, ref right, .. }) =>
-                        left.len() + right.len()
-                    }
+                   , &Branch(_) => self.leaves().map(Node::len).sum()
+                   }
     }
 
     /// Calculates the weight of a node
@@ -303,7 +301,8 @@ impl Node {
         }
     }
 
-    /// Returns an iterator over all the `Nodes` in this `Node`'s subtree
+    /// Returns an iterator that performs an in-order traversal over all the
+    /// `Nodes` in this `Node`'s subtree
     #[inline]
     fn nodes<'a>(&'a self) -> Nodes<'a> {
         Nodes(vec!(self))
