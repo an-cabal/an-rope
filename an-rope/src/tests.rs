@@ -271,22 +271,26 @@ fn rope_add_1000(b: &mut Bencher) {
     let mut rope = Rope::from(iter::repeat('a')
                                     .take(100_000)
                                     .collect::<String>());
-    rope.rebalance();
+    // rope.rebalance();
     b.iter(|| {
         let n = test::black_box(1000);
-        (0..n).fold(rope.clone()
-        , |r, b| r + b.to_string())
+        // let mut rope = Rope::new();
+        for i in 0..n {
+            rope += i.to_string();
+        }
     })
 
 }
 
 #[bench]
 fn string_add_1000(b: &mut Bencher) {
-    let string = iter::repeat('a').take(100_000).collect::<String>();
+    let mut string = iter::repeat('a').take(100_000).collect::<String>();
     b.iter(|| {
         let n = test::black_box(1000);
-        (0..n).fold(string.clone(),
-            |s, b| s + &b.to_string())
+        // let mut string = String::new();
+        for i in 0..n {
+            string += &i.to_string();
+        }
     })
 
 }
@@ -296,14 +300,13 @@ fn rope_insert_1000(b: &mut Bencher) {
     let mut rope = Rope::from(iter::repeat('a')
                                     .take(100_000)
                                     .collect::<String>());
-    rope.rebalance();
+    // rope.rebalance();
     b.iter(|| {
         let n = test::black_box(1000);
-        (0..n).fold(rope.clone()
-            , |mut r, b| {
-            r.insert_rope(2, Rope::from(b.to_string()));
-            r
-        })
+        // let mut rope = Rope::from("aaaa");
+        for i in 0..n {
+            rope.insert_str(2, &i.to_string())
+        }
     })
 
 }
@@ -313,11 +316,10 @@ fn string_insert_1000(b: &mut Bencher) {
     let mut string = iter::repeat('a').take(100_000).collect::<String>();
     b.iter(|| {
         let n = test::black_box(1000);
-        (0..n).fold(string.clone(),
-            |mut s, b| {
-                s.insert_str(2, &b.to_string());
-                s
-            })
+        // let mut string = String::from("aaaa");
+        for i in 0..n {
+            string.insert_str(2, &i.to_string())
+        }
     })
 
 }
