@@ -267,6 +267,7 @@ fn rope_insert_1000(b: &mut Bencher) {
         for i in 0..1000 {
             rope = rope.insert_str(2, &i.to_string());
         }
+
     })
 
 }
