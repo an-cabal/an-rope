@@ -238,9 +238,10 @@ impl Node {
 
     /// Returns the length of a node
     //  TODO: do we want to cache this?
+    #[inline]
     pub fn len(&self) -> usize {
         match self { &Leaf(ref s) => s.len()
-                   , &Branch(_) => self.leaves().map(Node::len).sum()
+                   , &Branch(BranchNode { len, ..}) => len
                    }
     }
 

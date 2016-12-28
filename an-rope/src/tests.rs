@@ -302,10 +302,10 @@ fn rope_insert_1000(b: &mut Bencher) {
                                     .collect::<String>());
     // rope.rebalance();
     b.iter(|| {
-        let n = test::black_box(1000);
+        // let n = test::black_box(1000);
         // let mut rope = Rope::from("aaaa");
-        for i in 0..n {
-            rope.insert_str(2, &i.to_string())
+        for i in 0..1000 {
+            rope.insert_str(2, &i.to_string());
         }
     })
 
@@ -315,10 +315,10 @@ fn rope_insert_1000(b: &mut Bencher) {
 fn string_insert_1000(b: &mut Bencher) {
     let mut string = iter::repeat('a').take(100_000).collect::<String>();
     b.iter(|| {
-        let n = test::black_box(1000);
+        // let n = test::black_box(1000);
         // let mut string = String::from("aaaa");
-        for i in 0..n {
-            string.insert_str(2, &i.to_string())
+        for i in 0..1000 {
+            string.insert_str(2, &i.to_string());
         }
     })
 
