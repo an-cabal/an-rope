@@ -323,3 +323,119 @@ fn string_insert_1000(b: &mut Bencher) {
     })
 
 }
+
+#[bench]
+fn string_insert_at_half_long(b: &mut Bencher) {
+    let mut string = iter::repeat('a').take(100_000).collect::<String>();
+    b.iter(|| { string.insert_str(50_000, "bbbbbbb") })
+}
+
+#[bench]
+fn rope_insert_at_half_long(b: &mut Bencher) {
+    let mut rope = Rope::from(iter::repeat('a')
+                                    .take(100_000)
+                                    .collect::<String>());
+    b.iter(|| { rope.insert_str(50_000, "bbbbbbb") })
+}
+
+#[bench]
+fn string_insert_at_start_long(b: &mut Bencher) {
+    let mut string = iter::repeat('a').take(100_000).collect::<String>();
+    b.iter(|| { string.insert_str(1, "bbbbbbb") })
+}
+
+#[bench]
+fn rope_insert_at_start_long(b: &mut Bencher) {
+    let mut rope = Rope::from(iter::repeat('a')
+                                    .take(100_000)
+                                    .collect::<String>());
+    b.iter(|| { rope.insert_str(1, "bbbbbbb") })
+}
+
+
+#[bench]
+fn string_insert_at_half_short(b: &mut Bencher) {
+    let mut string = iter::repeat('a').take(100).collect::<String>();
+    b.iter(|| { string.insert_str(50, "bbbbbbb") })
+}
+
+#[bench]
+fn rope_insert_at_half_short(b: &mut Bencher) {
+    let mut rope = Rope::from(iter::repeat('a')
+                                    .take(100)
+                                    .collect::<String>());
+    b.iter(|| { rope.insert_str(50, "bbbbbbb") })
+}
+
+
+#[bench]
+fn string_insert_at_start_short(b: &mut Bencher) {
+    let mut string = iter::repeat('a').take(100).collect::<String>();
+    b.iter(|| { string.insert_str(1, "bbbbbbb") })
+}
+
+#[bench]
+fn rope_insert_at_start_short(b: &mut Bencher) {
+    let mut rope = Rope::from(iter::repeat('a')
+                                    .take(100)
+                                    .collect::<String>());
+    b.iter(|| { rope.insert_str(1, "bbbbbbb") })
+}
+
+#[bench]
+fn string_insert_char_at_half_long(b: &mut Bencher) {
+    let mut string = iter::repeat('a').take(100_000).collect::<String>();
+    b.iter(|| { string.insert(50_000, 'b') })
+}
+
+#[bench]
+fn rope_insert_char_at_half_long(b: &mut Bencher) {
+    let mut rope = Rope::from(iter::repeat('a')
+                                    .take(100_000)
+                                    .collect::<String>());
+    b.iter(|| { rope.insert(50_000, 'b') })
+}
+
+#[bench]
+fn string_insert_char_at_start_long(b: &mut Bencher) {
+    let mut string = iter::repeat('a').take(100_000).collect::<String>();
+    b.iter(|| { string.insert(1, 'b') })
+}
+
+#[bench]
+fn rope_insert_char_at_start_long(b: &mut Bencher) {
+    let mut rope = Rope::from(iter::repeat('a')
+                                    .take(100_000)
+                                    .collect::<String>());
+    b.iter(|| { rope.insert(1, 'b') })
+}
+
+
+#[bench]
+fn string_insert_char_at_half_short(b: &mut Bencher) {
+    let mut string = iter::repeat('a').take(100).collect::<String>();
+    b.iter(|| { string.insert(50, 'b') })
+}
+
+#[bench]
+fn rope_insert_char_at_half_short(b: &mut Bencher) {
+    let mut rope = Rope::from(iter::repeat('a')
+                                    .take(100)
+                                    .collect::<String>());
+    b.iter(|| { rope.insert(50, 'b') })
+}
+
+
+#[bench]
+fn string_insert_char_at_start_short(b: &mut Bencher) {
+    let mut string = iter::repeat('a').take(100).collect::<String>();
+    b.iter(|| { string.insert(1, 'b') })
+}
+
+#[bench]
+fn rope_insert_char_at_start_short(b: &mut Bencher) {
+    let mut rope = Rope::from(iter::repeat('a')
+                                    .take(100)
+                                    .collect::<String>());
+    b.iter(|| { rope.insert(1, 'b') })
+}
