@@ -1,7 +1,15 @@
 use std::ops;
 use std::fmt;
+#[cfg(features = "with_tendrils")]
+use tendril;
 
 use self::Node::*;
+
+#[cfg(not(features = "with_tendrils"))]
+type LeafRepr = String;
+
+#[cfg(all(features = "with_tendrils", not(features = "atomic") ))]
+type LeafRepr = tendril::StrTendril;
 
 /// A `Node` in the `Rope`'s tree.
 ///
@@ -10,7 +18,7 @@ use self::Node::*;
 #[derive(Clone)]
 pub enum Node {
     /// A leaf node
-    Leaf(String)
+    Leaf(LeafRepr)
   , /// A branch concatenating together `l`eft and `r`ight nodes.
     Branch(BranchNode)
 }
