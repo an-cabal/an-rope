@@ -15,6 +15,7 @@ license = "MIT"
 default = []
 with_tendrils = ["tendril"]
 rebalance = []
+string_benchmarks = []
 
 [dependencies.tendril]
 version = "0.2.3"

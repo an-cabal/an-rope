@@ -282,6 +282,7 @@ fn rope_add_1000(b: &mut Bencher) {
 
 }
 
+#[cfg(feature = "string_benchmarks")]
 #[bench]
 fn string_add_1000(b: &mut Bencher) {
     let mut string = iter::repeat('a').take(100_000).collect::<String>();
@@ -311,6 +312,7 @@ fn rope_insert_1000(b: &mut Bencher) {
 
 }
 
+#[cfg(feature = "string_benchmarks")]
 #[bench]
 fn string_insert_1000(b: &mut Bencher) {
     let mut string = iter::repeat('a').take(100_000).collect::<String>();
@@ -358,6 +360,7 @@ macro_rules! insert_benches {
                 }
             )*
         }
+        #[cfg(feature = "string_benchmarks")]
         mod string {
             $(
                 mod $name {
