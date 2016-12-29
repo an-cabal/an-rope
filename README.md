@@ -2,8 +2,8 @@
 
 An text editor implemented in Rust.
 
-## Modules
+# Modules
 
-#### an-rope [![crates.io](https://img.shields.io/crates/v/an-rope.svg)](https://crates.io/crates/an-rope) [![RustDoc documentation](https://docs.rs/an-rope/badge.svg)](https://docs.rs/an-rope)
+## an-rope [![crates.io](https://img.shields.io/crates/v/an-rope.svg)](https://crates.io/crates/an-rope) [![RustDoc documentation](https://docs.rs/an-rope/badge.svg)](https://docs.rs/an-rope)
 
 `an-rope` is an implementation of the Rope data structure for representing large text documents.
