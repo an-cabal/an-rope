@@ -460,6 +460,24 @@ fn iter_extend_string_nonempty () {
     assert_eq!(&rope, "aaaabbbbcccc");
 }
 
+
+#[test]
+fn iter_extend_rope_empty () {
+    let mut rope = Rope::from("");
+    rope.extend(vec![ Rope::from("aaaa")
+                    , Rope::from("bbbb")
+                    , Rope::from("cccc")
+                    ]);
+    assert_eq!(&rope, "aaaabbbbcccc");
+}
+
+#[test]
+fn iter_extend_rope_nonempty () {
+    let mut rope = Rope::from("aaaa");
+    rope.extend(vec![Rope::from("bbbb"), Rope::from("cccc")]);
+    assert_eq!(&rope, "aaaabbbbcccc");
+}
+
 #[test]
 fn iter_extend_chars_empty () {
     let mut rope = Rope::from("");
