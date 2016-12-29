@@ -1053,7 +1053,9 @@ impl iter::Extend<char> for Rope{
 
     fn extend<T>(&mut self, iter: T)
     where T: IntoIterator<Item=char> {
-        unimplemented!()
+        let s: String = iter.into_iter().collect();
+        let r: Rope = Rope::from(s);
+        self.append(r);
     }
 
 }
