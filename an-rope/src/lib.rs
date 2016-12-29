@@ -1073,7 +1073,7 @@ impl<'a> iter::Extend<&'a str> for Rope {
 
     fn extend<T>(&mut self, iter: T)
     where T: IntoIterator<Item=&'a str> {
-        unimplemented!()
+        for s in iter {self.append(Rope::from(s));}
     }
 
 }
