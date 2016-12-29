@@ -2,7 +2,12 @@
 name = "an-rope"
 description = "an rope for large text documents."
 version = "0.0.1"
-authors = ["Eliza Weisman <hi@hawkweisman.me>", "Chris McDonald <mail.chris.mcdonald@gmail.com>"]
+authors = [ "Eliza Weisman <hi@hawkweisman.me>"
+          , "Chris McDonald <mail.chris.mcdonald@gmail.com>"
+          , "Rachel Leigh"]
+repository = "https://github.com/hawkw/an-editor"
+homepage = "https://github.com/hawkw/an-editor"
+readme = "README.md"
 
 [features]
 # no features by default
