@@ -514,7 +514,7 @@ fn iter_extend_chars_nonempty () {
 #[test]
 fn iter_extend_char_ptr_empty () {
     let mut rope = Rope::from("");
-    rope.extend(vec![&'a', &'b', &'c', &'d']);
+    rope.extend(&vec!['a', 'b', 'c', 'd']);
     assert_eq!(&rope, "abcd");
 }
 
