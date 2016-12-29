@@ -351,12 +351,30 @@ macro_rules! insert_benches {
                     mk_bench! { short: insert_str, $lens, "bb" }
                     mk_bench! { char_long: insert, $lenl, 'c' }
                     mk_bench! { char_short: insert, $lens, 'c' }
-                    mk_bench! { rope_long: insert_rope, $lenl,
-                        Rope::from(repeat('a').take($lenl)
-                                    .collect::<String>()) }
-                    mk_bench! { rope_short: insert_rope, $lens,
-                        Rope::from(repeat('a').take($lens)
-                                    .collect::<String>()) }
+
+                    #[bench] fn rope_long(b: &mut Bencher) {
+                        let mut rope = Rope::from(repeat('a').take($lenl)
+                                                .collect::<String>());
+                        let rope2 = rope.clone();
+                        b.iter(|| { rope.insert_rope(
+                            ($lenl as f64 * $frac as f64) as usize, rope2.clone())
+                        })
+                    }
+
+                    #[bench] fn rope_short(b: &mut Bencher) {
+                        let mut rope = Rope::from(repeat('a').take($lens)
+                                                .collect::<String>());
+                        let rope2 = rope.clone();
+                        b.iter(|| { rope.insert_rope(
+                            ($lens as f64 * $frac as f64) as usize, rope2.clone())
+                        })
+                    }
+                    // mk_bench! { rope_long: insert_rope, $lenl,
+                    //     Rope::from(repeat('a').take($lenl)
+                    //                 .collect::<String>()) }
+                    // mk_bench! { rope_short: insert_rope, $lens,
+                    //     Rope::from(repeat('a').take($lens)
+                    //                 .collect::<String>()) }
                 }
             )*
         }
