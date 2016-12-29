@@ -1082,7 +1082,9 @@ impl<'a> iter::Extend<&'a char> for Rope {
 
     fn extend<T>(&mut self, iter: T)
     where T: IntoIterator<Item=&'a char> {
-        unimplemented!()
+        let s: String = iter.into_iter().fold(String::new(), |mut acc, x| {acc.push(*x); acc});
+        let r: Rope = Rope::from(s);
+        self.append(r);
     }
 
 }
