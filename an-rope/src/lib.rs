@@ -1064,7 +1064,7 @@ impl iter::Extend<String> for Rope {
 
     fn extend<T>(&mut self, iter: T)
     where T: IntoIterator<Item=String> {
-        unimplemented!()
+        for s in iter {self.append(Rope::from(s));}
     }
 
 }
