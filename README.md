@@ -4,6 +4,8 @@ An text editor implemented in Rust.
 
 # Modules
 
+An editor is designed with modularity in mind. Thus, it consists of several modules which exist as independant crates:
+
 ## an-rope [![crates.io](https://img.shields.io/crates/v/an-rope.svg)](https://crates.io/crates/an-rope) [![RustDoc documentation](https://docs.rs/an-rope/badge.svg)](https://docs.rs/an-rope)
 
-`an-rope` is an implementation of the Rope data structure for representing large text documents.
+[`an-rope`](https://github.com/hawkw/an-editor/tree/master/an-rope) is an implementation of the Rope data structure for representing large text documents.
