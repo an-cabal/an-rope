@@ -1316,3 +1316,48 @@ impl<'a> iter::FromIterator<&'a str> for Rope {
     }
 
 }
+
+impl iter::FromIterator<char> for Rope {
+
+    fn from_iter<I>(iter: I) -> Rope
+    where I: IntoIterator<Item=char> {
+        unimplemented!()
+    }
+
+}
+
+impl iter::FromIterator<String> for Rope {
+
+    fn from_iter<I>(iter: I) -> Rope
+    where I: IntoIterator<Item=String> {
+        unimplemented!()
+    }
+
+}
+
+impl iter::FromIterator<Rope> for Rope {
+
+    fn from_iter<I>(iter: I) -> Rope
+    where I: IntoIterator<Item=Rope> {
+        unimplemented!()
+    }
+
+}
+
+impl<'a> iter::FromIterator<&'a char> for Rope {
+
+    fn from_iter<I>(iter: I) -> Rope
+    where I: IntoIterator<Item=&'a char> {
+        unimplemented!()
+    }
+
+}
+
+impl<'a> iter::FromIterator<&'a str> for Rope {
+
+    fn from_iter<I>(iter: I) -> Rope
+    where I: IntoIterator<Item=&'a str> {
+        unimplemented!()
+    }
+
+}
