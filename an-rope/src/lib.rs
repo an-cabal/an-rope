@@ -14,6 +14,14 @@
 #![feature(conservative_impl_trait)]
 #![cfg_attr(test, feature(test))]
 #![cfg_attr(test, feature(insert_str))]
+#![feature(collections)]
+#![feature(collections_range)]
+#![feature(inclusive_range_syntax)]
+
+extern crate collections;
+
+use collections::range::RangeArgument;
+use collections::borrow::Borrow;
 
 use std::cmp;
 use std::ops;
@@ -22,19 +30,17 @@ use std::fmt;
 use std::string;
 use std::iter;
 
-#[cfg(feature = "with_tendrils")]
-extern crate tendril;
-#[cfg(feature = "with_tendrils")]
-use tendril::StrTendril;
+#[cfg(feature = "with_tendrils")] extern crate tendril;
+#[cfg(feature = "with_tendrils")] use tendril::StrTendril;
 
-#[cfg(test)]
-mod tests;
+#[cfg(test)] mod tests;
+#[cfg(test)] extern crate test;
 
-#[cfg(test)]
-extern crate test;
+mod slice;
 
 
 use self::internals::Node;
+pub use self::slice::{RopeSlice, RopeSliceMut};
 
 /// A Rope
 ///
@@ -735,6 +741,90 @@ impl Rope {
     where I: Iterator<Item=u8> {
         self.bytes().zip(other).all(|(a, b)| a == b)
     }
+
+    /// Returns an immutable slice of this `Rope` between the given indices.
+    ///
+    /// # Arguments
+    /// + `range`: A [`RangeArgument`](https://doc.rust-lang.org/nightly/collections/range/trait.RangeArgument.html)
+    /// specifying the range to slice. This can be produced by range syntax
+    /// like `..`, `a..`, `..b` or `c..d`.
+    ///
+    /// # Panics
+    /// If the start or end indices of the range to slice exceed the length of
+    /// this `Rope`.
+    ///
+    /// # Examples
+    /// ```ignore
+    //  this doctest fails to link on my macbook for Secret Reasons.
+    //  i'd really like to know why...
+    //      - eliza, 12/23/2016
+    /// #![feature(collections)]
+    /// #![feature(collections_range)]
+    ///
+    /// extern crate collections;
+    /// extern crate an_rope;
+    /// # fn main() {
+    /// use collections::range::RangeArgument;
+    /// use an_rope::Rope;
+    ///
+    /// let rope = Rope::from("this is an example string");
+    /// assert_eq!(&rope.slice(4..6), "is");
+    /// # }
+    /// ```
+    //  TODO: this uses the unstable `collections::Range::RangeArgument` type
+    //        to be generic over different types of ranges (inclusive & //        non-inclusive). however, since `RangeArgument` is feature-gated,
+    //        this won't work on stable Rust. We could easily add a feature flag
+    //        for `RangeArgument`, and provide an alternate implementation of
+    //        rope slicing as well, if we wanted to support stable Rust
+    //          -- eliza, 12/23/2016
+    #[inline]
+    pub fn slice<'a, R>(&'a self, range: R) -> RopeSlice<'a>
+    where R: RangeArgument<usize> {
+        RopeSlice::new(&self.root, range)
+    }
+
+    /// Returns an mutable slice of this `Rope` between the given indices.
+    ///
+    ///
+    /// # Arguments
+    /// + `range`: A [`RangeArgument`](https://doc.rust-lang.org/nightly/collections/range/trait.RangeArgument.html)
+    /// specifying the range to slice. This can be produced by range syntax
+    /// like `..`, `a..`, `..b` or `c..d`.
+    ///
+    ///
+    /// # Panics
+    /// If the start or end indices of the range to slice exceed the length of
+    /// this `Rope`.
+    ///
+    /// # Examples
+    /// ```ignore
+    //  this doctest fails to link on my macbook for Secret Reasons.
+    //  i'd really like to know why...
+    //      - eliza, 12/23/2016
+    /// #![feature(collections)]
+    /// #![feature(collections_range)]
+    ///
+    /// extern crate collections;
+    /// extern crate an_rope;
+    /// # fn main() {
+    /// use collections::range::RangeArgument;
+    /// use an_rope::Rope;
+    ///
+    /// let mut rope = Rope::from("this is an example string");
+    /// assert_eq!(&mut rope.slice_mut(4..6), "is");
+    /// # }
+    /// ```
+    //  TODO: this uses the unstable `collections::Range::RangeArgument` type
+    //        to be generic over different types of ranges (inclusive & //        non-inclusive). however, since `RangeArgument` is feature-gated,
+    //        this won't work on stable Rust. We could easily add a feature flag
+    //        for `RangeArgument`, and provide an alternate implementation of
+    //        rope slicing as well, if we wanted to support stable Rust
+    //          -- eliza, 12/23/2016
+    #[inline]
+    pub fn slice_mut<'a, R>(&'a mut self, range: R) -> RopeSliceMut<'a>
+    where R: RangeArgument<usize> {
+        RopeSliceMut::new(&mut self.root, range)
+    }
 }
 
 impl convert::Into<Vec<u8>> for Rope {
@@ -1045,6 +1135,12 @@ impl ops::IndexMut<ops::RangeTo<usize>> for Rope {
 
 impl ops::IndexMut<ops::RangeFrom<usize>> for Rope {
     fn index_mut(&mut self, i: ops::RangeFrom<usize>) -> &mut str {
+        unimplemented!()
+    }
+}
+
+impl<'a> Borrow<RopeSlice<'a>> for &'a Rope {
+    fn borrow(&self) -> &RopeSlice<'a> {
         unimplemented!()
     }
 }

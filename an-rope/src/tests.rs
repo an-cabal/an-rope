@@ -435,6 +435,21 @@ insert_benches! {
 }
 
 #[test]
+fn rope_char_indices() {
+    let rope = Rope::from("aaaaa")
+        .with_append(Rope::from("bbbbbb"))
+        .with_append(Rope::from("cccccccccccc"))
+        .with_append(Rope::from("defgdefgaabababab"));
+    let string = String::from("aaaaabbbbbbccccccccccccdefgdefgaabababab");
+    let indices = rope.char_indices().zip(string.char_indices());
+    for ((ridx, rch), (sidx, sch)) in indices {
+        assert_eq!(rch, sch);
+        assert_eq!(ridx, sidx);
+    }
+}
+
+
+#[test]
 fn iter_extend_empty_iter () {
     let mut rope = Rope::from("");
     let empty_vec: Vec<String> = vec![];

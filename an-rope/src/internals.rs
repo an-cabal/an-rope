@@ -163,7 +163,68 @@ impl BranchNode {
 
 }
 
+macro_rules! or_zero {
+    ($a: expr, $b: expr) => { if $a > $b { $a - $b } else { 0 } }
+}
 impl Node {
+
+    pub fn spanning(&self, i: usize, span_len: usize) -> (&Node, usize) {
+        assert!(self.len() >= span_len);
+        match *self {
+            Leaf(_) =>
+                // if this function has walked as far as a leaf node,
+                // then that leaf must be the spanning node. return it.
+                (self, i)
+          , Branch(BranchNode{ box ref right, weight, .. }) if weight < i => {
+                assert!(or_zero!(right.len(), i) >= span_len);
+                // if this node is a branch, and the weight is less than the
+                // index, where the span begins, then the first index of the
+                // span is on the right side
+
+                right.spanning(or_zero!(i, weight)
+                    // avoid integer overflow
+                  , span_len)
+            }
+          , Branch(BranchNode{ box ref left, .. })
+            // if the left child is long enough to contain the entire span,
+            // walk to the left child
+            if or_zero!(left.len(), i) >= span_len => left.spanning(i, span_len)
+          , // otherwise, if the span is longer than the left child, then this
+            // node must be the minimum spanning node
+            Branch(_) => (self, i)
+
+        }
+    }
+
+    pub fn spanning_mut(&mut self, i: usize, span_len: usize)
+                        -> (&mut Node, usize) {
+        assert!(self.len() >= span_len);
+        match *self {
+            Leaf(_) =>
+                // if this function has walked as far as a leaf node,
+                // then that leaf must be the spanning node. return it.
+                (self, i)
+          , Branch(BranchNode{ box ref mut right, weight, .. })
+            if weight < i => {
+                assert!(or_zero!(right.len(), i) >= span_len);
+                // if this node is a branch, and the weight is less than the
+                // index, where the span begins, then the first index of the
+                // span is on the right side
+
+                right.spanning_mut(or_zero!(i, weight)
+                    // avoid integer overflow
+                  , span_len)
+            }
+          , Branch(BranchNode { box ref mut left, .. })
+            // if the left child is long enough to contain the entire span,
+            // walk to the left child
+            if or_zero!(left.len(), i) >= span_len =>
+                left.spanning_mut(i, span_len)
+          , // otherwise, if the span is longer than the left child, then this
+            // node must be the minimum spanning node
+            Branch(_) => (self, i)
+        }
+    }
 
     /// Split this `Node`'s subtree on the specified `index`.
     ///
