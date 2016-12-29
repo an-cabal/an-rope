@@ -8,6 +8,7 @@ authors = [ "Eliza Weisman <hi@hawkweisman.me>"
 repository = "https://github.com/hawkw/an-editor"
 homepage = "https://github.com/hawkw/an-editor"
 readme = "README.md"
+license = "MIT"
 
 [features]
 # no features by default
