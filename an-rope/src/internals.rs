@@ -1,7 +1,15 @@
 use std::ops;
 use std::fmt;
+#[cfg(feature = "with_tendrils")]
+use tendril;
 
 use self::Node::*;
+
+#[cfg(not(feature = "with_tendrils"))]
+type LeafRepr = String;
+
+#[cfg(feature = "with_tendrils")]
+type LeafRepr = tendril::StrTendril;
 
 /// A `Node` in the `Rope`'s tree.
 ///
@@ -10,34 +18,42 @@ use self::Node::*;
 #[derive(Clone)]
 pub enum Node {
     /// A leaf node
-    Leaf(String)
+    Leaf(LeafRepr)
   , /// A branch concatenating together `l`eft and `r`ight nodes.
     Branch(BranchNode)
 }
 
+
 impl fmt::Debug for Node {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            Leaf(ref string) => write!(f, "{:?}", string)
-          , Branch(ref branch) => write!(f, "{:?}", branch)
-        }
+        self.nodes()
+            .fold(Ok(()), |r, node| r.and_then(|_| write!(f, "{:?}", node)))
     }
 }
+
+
 impl fmt::Display for Node {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            Leaf(ref string) => write!(f, "{}", string)
-          , Branch(ref branch) => write!(f, "{}", branch)
-        }
+        self.strings()
+            .fold(Ok(()), |r, string| r.and_then(|_| write!(f, "{}", string)))
     }
 }
+
+// impl fmt::Display for Node {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         match *self {
+//             Leaf(ref string) => write!(f, "{}", string)
+//           , Branch(ref branch) => write!(f, "{}", branch)
+//         }
+//     }
+// }
 
 #[derive(Clone)]
 pub struct BranchNode {
     /// The length of this node
     len: usize
   , /// The weight of a node is the summed weight of its left subtree
-    pub weight: usize
+    weight: usize
   , /// The left branch node
     pub left: Box<Node>
   , /// The right branch node
@@ -62,13 +78,18 @@ impl Default for Node {
     fn default() -> Self { Node::empty() }
 }
 
+
+#[cfg(feature = "rebalance")]
+const FIB_LOOKUP: [usize; 93] = [
+ 0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181, 6765, 10946, 17711, 28657, 46368, 75025, 121393, 196418, 317811, 514229, 832040, 1346269, 2178309, 3524578, 5702887, 9227465, 14930352, 24157817, 39088169, 63245986, 102334155, 165580141, 267914296, 433494437, 701408733, 1134903170, 1836311903, 2971215073, 4807526976, 7778742049, 12586269025, 20365011074, 32951280099, 53316291173, 86267571272, 139583862445, 225851433717, 365435296162, 591286729879, 956722026041, 1548008755920, 2504730781961, 4052739537881, 6557470319842, 10610209857723, 17167680177565, 27777890035288, 44945570212853, 72723460248141, 117669030460994, 190392490709135, 308061521170129, 498454011879264, 806515533049393, 1304969544928657, 2111485077978050, 3416454622906707, 5527939700884757, 8944394323791464, 14472334024676221, 23416728348467685, 37889062373143906, 61305790721611591, 99194853094755497, 160500643816367088, 259695496911122585, 420196140727489673, 679891637638612258, 1100087778366101931, 1779979416004714189, 2880067194370816120, 4660046610375530309, 7540113804746346429 ];
+
+
 /// Returns the _n_th fibonacci number.
-// TODO: replace with an iterative implementation and/or lookup table?
+#[inline]
+#[cfg(feature = "rebalance")]
 fn fibonacci(n: usize) -> usize {
-    match n { 0 => 1
-            , 1 => 1
-            , _ => fibonacci(n - 1) + fibonacci(n - 2)
-            }
+    if n <= 93 { FIB_LOOKUP[n] }
+    else { fibonacci(n - 1) + fibonacci(n - 2) }
 }
 
 impl BranchNode {
@@ -231,8 +252,8 @@ impl Node {
                 // splitting a leaf node with length >= 2 returns two new Leaf
                 // nodes, one with the left half of the string, and one with
                 // the right
-                let left = Leaf(s[..index].to_string());
-                let right = Leaf(s[index..].to_string());
+                let left = Leaf(s[..index].into());
+                let right = Leaf(s[index..].into());
                 (left, right)
             }
           , Branch(node) =>
@@ -243,7 +264,7 @@ impl Node {
 
     #[inline]
     pub fn empty() -> Self {
-        Leaf(String::new())
+        Leaf("".into())
     }
 
     /// Concatenate two `Node`s to return a new `Branch` node.
@@ -253,27 +274,45 @@ impl Node {
     }
 
     #[inline]
-    pub const fn new_leaf(string: String) -> Self {
+    pub const fn new_leaf(string: LeafRepr) -> Self {
         Leaf(string)
+    }
+
+
+    /// Returns true if this node is balanced
+    ///
+    /// > We define the depth of a leaf to be 0, and the depth of a
+    /// > concatenation to be one plus the maximum depth of its children. Let
+    /// > _Fn_ be the _n_th Fibonacci number. A rope of depth _n_ is balanced if
+    /// > its length is at least _Fn_+2, e.g. a balanced rope of depth 1 must
+    /// > have length at least 2. Note that balanced ropes may contain
+    /// > unbalanced subropes.
+    /// – from "Ropes: An Alternative to Strings"
+    #[inline]
+    #[cfg(feature = "rebalance")]
+    pub fn is_balanced(&self) -> bool {
+        self.len() >= fibonacci(self.depth() + 2)
+        // true
     }
 
     /// Returns true if this node is balanced
     ///
-    /// "We define the depth of a leaf to be 0, and the depth of a
-    /// concatenation to be one plus the maximum depth of its children. Let
-    /// _Fn_ be the _n_th Fibonacci number. A rope of depth _n_ is balanced if
-    /// its length is at least _Fn_+2, e.g. a balanced rope of depth 1 must
-    /// have length at least 2. Note that balanced ropes may contain unbalanced
-    /// subropes."
+    /// > We define the depth of a leaf to be 0, and the depth of a
+    /// > concatenation to be one plus the maximum depth of its children. Let
+    /// > _Fn_ be the _n_th Fibonacci number. A rope of depth _n_ is balanced if
+    /// > its length is at least _Fn_+2, e.g. a balanced rope of depth 1 must
+    /// > have length at least 2. Note that balanced ropes may contain
+    /// > unbalanced subropes.
     /// – from "Ropes: An Alternative to Strings"
     #[inline]
+    #[cfg(not(feature = "rebalance"))]
     pub fn is_balanced(&self) -> bool {
-        self.len() >= fibonacci(self.depth() + 2)
+        true
     }
-
 
     /// Returns the depth in the tree of a node
     #[inline]
+    #[cfg(feature = "rebalance")]
     fn depth(&self) -> usize {
         use std::cmp::max;
 
@@ -286,12 +325,11 @@ impl Node {
 
 
     /// Returns the length of a node
-    //  TODO: do we want to cache this?
+    #[inline]
     pub fn len(&self) -> usize {
         match self { &Leaf(ref s) => s.len()
-                   , &Branch(BranchNode { ref left, ref right, .. }) =>
-                        left.len() + right.len()
-                    }
+                   , &Branch(BranchNode { len, ..}) => len
+                   }
     }
 
     /// Calculates the weight of a node
@@ -302,10 +340,6 @@ impl Node {
                     }
     }
 
-    pub fn weight(&self) -> usize {
-        match self { &Leaf(ref s) => s.len()
-                   , &Branch(BranchNode { ref weight, ..} ) => *weight }
-    }
 
     /// Rebalance the subrope starting at this `Node`, returning a new `Node`
     ///
@@ -339,6 +373,7 @@ impl Node {
             let mut leaves: Vec<Option<Node>> =
                 self.into_leaves().map(Option::Some).collect();
             let len = leaves.len();
+            #[inline]
             fn _rebalance(l: &mut Vec<Option<Node>>, start: usize, end: usize)
                           -> Node {
                 match end - start {
@@ -355,12 +390,21 @@ impl Node {
         }
     }
 
+    /// Returns an iterator that performs an in-order traversal over all the
+    /// `Nodes` in this `Node`'s subtree
+    #[inline]
+    fn nodes<'a>(&'a self) -> Nodes<'a> {
+        Nodes(vec!(self))
+    }
+
     /// Returns an iterator over all leaf nodes in this `Node`'s subrope
+    #[inline]
     fn leaves<'a>(&'a self) -> Leaves<'a> {
         Leaves(vec![self])
     }
 
     /// Returns a move iterator over all leaf nodes in this `Node`'s subrope
+    #[inline]
     fn into_leaves(self) -> IntoLeaves {
         IntoLeaves(vec![self])
     }
@@ -369,7 +413,7 @@ impl Node {
     /// Returns an iterator over all the strings in this `Node`s subrope'
     #[inline]
     pub fn strings<'a>(&'a self) -> impl Iterator<Item=&'a str> {
-        box self.leaves().map(|n| match n {
+        self.leaves().map(|n| match n {
             &Leaf(ref s) => s.as_ref()
           , _ => unreachable!("Node.leaves() iterator contained something \
                                that wasn't a leaf. Barring _force majeure_, \
@@ -381,9 +425,26 @@ impl Node {
     ///
     /// Consumes `self`.
     #[inline]
+    #[cfg(not(feature = "with_tendrils"))]
     pub fn into_strings(self) -> impl Iterator<Item=String> {
-        box self.into_leaves().map(|n| match n {
+        self.into_leaves().map(|n| match n {
             Leaf(s) => s
+            , _ => unreachable!("Node.into_leaves() iterator contained \
+                                 something  that wasn't a leaf. Barring _force \
+                                 majeure_, this should be impossible. \
+                                 Something's broken.")
+        })
+    }
+
+
+    /// Returns a move iterator over all the strings in this `Node`s subrope'
+    ///
+    /// Consumes `self`.
+    #[inline]
+    #[cfg(feature = "with_tendrils")]
+    pub fn into_strings(self) -> impl Iterator<Item=String> {
+        self.into_leaves().map(|n| match n {
+            Leaf(s) => s.into()
             , _ => unreachable!("Node.into_leaves() iterator contained \
                                  something  that wasn't a leaf. Barring _force \
                                  majeure_, this should be impossible. \
@@ -424,11 +485,6 @@ impl Node {
         impl lines<&'a str> for Node {}
     }
 
-    pub fn char_indices<'a>(&'a self)
-                        -> impl Iterator<Item=(usize, char)> + 'a {
-        self.chars().enumerate()
-    }
-
     // /// Returns n iterator over the bytes of this `Node`'s subrope
     // ///
     // ///
@@ -452,19 +508,39 @@ impl Node {
 
 }
 
+/// An that performs a left traversal over a series of `Node`s
+struct Nodes<'a>(Vec<&'a Node>);
+
+impl<'a> Iterator for Nodes<'a> {
+    type Item = &'a Node;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let node = self.0.pop();
+        if let Some(&Branch(BranchNode { ref left, ref right, ..})) = node {
+            self.0.push(right);
+            self.0.push(left);
+        };
+        node
+    }
+}
+
 /// An iterator over a series of leaf `Node`s
+// TODO: this _could_ be implemented as `nodes.filter(node.is_leaf)`
 struct Leaves<'a>(Vec<&'a Node>);
 
 impl<'a> Iterator for Leaves<'a> {
     type Item = &'a Node;
+
     fn next(&mut self) -> Option<Self::Item> {
-        match self.0.pop() {
-            None => None
-          , Some(leaf @ &Leaf(_)) => Some(leaf)
-          , Some(&Branch(BranchNode { ref left, ref right, .. })) => {
-                self.0.push(right);
-                self.0.push(left);
-                self.next()
+        loop {
+            match self.0.pop() {
+                None => return None
+              , Some(&Leaf(ref s)) if s.len() == 0 => {}
+              , leaf @ Some(&Leaf(_))=> return leaf
+              , Some(&Branch(BranchNode { ref left, ref right, .. })) => {
+                    self.0.push(right);
+                    self.0.push(left);
+                }
             }
         }
     }
@@ -475,14 +551,17 @@ struct IntoLeaves(Vec<Node>);
 
 impl Iterator for IntoLeaves {
     type Item = Node;
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        match self.0.pop() {
-            None => None
-          , Some(leaf @ Leaf(_)) => Some(leaf)
-          , Some(Branch(BranchNode { box left, box right, .. })) => {
-                self.0.push(right);
-                self.0.push(left);
-                self.next()
+        loop {
+            match self.0.pop() {
+                None => return None
+              , Some(Leaf(ref s)) if s.len() == 0 => {}
+              , leaf @ Some(Leaf(_))=> return leaf
+              , Some(Branch(BranchNode { box left, box right, .. })) => {
+                    self.0.push(right);
+                    self.0.push(left);
+                }
             }
         }
     }

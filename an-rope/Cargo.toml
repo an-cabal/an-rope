@@ -4,4 +4,12 @@ description = "an rope for large text documents."
 version = "0.0.1"
 authors = ["Eliza Weisman <hi@hawkweisman.me>", "Chris McDonald <mail.chris.mcdonald@gmail.com>"]
 
-[dependencies]
+[features]
+# no features by default
+default = []
+with_tendrils = ["tendril"]
+rebalance = []
+
+[dependencies.tendril]
+version = "0.2.3"
+optional = true
