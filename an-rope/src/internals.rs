@@ -432,6 +432,12 @@ impl Node {
     //     self.strings().flat_map(str::bytes)
     // }
 
+    #[inline]
+    pub fn char_indices<'a>(&'a self)
+                       -> impl Iterator<Item=(usize, char)> + 'a {
+         self.chars().enumerate()
+    }
+
     /// Returns an iterator over the grapheme clusters of this `Node`'s subrope'
     ///
     /// This is the iterator returned by `Node::into_iter`.

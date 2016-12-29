@@ -713,8 +713,8 @@ impl Rope {
                you actually want."]
         #[inline]
         impl chars<char> for Rope {}
-        // #[inline]
-        // impl char_indices<(usize, char)> for Rope {}
+        #[inline]
+        impl char_indices<(usize, char)> for Rope {}
         #[inline]
         impl split_whitespace<&'a str> for Rope {}
         #[inline]
