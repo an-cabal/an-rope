@@ -478,6 +478,24 @@ fn iter_extend_rope_nonempty () {
     assert_eq!(&rope, "aaaabbbbcccc");
 }
 
+
+#[test]
+fn iter_extend_str_slice_empty () {
+    let mut rope = Rope::from("");
+    rope.extend(vec![ "aaaa"
+                    , "bbbb"
+                    , "cccc"
+                    ]);
+    assert_eq!(&rope, "aaaabbbbcccc");
+}
+
+#[test]
+fn iter_extend_str_slice_nonempty () {
+    let mut rope = Rope::from("aaaa");
+    rope.extend(vec!["bbbb", "cccc"]);
+    assert_eq!(&rope, "aaaabbbbcccc");
+}
+
 #[test]
 fn iter_extend_chars_empty () {
     let mut rope = Rope::from("");
@@ -489,5 +507,20 @@ fn iter_extend_chars_empty () {
 fn iter_extend_chars_nonempty () {
     let mut rope = Rope::from("a");
     rope.extend(vec!['b', 'c', 'd']);
+    assert_eq!(&rope, "abcd");
+}
+
+
+#[test]
+fn iter_extend_char_ptr_empty () {
+    let mut rope = Rope::from("");
+    rope.extend(vec![&'a', &'b', &'c', &'d']);
+    assert_eq!(&rope, "abcd");
+}
+
+#[test]
+fn iter_extend_char_ptrs_nonempty () {
+    let mut rope = Rope::from("a");
+    rope.extend(vec![&'b', &'c', &'d']);
     assert_eq!(&rope, "abcd");
 }

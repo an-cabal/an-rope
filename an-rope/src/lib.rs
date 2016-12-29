@@ -1069,6 +1069,24 @@ impl iter::Extend<String> for Rope {
 
 }
 
+impl<'a> iter::Extend<&'a str> for Rope {
+
+    fn extend<T>(&mut self, iter: T)
+    where T: IntoIterator<Item=&'a str> {
+        unimplemented!()
+    }
+
+}
+
+impl<'a> iter::Extend<&'a char> for Rope {
+
+    fn extend<T>(&mut self, iter: T)
+    where T: IntoIterator<Item=&'a char> {
+        unimplemented!()
+    }
+
+}
+
 impl iter::Extend<Rope> for Rope {
 
     fn extend<T>(&mut self, iter: T)
