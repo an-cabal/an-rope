@@ -420,7 +420,7 @@ macro_rules! split_benches {
 }
 
 split_benches! {
-    long: 100_000, short: 100,
+    long: 1_000_000, short: 10000,
         at_start: 0,
         at_quarter: 0.25,
         at_half: 0.5,
@@ -429,7 +429,7 @@ split_benches! {
 }
 
 insert_benches! {
-    long: 100_000, short: 100,
+    long: 1_000_000, short: 10000,
         at_start: 0,
         at_quarter: 0.25,
         at_half: 0.5,
