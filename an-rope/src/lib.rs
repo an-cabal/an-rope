@@ -668,12 +668,13 @@ impl Rope {
     /// Rebalances this entire `Rope`, returning a balanced `Rope`.
     #[inline]
     fn rebalance(&mut self) {
-        if self.is_balanced() {
-            // the rope is already balanced, do nothing
-        } else {
-            // rebalance the rope
-            self.root = self.take_root().rebalance();
-        }
+        // if self.is_balanced() {
+        //     // the rope is already balanced, do nothing
+        // } else {
+        //     // rebalance the rope
+        //
+        // }
+        self.root.rebalance();
     }
 
     /// Returns true if this `Rope` is balanced.

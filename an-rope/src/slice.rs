@@ -204,7 +204,8 @@ impl<'a> RopeSliceMut<'a>  {
             let (left, right) = self.take_node().split(self.offset + index);
 
             // construct the new root node with `Rope` inserted
-            *self.node = (left + rope.root + right).rebalance();
+            *self.node = left + rope.root + right;
+            self.node.rebalance();
         }
     }
 

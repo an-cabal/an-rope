@@ -11,6 +11,10 @@ type LeafRepr = String;
 #[cfg(feature = "with_tendrils")]
 type LeafRepr = tendril::StrTendril;
 
+const BALANCE_THRESHOLD: f64 = 1.2;
+const TOO_LONG: usize = 1000;
+const TOO_SHORT: usize = TOO_LONG/2;
+
 /// A `Node` in the `Rope`'s tree.
 ///
 /// A `Node` is either a `Leaf` holding a `String`, or a
@@ -93,7 +97,6 @@ fn fibonacci(n: usize) -> usize {
 }
 
 impl BranchNode {
-
     #[inline]
     fn new(left: Node, right: Node) -> Self {
         BranchNode { len: left.len() + right.len()
@@ -341,6 +344,47 @@ impl Node {
     }
 
 
+    /// Adjusts the length of this node
+    #[cfg(feature = "rebalance")]
+    fn adjust_length(&mut self) {
+        use std::mem::replace;
+        let len = self.len();
+        // we mutably borrow `self` here. This precludes us from changing it
+        // directly as in `*self = ...`, because the borrow checker won't allow
+        // it. Therefore the assignment to `self` must be outside the `if let`
+        // clause.
+        *self = if let Leaf(_) = *self {
+            if len > TOO_LONG {
+                let (l, r) = replace(self, Node::empty()).split(len/2);
+                Node::new_branch(l, r)
+            } else {
+                return
+            }
+        } else if let Branch(_) = *self {
+            if len < TOO_SHORT{
+                if let Branch(BranchNode { left, right, ..})
+                    = replace(self, Node::empty()) {
+                        Leaf(left.into_strings()
+                                 .chain(right.into_strings())
+                                 .collect())
+                    } else {
+                        unreachable!()
+                    }
+            } else {
+                return
+            }
+        } else {
+            // In all other cases, we return immediately, thus skipping the
+            // assignment
+            return
+        };
+
+    }
+
+    #[cfg(not(feature = "rebalance"))]
+    fn adjust_length(&mut self) { }
+
+
     /// Rebalance the subrope starting at this `Node`, returning a new `Node`
     ///
     /// From "Ropes: An Alternative to Strings":
@@ -361,34 +405,27 @@ impl Node {
     /// > concatenate ropes from the sequence in increasing order to the left
     /// > of this result, until the result fits into an empty slot in the
     /// > sequence."
-    pub fn rebalance(self) -> Self {
-        // TODO: this is a huge mess, I based it on the IBM Java implementation
+    #[cfg(feature = "rebalance")]
+    pub fn rebalance(&mut self) {
+        // TODO: this is an even huger mess
         //       please refactor until it stops being ugly!
         //        - eliza, 12/17/2016
-
-        if self.is_balanced() {
-            // the subrope is already balanced, do nothing
-            self
-        } else {
-            let mut leaves: Vec<Option<Node>> =
-                self.into_leaves().map(Option::Some).collect();
-            let len = leaves.len();
-            #[inline]
-            fn _rebalance(l: &mut Vec<Option<Node>>, start: usize, end: usize)
-                          -> Node {
-                match end - start {
-                    1 => l[start].take().unwrap()
-                  , 2 => l[start].take().unwrap() + l[start + 1].take().unwrap()
-                  , n => {
-                        let mid = start + (n / 2);
-                        _rebalance(l, start, mid) + _rebalance(l, mid, end)
-
-                    }
-                }
-            };
-            _rebalance(&mut leaves, 0, len)
-        }
+        let rebal =
+        if let Branch(BranchNode{ref mut left, ref mut right, ..})  = *self {
+            if left.len() as f64 / right.len() as f64 > BALANCE_THRESHOLD ||
+               right.len() as f64 / left.len() as f64 > BALANCE_THRESHOLD {
+                   true
+               } else {
+                   left.rebalance();
+                   right.rebalance();
+                   return;
+               }
+           } else { return };
+         if rebal { self.adjust_length(); };
     }
+
+    #[cfg(not(feature = "rebalance"))]
+    pub fn rebalance(&mut self) { }
 
     /// Returns an iterator that performs an in-order traversal over all the
     /// `Nodes` in this `Node`'s subtree
