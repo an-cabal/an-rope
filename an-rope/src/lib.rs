@@ -1091,7 +1091,7 @@ impl iter::Extend<Rope> for Rope {
 
     fn extend<T>(&mut self, iter: T)
     where T: IntoIterator<Item=Rope> {
-        unimplemented!()
+        for r in iter {self.append(r);}
     }
 
 }
