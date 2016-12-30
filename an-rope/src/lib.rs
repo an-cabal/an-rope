@@ -811,16 +811,14 @@ impl Rope {
     /// assert_eq!(&rope.slice(4..6), "is");
     /// # }
     /// ```
-    //  TODO: this uses the unstable `collections::Range::RangeArgument` type
-    //        to be generic over different types of ranges (inclusive & //        non-inclusive). however, since `RangeArgument` is feature-gated,
-    //        this won't work on stable Rust. We could easily add a feature flag
-    //        for `RangeArgument`, and provide an alternate implementation of
-    //        rope slicing as well, if we wanted to support stable Rust
-    //          -- eliza, 12/23/2016
     #[inline]
     #[cfg(feature = "unstable")]
     pub fn slice<'a, R>(&'a self, range: R) -> RopeSlice<'a>
     where R: RangeArgument<usize> {
+        RopeSlice::new(&self.root, range)
+    }
+    #[cfg(not(feature = "unstable"))]
+    pub fn slice<'a, R>(&'a self, range: ops::Range<usize>) -> RopeSlice<'a> {
         RopeSlice::new(&self.root, range)
     }
 
@@ -855,18 +853,19 @@ impl Rope {
     /// assert_eq!(&mut rope.slice_mut(4..6), "is");
     /// # }
     /// ```
-    //  TODO: this uses the unstable `collections::Range::RangeArgument` type
-    //        to be generic over different types of ranges (inclusive & //        non-inclusive). however, since `RangeArgument` is feature-gated,
-    //        this won't work on stable Rust. We could easily add a feature flag
-    //        for `RangeArgument`, and provide an alternate implementation of
-    //        rope slicing as well, if we wanted to support stable Rust
-    //          -- eliza, 12/23/2016
     #[inline]
     #[cfg(feature = "unstable")]
     pub fn slice_mut<'a, R>(&'a mut self, range: R) -> RopeSliceMut<'a>
     where R: RangeArgument<usize> {
         RopeSliceMut::new(&mut self.root, range)
     }
+    #[cfg(not(feature = "unstable"))]
+    pub fn slice_mut<'a, R>(&'a mut self, range: ops::Range<usize>)
+                          -> RopeSliceMut<'a> {
+        RopeSliceMut::new(&mut self.root, range)
+    }
+
+
 }
 
 impl convert::Into<Vec<u8>> for Rope {

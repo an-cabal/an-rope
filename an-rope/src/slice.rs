@@ -15,6 +15,8 @@ use std::convert;
 
 #[cfg(feature = "unstable")]
 use collections::range::RangeArgument;
+#[cfg(not(feature = "unstable"))]
+use std::ops::Range;
 
 use super::Rope;
 use super::internals::Node;
@@ -77,6 +79,25 @@ impl<'a> RopeSliceMut<'a>  {
             (node, 0)
         } else {
             node.spanning_mut(start, slice_len)
+        };
+
+        RopeSliceMut { node: node
+                     , offset: offset
+                     , len: slice_len }
+    }
+    #[cfg(not(feature = "unstable"))]
+    pub fn new(node: &'a mut Node, range: Range<usize>) -> Self {
+        let len = node.len();
+        let slice_len = range.end - range.start;
+
+        // find the lowest node that contains both the slice start index and
+        // the end index
+        let (node, offset) = if range.start == 0 && range.end == len {
+            // if the slice contains the entire rope, then the spanning node
+            // is the root node
+            (node, 0)
+        } else {
+            node.spanning_mut(range.start, slice_len)
         };
 
         RopeSliceMut { node: node
@@ -401,6 +422,27 @@ impl<'a> RopeSlice<'a> {
                   , len: slice_len }
     }
 
+    #[cfg(not(feature = "unstable"))]
+    pub fn new(node: &'a Node, range: Range<usize>) -> Self {
+        let len = node.len();
+        let slice_len = range.end - range.start;
+
+        // find the lowest node that contains both the slice start index and
+        // the end index
+        let (node, offset) = if range.start == 0 && range.end == len {
+            // if the slice contains the entire rope, then the spanning node
+            // is the root node
+            (node, 0)
+        } else {
+            node.spanning(range.start, slice_len)
+        };
+
+        RopeSlice { node: node
+                  , offset: offset
+                  , len: slice_len }
+    }
+
+
     #[cfg(feature = "unstable")]
     #[inline]
     fn slice_char_iter<I, T>(&'a self, i: I) -> impl Iterator<Item=T> + 'a
@@ -409,8 +451,6 @@ impl<'a> RopeSlice<'a> {
         , T: Copy {
             i.skip(self.offset).take(self.len)
     }
-
-
 
     #[cfg(feature = "unstable")]
     fn slice_strings_iter<I>(&'a self, i: I) -> impl Iterator<Item=&'a str> + 'a
