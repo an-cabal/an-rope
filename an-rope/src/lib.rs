@@ -1198,7 +1198,9 @@ impl iter::FromIterator<char> for Rope {
 
     fn from_iter<I>(iter: I) -> Rope
     where I: IntoIterator<Item=char> {
-        unimplemented!()
+        let s: String = iter.into_iter().collect();
+        let r: Rope = Rope::from(s); r
+
     }
 
 }
