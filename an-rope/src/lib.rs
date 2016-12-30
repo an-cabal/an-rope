@@ -278,6 +278,7 @@ impl Rope {
     ///
     /// # Panics
     /// * If the start or end of `range` are indices outside of the `Rope`
+    /// * If the end index of `range` is greater than the start index
     ///
     /// # Time Complexity
     /// O(log _n_)
