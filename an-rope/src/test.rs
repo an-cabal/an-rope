@@ -2,6 +2,77 @@ use super::Rope;
 use std::iter;
 
 #[test]
+fn delete_test_1() {
+    let mut r = Rope::from("this is not fine".to_string());
+    r.delete((8..12));
+    assert_eq!(&r, "this is fine");
+}
+
+#[test]
+fn delete_test_2() {
+    let mut r = Rope::new();
+    r.delete((0..0));
+    assert_eq!(&r, "");
+}
+
+#[test]
+fn delete_test_3() {
+    let mut r = Rope::from("this is not fine".to_string());
+    r.delete((..));
+    assert_eq!(&r, "");
+}
+
+#[test]
+fn delete_test_4() {
+    let mut r = Rope::from("this is not fine".to_string());
+    r.delete((11..));
+    assert_eq!(&r, "this is not");
+}
+
+#[test]
+fn delete_test_5() {
+    let mut r = Rope::from("this is not fine".to_string());
+    r.delete((..5));
+    assert_eq!(&r, "is not fine");
+}
+
+#[test]
+#[should_panic(expected = "do not lie on character boundary")]
+fn delete_test_6() {
+    let mut r = Rope::from("this is not fine".to_string());
+    r.delete((..42));
+}
+
+#[test]
+#[should_panic(expected = "attempt to subtract with overflow")]
+fn delete_test_7() {
+    let mut r = Rope::from("this is not fine".to_string());
+    r.delete((12..8)); // lol, fuck you
+}
+
+#[test]
+fn fmt_debug_test_1() {
+    let s = format!("{:?}", Rope::new());
+    assert_eq!(s, "Rope[\"\"] Leaf(\"\")");
+}
+
+#[test]
+fn fmt_debug_test_2() {
+    let s = format!("{:?}", Rope::from("NERD!!!".to_string()));
+    assert_eq!(s, "Rope[\"NERD!!!\"] Leaf(\"NERD!!!\")");
+}
+
+#[test]
+fn fmt_debug_test_3() {
+    let r1 = Rope::from("Hello, ".to_string());
+    let r2 = Rope::from("World!".to_string());
+    let r = r1 + r2;
+    let s = format!("{:?}", r);
+    assert_eq!(s, "Rope[\"Hello, World!\"] \
+                        Branch(7(Leaf(\"Hello, \"), Leaf(\"World!\")))");
+}
+
+#[test]
 fn rebalance_test_1() {
     let mut r = Rope::from("This is a large string \
                         that will need to be rebalanced.".to_string());
