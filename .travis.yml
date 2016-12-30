@@ -33,7 +33,7 @@ script: |
   if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
     travis-cargo build &&
     travis-cargo test &&
-    travis-cargo test -p an-rope &&
+    cd an-rope && travis-cargo test && cd ..
     travis-cargo --only stable doc
   else
     cargo build &&
