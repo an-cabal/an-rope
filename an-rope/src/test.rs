@@ -418,13 +418,6 @@ mod iterator {
         }
 
         #[test]
-        fn ropes_empty () {
-            let vec: Vec<Rope> = vec![];
-            let rope: Rope = vec.into_iter().collect();
-            assert_eq!(&rope, "");
-        }
-
-        #[test]
         fn str_slice_empty () {
             let mut rope = Rope::from("");
             rope.extend(vec![ "aaaa"
