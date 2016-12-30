@@ -47,7 +47,9 @@ after_success:
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then bash <(curl -s https://codecov.io/bash);
   fi
 notifications:
-  slack: stemtumblr:5NYecEWWIW4z3LxVE98V6BZk
+  slack:
+    rooms:
+      - stemtumblr:5NYecEWWIW4z3LxVE98V6BZk
     on_failure: always
     on_success: change
 env:
