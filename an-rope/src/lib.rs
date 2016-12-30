@@ -16,8 +16,8 @@
                     , collections, collections_range
                     , inclusive_range_syntax
                     ))]
-#![cfg_attr(test, feature(test))]
-#![cfg_attr(test, feature(insert_str))]
+#![cfg_attr( all( test, feature = "unstable")
+           , feature( test, insert_str) )]
 
 #[cfg(feature = "unstable")]
 extern crate collections;
@@ -35,8 +35,8 @@ use std::iter;
 #[cfg(feature = "with_tendrils")] extern crate tendril;
 #[cfg(feature = "with_tendrils")] use tendril::StrTendril;
 
-#[cfg(test)] mod tests;
-#[cfg(test)] extern crate test;
+#[cfg(test)] mod test;
+#[cfg(all( test, feature = "unstable"))] mod bench;
 
 mod slice;
 
