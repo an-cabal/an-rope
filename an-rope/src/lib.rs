@@ -1314,7 +1314,7 @@ impl<'a> iter::FromIterator<&'a str> for Rope {
 
     fn from_iter<I>(iter: I) -> Rope
     where I: IntoIterator<Item=&'a str> {
-        unimplemented!()
+        iter.into_iter().fold(Rope::new(), |mut acc, x| {acc.append(Rope::from(x)); acc})
     }
 
 }
