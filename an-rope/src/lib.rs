@@ -9,20 +9,22 @@
 //! + https://www.ibm.com/developerworks/library/j-ropes/
 //! + http://citeseer.ist.psu.edu/viewdoc/download?doi=10.1.1.14.9450&rep=rep1&type=pdf
 
-#![feature(const_fn)]
-#![feature(box_syntax, box_patterns)]
-#![feature(conservative_impl_trait)]
+#![cfg_attr( feature = "unstable"
+           , feature( const_fn
+                    , box_syntax, box_patterns
+                    , conservative_impl_trait
+                    , collections, collections_range
+                    , inclusive_range_syntax
+                    ))]
 #![cfg_attr(test, feature(test))]
 #![cfg_attr(test, feature(insert_str))]
-#![feature(collections)]
-#![feature(collections_range)]
-#![feature(inclusive_range_syntax)]
 
+#[cfg(feature = "unstable")]
 extern crate collections;
-
+#[cfg(feature = "unstable")]
 use collections::range::RangeArgument;
-use collections::borrow::Borrow;
 
+use std::borrow::Borrow;
 use std::cmp;
 use std::ops;
 use std::convert;
@@ -71,14 +73,26 @@ impl fmt::Debug for Rope {
 macro_rules! str_iters {
     ( $($(#[$attr:meta])* impl $name: ident<$ty: ty> for Node {})+ ) => { $(
         $(#[$attr])*
+        #[cfg(feature = "unstable")]
         pub fn $name<'a>(&'a self) -> impl Iterator<Item=$ty> + 'a {
             self.strings().flat_map(str::$name)
+        }
+        $(#[$attr])*
+        #[cfg(not(feature = "unstable"))]
+        pub fn $name<'a>(&'a self) -> Box<Iterator<Item=$ty> + 'a> {
+            Box::new(self.strings().flat_map(str::$name))
         }
     )+ };
 
     ( $($(#[$attr:meta])* impl $name: ident<$ty: ty> for Rope {})+ )=> { $(
         $(#[$attr])*
+        #[cfg(feature = "unstable")]
         pub fn $name<'a>(&'a self) -> impl Iterator<Item=$ty> + 'a {
+            self.root.$name()
+        }
+        $(#[$attr])*
+        #[cfg(not(feature = "unstable"))]
+        pub fn $name<'a>(&'a self) -> Box<Iterator<Item=$ty> + 'a>{
             self.root.$name()
         }
     )+ }
@@ -686,6 +700,7 @@ impl Rope {
     }
 
     /// Returns an iterator over all the strings in this `Rope`
+    #[cfg(feature = "unstable")]
     #[inline]
     pub fn strings<'a>(&'a self) -> impl Iterator<Item=&'a str> {
         // TODO: since all the iterator methods on `Rope` just call the
@@ -696,13 +711,31 @@ impl Rope {
         self.root.strings()
     }
 
+    /// Returns an iterator over all the strings in this `Rope`
+    #[cfg(not(feature = "unstable"))]
+    #[inline]
+    pub fn strings<'a>(&'a self) -> Box<Iterator<Item=&'a str> + 'a> {
+        self.root.strings()
+    }
+
     /// Returns a move iterator over all the strings in this `Rope`
     ///
     /// Consumes `self`.
+    #[cfg(feature = "unstable")]
     #[inline]
     pub fn into_strings<'a>(self) -> impl Iterator<Item=String> + 'a {
         self.root.into_strings()
     }
+
+    /// Returns a move iterator over all the strings in this `Rope`
+    ///
+    /// Consumes `self`.
+    #[cfg(not(feature = "unstable"))]
+    #[inline]
+    pub fn into_strings<'a>(self) -> Box<Iterator<Item=String> + 'a> {
+        self.root.into_strings()
+    }
+
 
     str_iters! {
         #[doc="Returns an iterator over all the bytes in this `Rope`.\n\
@@ -731,9 +764,16 @@ impl Rope {
     ///
     /// This is the iterator returned by `Node::into_iter`.
     #[inline]
+    #[cfg(feature = "unstable")]
     pub fn graphemes<'a>(&'a self) -> impl Iterator<Item=&'a str> {
         self.root.graphemes()
     }
+    #[inline]
+    #[cfg(not(feature = "unstable"))]
+    pub fn graphemes<'a>(&'a self) -> Box<Iterator<Item=&'a str>> {
+        self.root.graphemes()
+    }
+
 
     /// Returns true if the bytes in `self` equal the bytes in `other`
     #[inline]
@@ -778,6 +818,7 @@ impl Rope {
     //        rope slicing as well, if we wanted to support stable Rust
     //          -- eliza, 12/23/2016
     #[inline]
+    #[cfg(feature = "unstable")]
     pub fn slice<'a, R>(&'a self, range: R) -> RopeSlice<'a>
     where R: RangeArgument<usize> {
         RopeSlice::new(&self.root, range)
@@ -821,6 +862,7 @@ impl Rope {
     //        rope slicing as well, if we wanted to support stable Rust
     //          -- eliza, 12/23/2016
     #[inline]
+    #[cfg(feature = "unstable")]
     pub fn slice_mut<'a, R>(&'a mut self, range: R) -> RopeSliceMut<'a>
     where R: RangeArgument<usize> {
         RopeSliceMut::new(&mut self.root, range)

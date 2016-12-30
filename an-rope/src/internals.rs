@@ -98,8 +98,8 @@ impl BranchNode {
     fn new(left: Node, right: Node) -> Self {
         BranchNode { len: left.len() + right.len()
                    , weight: left.subtree_weight()
-                   , left: box left
-                   , right: box right
+                   , left: Box::new(left)
+                   , right: Box::new(right)
                    }
     }
 
@@ -168,6 +168,7 @@ macro_rules! or_zero {
 }
 impl Node {
 
+    #[cfg(feature = "unstable")]
     pub fn spanning(&self, i: usize, span_len: usize) -> (&Node, usize) {
         assert!(self.len() >= span_len);
         match *self {
@@ -196,6 +197,7 @@ impl Node {
         }
     }
 
+    #[cfg(feature = "unstable")]
     pub fn spanning_mut(&mut self, i: usize, span_len: usize)
                         -> (&mut Node, usize) {
         assert!(self.len() >= span_len);
@@ -273,11 +275,18 @@ impl Node {
         Branch(BranchNode::new(left, right))
     }
 
+
     #[inline]
+    #[cfg(feature = "unstable")]
     pub const fn new_leaf(string: LeafRepr) -> Self {
         Leaf(string)
     }
 
+    #[inline]
+    #[cfg(not(feature = "unstable"))]
+    pub fn new_leaf(string: LeafRepr) -> Self {
+        Leaf(string)
+    }
 
     /// Returns true if this node is balanced
     ///
@@ -411,6 +420,7 @@ impl Node {
 
 
     /// Returns an iterator over all the strings in this `Node`s subrope'
+    #[cfg(feature = "unstable")]
     #[inline]
     pub fn strings<'a>(&'a self) -> impl Iterator<Item=&'a str> {
         self.leaves().map(|n| match n {
@@ -425,7 +435,8 @@ impl Node {
     ///
     /// Consumes `self`.
     #[inline]
-    #[cfg(not(feature = "with_tendrils"))]
+    #[cfg(all( feature = "unstable"
+             , not(feature = "with_tendrils") ))]
     pub fn into_strings(self) -> impl Iterator<Item=String> {
         self.into_leaves().map(|n| match n {
             Leaf(s) => s
@@ -441,7 +452,8 @@ impl Node {
     ///
     /// Consumes `self`.
     #[inline]
-    #[cfg(feature = "with_tendrils")]
+    #[cfg(all( feature = "unstable"
+             , feature = "with_tendrils" ))]
     pub fn into_strings(self) -> impl Iterator<Item=String> {
         self.into_leaves().map(|n| match n {
             Leaf(s) => s.into()
@@ -450,6 +462,51 @@ impl Node {
                                  majeure_, this should be impossible. \
                                  Something's broken.")
         })
+    }
+
+    /// Returns an iterator over all the strings in this `Node`s subrope'
+    #[cfg(not(feature = "unstable"))]
+    #[inline]
+    pub fn strings<'a>(&'a self) -> Box<Iterator<Item=&'a str> + 'a> {
+        Box::new(self.leaves().map(|n| match n {
+            &Leaf(ref s) => s.as_ref()
+          , _ => unreachable!("Node.leaves() iterator contained something \
+                               that wasn't a leaf. Barring _force majeure_, \
+                               this should be impossible. Something's broken.")
+        }))
+    }
+
+    /// Returns a move iterator over all the strings in this `Node`s subrope'
+    ///
+    /// Consumes `self`.
+    #[inline]
+    #[cfg(all( not(feature = "unstable")
+             , not(feature = "with_tendrils") ))]
+    pub fn into_strings(self) -> Box<Iterator<Item=String>> {
+        Box::new(self.into_leaves().map(|n| match n {
+            Leaf(s) => s
+            , _ => unreachable!("Node.into_leaves() iterator contained \
+                                 something  that wasn't a leaf. Barring _force \
+                                 majeure_, this should be impossible. \
+                                 Something's broken.")
+        }))
+    }
+
+
+    /// Returns a move iterator over all the strings in this `Node`s subrope'
+    ///
+    /// Consumes `self`.
+    #[inline]
+    #[cfg(all( not(feature = "unstable")
+             , feature = "with_tendrils" ))]
+    pub fn into_strings(self) -> Box<Iterator<Item=String>> {
+        Box::new(self.into_leaves().map(|n| match n {
+            Leaf(s) => s.into()
+            , _ => unreachable!("Node.into_leaves() iterator contained \
+                                 something  that wasn't a leaf. Barring _force \
+                                 majeure_, this should be impossible. \
+                                 Something's broken.")
+        }))
     }
 
     str_iters! {
@@ -493,15 +550,24 @@ impl Node {
     //     self.strings().flat_map(str::bytes)
     // }
 
+    #[cfg(feature = "unstable")]
     #[inline]
     pub fn char_indices<'a>(&'a self)
                        -> impl Iterator<Item=(usize, char)> + 'a {
          self.chars().enumerate()
     }
 
+    #[cfg(not(feature = "unstable"))]
+    #[inline]
+    pub fn char_indices<'a>(&'a self) -> Box<Iterator<Item=(usize, char)> + 'a>
+    {
+         Box::new(self.chars().enumerate())
+    }
+
     /// Returns an iterator over the grapheme clusters of this `Node`'s subrope'
     ///
     /// This is the iterator returned by `Node::into_iter`.
+    #[cfg(feature = "unstable")]
     #[inline]
     pub fn graphemes<'a>(&'a self) -> impl Iterator<Item=&'a str> {
         // the compiler won't let me mark this as unimplemented using the
@@ -510,6 +576,11 @@ impl Node {
         //  - eliza, 12/18/2016
         panic!("Unimplemented!");
         self.strings()
+    }
+    #[cfg(not(feature = "unstable"))]
+    #[inline]
+    pub fn graphemes<'a>(&'a self) -> Box<Iterator<Item=&'a str>> {
+        unimplemented!()
     }
 
 }
@@ -564,9 +635,9 @@ impl Iterator for IntoLeaves {
                 None => return None
               , Some(Leaf(ref s)) if s.len() == 0 => {}
               , leaf @ Some(Leaf(_))=> return leaf
-              , Some(Branch(BranchNode { box left, box right, .. })) => {
-                    self.0.push(right);
-                    self.0.push(left);
+              , Some(Branch(BranchNode { left, right, .. })) => {
+                    self.0.push(*right);
+                    self.0.push(*left);
                 }
             }
         }
@@ -600,9 +671,9 @@ impl ops::Index<usize> for Node {
                , "Node::index: index {} out of bounds (length {})", i, len);
         match *self {
             Leaf(ref vec) => { &vec[i..i+1] }
-          , Branch(BranchNode { box ref right, .. }) if len < i =>
+          , Branch(BranchNode { ref right, .. }) if len < i =>
                 &right[i - len]
-          , Branch(BranchNode { box ref left, .. }) => &left[i]
+          , Branch(BranchNode { ref left, .. }) => &left[i]
         }
     }
 }
