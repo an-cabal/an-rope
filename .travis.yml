@@ -1,53 +1,57 @@
 language: rust
-
-os:
-  - linux
-  - osx
-
-matrix:
-  allow_failures:
-    - os: osx
-  fast_finish: true
-
-
-rust:
-  - nightly
-
-before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update; fi
-
 addons:
   apt:
     packages:
-      - libcurl4-openssl-dev
-      - libelf-dev
-      - libdw-dev
-      - cmake
-      - gcc
-      - binutils-dev
-
-script:
-  - cargo build --verbose
-  - cargo test --verbose
-  - cargo test -p an-rope --verbose
-
-after_success: |
+    - libcurl4-openssl-dev
+    - libelf-dev
+    - libdw-dev
+    - binutils-dev
+    - cmake
+    - gcc
+rust:
+- nightly
+- beta
+- stable
+# - 1.0.0
+os:
+- linux
+- osx
+matrix:
+  allow_failures:
+  - rust: beta
+  - rust: nightly
+  fast_finish: true
+before_install:
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update; fi
+cache: cargo
+before_script: |
   if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-    wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz &&
-    tar xzf master.tar.gz &&
-    cd kcov-master &&
-    mkdir build &&
-    cd build &&
-    cmake .. &&
-    make &&
-    sudo make install &&
-    cd ../.. &&
-    rm -rf kcov-master &&
-    for file in target/debug/an_editor-*; do mkdir -p "target/cov/$(basename $file)"; kcov --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file"; done &&
-    for file in target/debug/deps/an_rope-*; do mkdir -p "an-rope/target/cov/$(basename $file)"; kcov --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file"; done &&
-    bash <(curl -s https://codecov.io/bash) &&
-    echo "Uploaded code coverage";
+    pip install 'travis-cargo' --user &&
+    export PATH=$HOME/.local/bin:$PATH;
   fi
-
+script: |
+  if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+    travis-cargo build &&
+    travis-cargo test &&
+    travis-cargo --only stable doc
+  else
+    cargo build &&
+    cargo test &&
+    cargo test -p an-rope
+  fi
+after_success:
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then travis-cargo --only stable doc-upload;
+  fi
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then  travis-cargo coverage --no-sudo --verify;
+  fi
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then bash <(curl -s https://codecov.io/bash);
+  fi
 notifications:
-  slack: stemtumblr:5NYecEWWIW4z3LxVE98V6BZk
+  slack:
+    rooms:
+      - stemtumblr:5NYecEWWIW4z3LxVE98V6BZk
+    on_failure: always
+    on_success: change
+env:
+  global:
+    secure: A/6kIeMgFnhbm1XKbh8LlaEr4hbIPMeSCHkDv3L1vewkqHptGHrsYEXVxeNtUmknG4tXCzlYs1WKVAiJaoGx8PWw9pkBzmF1rv59bZDwyO6p75g/bEWn4e9PIa/5KD2DFR/Urlr+gqj8oNOM9ixPvo1t6IyijpTrK7Gn/cdnUkQOmAOFv7xXRNuHvCaPPdkDVvMyn4xL7hyH4GfHW7l/hlLkJ5H+wFISLKLzgCoFTH4Rmzhx/fz7GYIjW7z7kP8RTcbWEj9pG9srL/79SGBc3BL6wPJj+3uoSTLHKlSSMfEZgFGe2JE3sA9p8yVNUyiOwlSQ6mwNqm081jJ7KkJUFhohjityXCxU1Mim1ZwHqxRwKeEYI9gsOzUF7s5ton35rjguz4on6mcqVguK5Jia4MxQMI1513GN2JbHMfDNB41yVxYq7odztFQ4czRLhzBlEiIbU5En8FVff4lZTLkJLDbwgxhpXYC3jC3dX9U/39hWwBXcH6cEwvL7V8FGHmt0O8N7bRxCYcMbHRxyqGTSrRUI/WbsjYYYeWawsYDfziQqnhCgL/SUThyNZnDBvrPAVk3iaCgCgjB0eWxh2F4axADf+B1vmRpD+AqHnyvDe818DBjuKmS5OZUyA0rUXhrBRpkB7JFzR+dUbfSJKu7uSNNjQa42th7Z/oyyQGk1r0U=

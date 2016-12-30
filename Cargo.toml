@@ -2,7 +2,15 @@
 name = "an-editor"
 description = "an text editor."
 version = "0.0.1"
-authors = ["Eliza Weisman <hi@hawkweisman.me>", "Chris McDonald <mail.chris.mcdonald@gmail.com>"]
+authors = [ "Eliza Weisman <hi@hawkweisman.me>"
+          , "Chris McDonald <mail.chris.mcdonald@gmail.com>"]
+
+
+[features]
+# no features by default
+default = []
+# if building against unstable Rust
+unstable = ["an-rope/unstable"]
 
 [dependencies.an-rope]
 path = "an-rope"
