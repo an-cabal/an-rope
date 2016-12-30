@@ -15,6 +15,8 @@ fn delete_test_2() {
     assert_eq!(&r, "");
 }
 
+// this range syntax only works on nightly rust
+#[cfg(feature = "unstable")]
 #[test]
 fn delete_test_3() {
     let mut r = Rope::from("this is not fine".to_string());
@@ -22,6 +24,8 @@ fn delete_test_3() {
     assert_eq!(&r, "");
 }
 
+// this range syntax only works on nightly rust
+#[cfg(feature = "unstable")]
 #[test]
 fn delete_test_4() {
     let mut r = Rope::from("this is not fine".to_string());
@@ -29,6 +33,8 @@ fn delete_test_4() {
     assert_eq!(&r, "this is not");
 }
 
+// this range syntax only works on nightly rust
+#[cfg(feature = "unstable")]
 #[test]
 fn delete_test_5() {
     let mut r = Rope::from("this is not fine".to_string());
@@ -36,6 +42,8 @@ fn delete_test_5() {
     assert_eq!(&r, "is not fine");
 }
 
+// this range syntax only works on nightly rust
+#[cfg(feature = "unstable")]
 #[test]
 #[should_panic(expected = "do not lie on character boundary")]
 fn delete_test_6() {

@@ -319,7 +319,7 @@ impl Rope {
     }
     #[inline]
     #[cfg(not(feature = "unstable"))]
-    pub fn delete<R>(&mut self, range: ops::Range<usize>) {
+    pub fn delete(&mut self, range: ops::Range<usize>) {
         let (l, r) = self.take_root().split(range.start);
         let (_, r) = r.split(range.end - range.start);
         self.root = Node::new_branch(l, r);
