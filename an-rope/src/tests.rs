@@ -54,6 +54,28 @@ fn delete_test_7() {
 }
 
 #[test]
+fn fmt_debug_test_1() {
+    let s = format!("{:?}", Rope::new());
+    assert_eq!(s, "Rope[\"\"] Leaf(\"\")");
+}
+
+#[test]
+fn fmt_debug_test_2() {
+    let s = format!("{:?}", Rope::from("NERD!!!".to_string()));
+    assert_eq!(s, "Rope[\"NERD!!!\"] Leaf(\"NERD!!!\")");
+}
+
+#[test]
+fn fmt_debug_test_3() {
+    let r1 = Rope::from("Hello, ".to_string());
+    let r2 = Rope::from("World!".to_string());
+    let r = r1 + r2;
+    let s = format!("{:?}", r);
+    assert_eq!(s, "Rope[\"Hello, World!\"] \
+                        Branch(7(Leaf(\"Hello, \"), Leaf(\"World!\")))");
+}
+
+#[test]
 fn rebalance_test_1() {
     let mut r = Rope::from("This is a large string \
                         that will need to be rebalanced.".to_string());
