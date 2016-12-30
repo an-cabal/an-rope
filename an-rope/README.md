@@ -16,3 +16,13 @@ providing the same API plus additional methods. Therefore, code which uses
 `Rope` provides two APIs for editing a `Rope`: a destructive,
 edit-in-place API whose methods match those of `String`, and a
 non-destructive, persistant API.
+
+### compatibility
+
+`an-rope` is [built against](https://travis-ci.org/hawkw/an-editor) the latest stable, beta, and nightly Rust releases, on macOS and Ubuntu. Some features rely on nightly Rust, and may not be available on other release channels.
+
+### cargo feature flags
+
++ `with_tendrils`: use the [`tendril`](https://docs.rs/crate/tendril/0.2.3) library to optimise performance for small strings.
++ `rebalance`: enable Rope rebalancing.
++ `unstable`: enable nightly Rust features. pass this flag if building on nightly Rust.
