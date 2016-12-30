@@ -308,12 +308,20 @@ impl Rope {
     /// assert_eq!(&an_rope, "this is fine");
     /// ```
     #[inline]
+    #[cfg(feature = "unstable")]
     pub fn delete<R>(&mut self, range: R)
     where R: RangeArgument<usize> {
         let start = *range.start().unwrap_or(&0);
         let end = *range.end().unwrap_or(&self.len());
         let (l, r) = self.take_root().split(start);
         let (_, r) = r.split(end - start);
+        self.root = Node::new_branch(l, r);
+    }
+    #[inline]
+    #[cfg(not(feature = "unstable"))]
+    pub fn delete<R>(&mut self, range: ops::Range<usize>) {
+        let (l, r) = self.take_root().split(range.start);
+        let (_, r) = r.split(range.end - range.start);
         self.root = Node::new_branch(l, r);
     }
 
@@ -1260,6 +1268,51 @@ impl iter::Extend<Rope> for Rope {
     fn extend<T>(&mut self, iter: T)
     where T: IntoIterator<Item=Rope> {
         for r in iter {self.append(r);}
+    }
+
+}
+
+impl iter::FromIterator<char> for Rope {
+
+    fn from_iter<I>(iter: I) -> Rope
+    where I: IntoIterator<Item=char> {
+        unimplemented!()
+    }
+
+}
+
+impl iter::FromIterator<String> for Rope {
+
+    fn from_iter<I>(iter: I) -> Rope
+    where I: IntoIterator<Item=String> {
+        unimplemented!()
+    }
+
+}
+
+impl iter::FromIterator<Rope> for Rope {
+
+    fn from_iter<I>(iter: I) -> Rope
+    where I: IntoIterator<Item=Rope> {
+        unimplemented!()
+    }
+
+}
+
+impl<'a> iter::FromIterator<&'a char> for Rope {
+
+    fn from_iter<I>(iter: I) -> Rope
+    where I: IntoIterator<Item=&'a char> {
+        unimplemented!()
+    }
+
+}
+
+impl<'a> iter::FromIterator<&'a str> for Rope {
+
+    fn from_iter<I>(iter: I) -> Rope
+    where I: IntoIterator<Item=&'a str> {
+        unimplemented!()
     }
 
 }
