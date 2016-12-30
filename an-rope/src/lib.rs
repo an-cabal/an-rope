@@ -818,7 +818,7 @@ impl Rope {
         RopeSlice::new(&self.root, range)
     }
     #[cfg(not(feature = "unstable"))]
-    pub fn slice<'a, R>(&'a self, range: ops::Range<usize>) -> RopeSlice<'a> {
+    pub fn slice<'a>(&'a self, range: ops::Range<usize>) -> RopeSlice<'a> {
         RopeSlice::new(&self.root, range)
     }
 
@@ -860,8 +860,8 @@ impl Rope {
         RopeSliceMut::new(&mut self.root, range)
     }
     #[cfg(not(feature = "unstable"))]
-    pub fn slice_mut<'a, R>(&'a mut self, range: ops::Range<usize>)
-                          -> RopeSliceMut<'a> {
+    pub fn slice_mut<'a>(&'a mut self, range: ops::Range<usize>)
+                        -> RopeSliceMut<'a> {
         RopeSliceMut::new(&mut self.root, range)
     }
 

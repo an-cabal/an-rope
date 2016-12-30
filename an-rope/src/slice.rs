@@ -273,12 +273,14 @@ impl<'a> RopeSliceMut<'a>  {
     /// O(log _n_)
     ///
     /// # Examples
+    /// If built with `--features unstable`:
     /// ```
     /// #![feature(collections)]
     /// #![feature(collections_range)]
-    ///
+    /// ##[cfg(feature = "unstable")]
     /// extern crate collections;
     /// extern crate an_rope;
+    /// ##[cfg(feature = "unstable")]
     /// # fn main() {
     ///
     /// use collections::range::RangeArgument;
@@ -320,12 +322,14 @@ impl<'a> RopeSliceMut<'a>  {
     /// O(log _n_)
     ///
     /// # Examples
+    /// If built with `--features unstable`:
     /// ```
     /// #![feature(collections)]
     /// #![feature(collections_range)]
-    ///
+    /// ##[cfg(feature = "unstable")]
     /// extern crate collections;
     /// extern crate an_rope;
+        /// ##[cfg(feature = "unstable")]
     /// # fn main() {
     ///
     /// use collections::range::RangeArgument;
@@ -363,12 +367,14 @@ impl<'a> RopeSliceMut<'a>  {
     /// O(log _n_)
     ///
     /// # Examples
+    /// If built with `--features unstable`:
     /// ```
     /// #![feature(collections)]
     /// #![feature(collections_range)]
-    ///
+    /// ##[cfg(feature = "unstable")]
     /// extern crate collections;
     /// extern crate an_rope;
+    /// ##[cfg(feature = "unstable")]
     /// # fn main() {
     ///
     /// use collections::range::RangeArgument;
@@ -718,7 +724,7 @@ mod tests {
     //     let string_slice = &string[1...10];
     //     assert_eq!(&rope_slice, string_slice)
     // }
-
+    #[cfg(feature = "unstable")]
     #[test]
     fn until() {
         let string = "aaaaabbbbbbccccccccccdefgdefgaabababab";
@@ -728,6 +734,7 @@ mod tests {
         assert_eq!(&rope_slice, string_slice)
     }
 
+    #[cfg(feature = "unstable")]
     #[test]
     fn from() {
         let mut string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
@@ -736,7 +743,7 @@ mod tests {
         let string_slice = &string[5..];
         assert_eq!(&rope_slice, string_slice)
     }
-
+    #[cfg(feature = "unstable")]
     #[test]
     fn full() {
         let string = "aaaaabbbbbbccccccccccccdefgdefgaabababab";
@@ -769,7 +776,7 @@ mod tests {
         let string_slice = &mut string[1..10];
         assert_eq!(&rope_slice, string_slice)
     }
-
+    #[cfg(feature = "unstable")]
     #[test]
     fn mut_until() {
         let mut string =
@@ -779,7 +786,7 @@ mod tests {
         let string_slice = &mut string[..10];
         assert_eq!(&rope_slice, string_slice)
     }
-
+    #[cfg(feature = "unstable")]
     #[test]
     fn mut_from() {
         let mut string =
@@ -790,6 +797,7 @@ mod tests {
         assert_eq!(&rope_slice, string_slice)
     }
 
+    #[cfg(feature = "unstable")]
     #[test]
     fn mut_full() {
         let mut string =
@@ -799,7 +807,7 @@ mod tests {
         let string_slice = &mut string[..];
         assert_eq!(&rope_slice, string_slice)
     }
-
+    #[cfg(feature = "unstable")]
     #[test]
     fn mut_insert_rope() {
         let mut rope = Rope::from("this is a string");
@@ -813,7 +821,8 @@ mod tests {
          }
         assert_eq!(&rope, "this is an example string");
     }
-
+    #[cfg(feature = "unstable")]
+    #[test]
     fn mut_insert_str() {
         let mut rope = Rope::from("this is a string");
          {
@@ -826,7 +835,7 @@ mod tests {
          }
         assert_eq!(&rope, "this is an example string");
     }
-
+    #[cfg(feature = "unstable")]
     #[test]
     fn mut_insert_char() {
         let mut rope = Rope::from("this is a string");
