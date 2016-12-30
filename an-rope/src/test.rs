@@ -356,94 +356,177 @@ fn rope_char_indices() {
     }
 }
 
+mod iterator {
 
-#[test]
-fn iter_extend_empty_iter () {
-    let mut rope = Rope::from("");
-    let empty_vec: Vec<String> = vec![];
-    rope.extend(empty_vec);
-    assert_eq!(&rope, "");
-}
+    mod Extend {
+        use ::Rope;
+        #[test]
+        fn char_ref_empty () {
+            let mut rope = Rope::from("");
+            rope.extend(&vec!['a', 'b', 'c', 'd']);
+            assert_eq!(&rope, "abcd");
+        }
 
+        #[test]
+        fn char_refs_nonempty () {
+            let mut rope = Rope::from("a");
+            rope.extend(vec![&'b', &'c', &'d']);
+            assert_eq!(&rope, "abcd");
+        }
 
-#[test]
-fn iter_extend_string_empty () {
-    let mut rope = Rope::from("");
-    rope.extend(vec![ String::from("aaaa")
-                    , String::from("bbbb")
-                    , String::from("cccc")
-                    ]);
-    assert_eq!(&rope, "aaaabbbbcccc");
-}
-
-#[test]
-fn iter_extend_string_nonempty () {
-    let mut rope = Rope::from("aaaa");
-    rope.extend(vec![String::from("bbbb"), String::from("cccc")]);
-    assert_eq!(&rope, "aaaabbbbcccc");
-}
+        fn empty_iter () {
+            let mut rope = Rope::from("");
+            let empty_vec: Vec<String> = vec![];
+            rope.extend(empty_vec);
+            assert_eq!(&rope, "");
+        }
 
 
-#[test]
-fn iter_extend_rope_empty () {
-    let mut rope = Rope::from("");
-    rope.extend(vec![ Rope::from("aaaa")
-                    , Rope::from("bbbb")
-                    , Rope::from("cccc")
-                    ]);
-    assert_eq!(&rope, "aaaabbbbcccc");
-}
+        #[test]
+        fn string_empty () {
+            let mut rope = Rope::from("");
+            rope.extend(vec![ String::from("aaaa")
+                            , String::from("bbbb")
+                            , String::from("cccc")
+                            ]);
+            assert_eq!(&rope, "aaaabbbbcccc");
+        }
 
-#[test]
-fn iter_extend_rope_nonempty () {
-    let mut rope = Rope::from("aaaa");
-    rope.extend(vec![Rope::from("bbbb"), Rope::from("cccc")]);
-    assert_eq!(&rope, "aaaabbbbcccc");
-}
-
-
-#[test]
-fn iter_extend_str_slice_empty () {
-    let mut rope = Rope::from("");
-    rope.extend(vec![ "aaaa"
-                    , "bbbb"
-                    , "cccc"
-                    ]);
-    assert_eq!(&rope, "aaaabbbbcccc");
-}
-
-#[test]
-fn iter_extend_str_slice_nonempty () {
-    let mut rope = Rope::from("aaaa");
-    rope.extend(vec!["bbbb", "cccc"]);
-    assert_eq!(&rope, "aaaabbbbcccc");
-}
-
-#[test]
-fn iter_extend_chars_empty () {
-    let mut rope = Rope::from("");
-    rope.extend(vec!['a', 'b', 'c', 'd']);
-    assert_eq!(&rope, "abcd");
-}
-
-#[test]
-fn iter_extend_chars_nonempty () {
-    let mut rope = Rope::from("a");
-    rope.extend(vec!['b', 'c', 'd']);
-    assert_eq!(&rope, "abcd");
-}
+        #[test]
+        fn string_nonempty () {
+            let mut rope = Rope::from("aaaa");
+            rope.extend(vec![String::from("bbbb"), String::from("cccc")]);
+            assert_eq!(&rope, "aaaabbbbcccc");
+        }
 
 
-#[test]
-fn iter_extend_char_ptr_empty () {
-    let mut rope = Rope::from("");
-    rope.extend(&vec!['a', 'b', 'c', 'd']);
-    assert_eq!(&rope, "abcd");
-}
+        #[test]
+        fn rope_empty () {
+            let mut rope = Rope::from("");
+            rope.extend(vec![ Rope::from("aaaa")
+                            , Rope::from("bbbb")
+                            , Rope::from("cccc")
+                            ]);
+            assert_eq!(&rope, "aaaabbbbcccc");
+        }
 
-#[test]
-fn iter_extend_char_ptrs_nonempty () {
-    let mut rope = Rope::from("a");
-    rope.extend(vec![&'b', &'c', &'d']);
-    assert_eq!(&rope, "abcd");
+        #[test]
+        fn rope_nonempty () {
+            let mut rope = Rope::from("aaaa");
+            rope.extend(vec![Rope::from("bbbb"), Rope::from("cccc")]);
+            assert_eq!(&rope, "aaaabbbbcccc");
+        }
+
+        #[test]
+        fn str_slice_empty () {
+            let mut rope = Rope::from("");
+            rope.extend(vec![ "aaaa"
+                            , "bbbb"
+                            , "cccc"
+                            ]);
+            assert_eq!(&rope, "aaaabbbbcccc");
+        }
+
+        #[test]
+        fn str_slice_nonempty () {
+            let mut rope = Rope::from("aaaa");
+            rope.extend(vec!["bbbb", "cccc"]);
+            assert_eq!(&rope, "aaaabbbbcccc");
+        }
+
+        #[test]
+        fn chars_empty () {
+            let mut rope = Rope::from("");
+            rope.extend(vec!['a', 'b', 'c', 'd']);
+            assert_eq!(&rope, "abcd");
+        }
+
+        #[test]
+        fn chars_nonempty () {
+            let mut rope = Rope::from("a");
+            rope.extend(vec!['b', 'c', 'd']);
+            assert_eq!(&rope, "abcd");
+        }
+    }
+
+
+    mod FromIterator {
+        use ::Rope;
+
+        #[test]
+        fn str_slice () {
+            let vec = vec!["aaaa", "bbbb", "cccc"];
+            let rope: Rope = vec.into_iter().collect();
+            assert_eq!(&rope, "aaaabbbbcccc");
+        }
+
+        #[test]
+        fn str_slice_empty () {
+            let vec: Vec<&str> = vec![];
+            let rope: Rope = vec.into_iter().collect();
+            assert_eq!(&rope, "");
+        }
+
+        #[test]
+        fn chars () {
+            let vec = vec!['a', 'b', 'c', 'd'];
+            let rope: Rope = vec.into_iter().collect();
+            assert_eq!(&rope, "abcd");
+        }
+
+        #[test]
+        fn chars_empty () {
+            let vec: Vec<char> = vec![];
+            let rope: Rope = vec.into_iter().collect();
+            assert_eq!(&rope, "");
+        }
+
+        #[test]
+        fn char_refs () {
+            let vec = vec!['a', 'b', 'c', 'd'];
+            let rope: Rope = (&vec).into_iter().collect();
+            assert_eq!(&rope, "abcd");
+        }
+
+        #[test]
+        fn char_refs_empty () {
+            let vec: Vec<&char> = vec![];
+            let rope: Rope = vec.into_iter().collect();
+            assert_eq!(&rope, "");
+        }
+
+        #[test]
+        fn strings () {
+            let vec: Vec<String> = vec![ String::from("aaaa")
+                                       , String::from("bbbb")
+                                       , String::from("cccc")];
+            let rope: Rope = vec.into_iter().collect();
+            assert_eq!(&rope, "aaaabbbbcccc");
+        }
+
+        #[test]
+        fn strings_empty () {
+            let vec: Vec<String> = vec![];
+            let rope: Rope = vec.into_iter().collect();
+            assert_eq!(&rope, "");
+        }
+
+        #[test]
+        fn ropes () {
+            let vec: Vec<Rope> = vec![ Rope::from("aaaa")
+                                     , Rope::from("bbbb")
+                                     , Rope::from("cccc")];
+            let rope: Rope = vec.into_iter().collect();
+            assert_eq!(&rope, "aaaabbbbcccc");
+        }
+
+        #[test]
+        fn ropes_empty () {
+            let vec: Vec<Rope> = vec![];
+            let rope: Rope = vec.into_iter().collect();
+            assert_eq!(&rope, "");
+        }
+
+    }
+
 }

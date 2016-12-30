@@ -1276,7 +1276,9 @@ impl iter::FromIterator<char> for Rope {
 
     fn from_iter<I>(iter: I) -> Rope
     where I: IntoIterator<Item=char> {
-        unimplemented!()
+        let s: String = iter.into_iter().collect();
+        Rope::from(s)
+
     }
 
 }
@@ -1285,7 +1287,7 @@ impl iter::FromIterator<String> for Rope {
 
     fn from_iter<I>(iter: I) -> Rope
     where I: IntoIterator<Item=String> {
-        unimplemented!()
+        iter.into_iter().fold(Rope::new(), |mut acc, x| {acc.append(Rope::from(x)); acc})
     }
 
 }
@@ -1294,7 +1296,7 @@ impl iter::FromIterator<Rope> for Rope {
 
     fn from_iter<I>(iter: I) -> Rope
     where I: IntoIterator<Item=Rope> {
-        unimplemented!()
+        iter.into_iter().fold(Rope::new(), |mut acc, x| {acc.append(x); acc})
     }
 
 }
@@ -1303,7 +1305,8 @@ impl<'a> iter::FromIterator<&'a char> for Rope {
 
     fn from_iter<I>(iter: I) -> Rope
     where I: IntoIterator<Item=&'a char> {
-        unimplemented!()
+        let s: String = iter.into_iter().fold(String::new(), |mut acc, x| {acc.push(*x); acc});
+        Rope::from(s)
     }
 
 }
@@ -1312,7 +1315,7 @@ impl<'a> iter::FromIterator<&'a str> for Rope {
 
     fn from_iter<I>(iter: I) -> Rope
     where I: IntoIterator<Item=&'a str> {
-        unimplemented!()
+        iter.into_iter().fold(Rope::new(), |mut acc, x| {acc.append(Rope::from(x)); acc})
     }
 
 }
