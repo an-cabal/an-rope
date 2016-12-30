@@ -5,6 +5,13 @@ use super::Rope;
 use std::iter;
 
 #[test]
+fn delete_test_1() {
+    let mut r = Rope::from("this is not fine".to_string());
+    r.delete(8, 4);
+    assert_eq!(&r, "this is fine");
+}
+
+#[test]
 fn rebalance_test_1() {
     let mut r = Rope::from("This is a large string \
                         that will need to be rebalanced.".to_string());

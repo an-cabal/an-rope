@@ -274,6 +274,12 @@ impl Rope {
         self.insert_rope(index, Rope::from(s))
     }
 
+    pub fn delete(&mut self, index: usize, length: usize) {
+        let (l, r) = self.take_root().split(index);
+        let (x, r) = r.split(length);
+        self.root = Node::new_branch(l, r);
+    }
+
     /// Insert `ch` into `index` in this `Rope`, returning a new `Rope`.
     ///
     ///
