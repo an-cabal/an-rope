@@ -1305,7 +1305,8 @@ impl<'a> iter::FromIterator<&'a char> for Rope {
 
     fn from_iter<I>(iter: I) -> Rope
     where I: IntoIterator<Item=&'a char> {
-        unimplemented!()
+        let s: String = iter.into_iter().fold(String::new(), |mut acc, x| {acc.push(*x); acc});
+        Rope::from(s)
     }
 
 }
