@@ -7,7 +7,7 @@ use std::iter;
 #[test]
 fn delete_test_1() {
     let mut r = Rope::from("this is not fine".to_string());
-    r.delete(8, 4);
+    r.delete((8..12));
     assert_eq!(&r, "this is fine");
 }
 

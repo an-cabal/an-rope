@@ -274,9 +274,12 @@ impl Rope {
         self.insert_rope(index, Rope::from(s))
     }
 
-    pub fn delete(&mut self, index: usize, length: usize) {
-        let (l, r) = self.take_root().split(index);
-        let (x, r) = r.split(length);
+    pub fn delete<R>(&mut self, range: R)
+    where R: RangeArgument<usize> {
+        let start = *range.start().unwrap_or(&0);
+        let end = *range.end().unwrap_or(&self.len());
+        let (l, r) = self.take_root().split(start);
+        let (_, r) = r.split(end - start);
         self.root = Node::new_branch(l, r);
     }
 
