@@ -16,19 +16,12 @@ type LeafRepr = tendril::StrTendril;
 /// A `Node` is either a `Leaf` holding a `String`, or a
 /// a `Branch` concatenating together two `Node`s.
 #[derive(Clone)]
+#[derive(Debug)]
 pub enum Node {
     /// A leaf node
     Leaf(LeafRepr)
   , /// A branch concatenating together `l`eft and `r`ight nodes.
     Branch(BranchNode)
-}
-
-
-impl fmt::Debug for Node {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.nodes()
-            .fold(Ok(()), |r, node| r.and_then(|_| write!(f, "{:?}", node)))
-    }
 }
 
 
