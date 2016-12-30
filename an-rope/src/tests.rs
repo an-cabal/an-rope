@@ -5,6 +5,55 @@ use super::Rope;
 use std::iter;
 
 #[test]
+fn delete_test_1() {
+    let mut r = Rope::from("this is not fine".to_string());
+    r.delete((8..12));
+    assert_eq!(&r, "this is fine");
+}
+
+#[test]
+fn delete_test_2() {
+    let mut r = Rope::new();
+    r.delete((0..0));
+    assert_eq!(&r, "");
+}
+
+#[test]
+fn delete_test_3() {
+    let mut r = Rope::from("this is not fine".to_string());
+    r.delete((..));
+    assert_eq!(&r, "");
+}
+
+#[test]
+fn delete_test_4() {
+    let mut r = Rope::from("this is not fine".to_string());
+    r.delete((11..));
+    assert_eq!(&r, "this is not");
+}
+
+#[test]
+fn delete_test_5() {
+    let mut r = Rope::from("this is not fine".to_string());
+    r.delete((..5));
+    assert_eq!(&r, "is not fine");
+}
+
+#[test]
+#[should_panic(expected = "do not lie on character boundary")]
+fn delete_test_6() {
+    let mut r = Rope::from("this is not fine".to_string());
+    r.delete((..42));
+}
+
+#[test]
+#[should_panic(expected = "attempt to subtract with overflow")]
+fn delete_test_7() {
+    let mut r = Rope::from("this is not fine".to_string());
+    r.delete((12..8)); // lol, fuck you
+}
+
+#[test]
 fn rebalance_test_1() {
     let mut r = Rope::from("This is a large string \
                         that will need to be rebalanced.".to_string());

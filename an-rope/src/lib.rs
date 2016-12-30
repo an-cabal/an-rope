@@ -274,6 +274,35 @@ impl Rope {
         self.insert_rope(index, Rope::from(s))
     }
 
+    /// Delete the range `range` from this `Rope`,
+    ///
+    /// # Panics
+    /// * If the start or end of `range` are indices outside of the `Rope`
+    /// * If the end index of `range` is greater than the start index
+    ///
+    /// # Time Complexity
+    /// O(log _n_)
+    ///
+    /// # Examples
+    ///
+    /// Deleting "not" from this `Rope`:
+    ///
+    /// ```
+    /// use an_rope::Rope;
+    /// let mut an_rope = Rope::from("this is not fine".to_string());
+    /// an_rope.delete((8..12));
+    /// assert_eq!(&an_rope, "this is fine");
+    /// ```
+    #[inline]
+    pub fn delete<R>(&mut self, range: R)
+    where R: RangeArgument<usize> {
+        let start = *range.start().unwrap_or(&0);
+        let end = *range.end().unwrap_or(&self.len());
+        let (l, r) = self.take_root().split(start);
+        let (_, r) = r.split(end - start);
+        self.root = Node::new_branch(l, r);
+    }
+
     /// Insert `ch` into `index` in this `Rope`, returning a new `Rope`.
     ///
     ///
