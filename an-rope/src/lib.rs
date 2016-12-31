@@ -1263,7 +1263,7 @@ impl iter::Extend<Rope> for Rope {
 
     fn extend<T>(&mut self, iter: T)
     where T: IntoIterator<Item=Rope> {
-        self.append(iter.into_iter().collect::<Rope>());
+        self.append(iter.into_iter().collect());
     }
 
 }
