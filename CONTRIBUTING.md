@@ -4,7 +4,7 @@ Contributing to An Editor
 **Looking for a first issue?** You might want to start out by looking at [issues tagged "easy"](https://github.com/hawkw/an-editor/issues?q=is%3Aissue+is%3Aopen+label%3Aeasy). These are issues that, while important, will probably require less knowledge of Rust, less programming experience, and/or less knowledge of the `an-editor` codebase and might make good jumping-off points for potential contibutors.
 
 Merging Pull Requests
----------------------
+=====================
 
 In order to be accepted and merged, a pull request must meet the following conditions.
 
@@ -22,7 +22,7 @@ In order to be accepted and merged, a pull request must meet the following condi
 + Have any outstanding changes requested by a reviewer.
 
 Code Style
-----------
+==========
 
 Code committed to `an-editor` should conform to the [Rust style guidelines](https://doc.rust-lang.org/1.12.0/style/README.html) and to the ["Effective Rust" section](https://doc.rust-lang.org/book/effective-rust.html) of the Rust Book, whenever possible.
 
@@ -64,13 +64,13 @@ The following deviations from the style guidelines are _permitted_, but not requ
     
     is considered good style.
 
-### Tools to Assist With Coding Style
+## Tools to Assist With Coding Style
 
-#### EditorConfig
+### EditorConfig
 
 An [`.editorconfig` file](https://github.com/hawkw/an-editor/blob/master/.editorconfig) is available for [compatible text editors](http://editorconfig.org/#download). If the EditorConfig plugin is installed in your text editor, it will use this file to automatically configure certain formatting settings for the `an-editor` repository.
 
-#### rustfmt
+### rustfmt
 
 [`rustfmt`](https://github.com/rust-lang-nursery/rustfmt) is a tool for automatically formatting Rust source code according to style guidelines. This repository provides a `rustfmt.toml` file for automatically configuring `rustfmt` to use our style guidelines.
 
