@@ -34,20 +34,25 @@ In particular, it should:
 The following deviations from the style guidelines are _permitted_, but not required:
 
 + [Comma-first style](https://gist.github.com/isaacs/357981) _may_ be used for all comma-delimited constructs. For example:
+
     ```rust
     let a_list = [ a
                  , b
                  , c
                  ];
     ```
+    
     and
+    
     ```rust
     let a_list = [ a, b, c, d
                  , e, f, g, h
                  ];
     ```
+    
     are considered good style.
 + When wrapping `where` clauses, the `where` clause _may_ be placed at the same indentation level as the corresponding `fn` or `impl` statement. For example:
+
     ```rust
     // Considered good style
     fn bar<A, B>(a: A) -> B
@@ -56,6 +61,7 @@ The following deviations from the style guidelines are _permitted_, but not requ
         ...
     }
     ```
+    
     is considered good style.
 
 ### Tools to Assist With Coding Style
