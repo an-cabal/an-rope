@@ -60,4 +60,26 @@ The following deviations from the style guidelines are _permitted_, but not requ
 
 ### Tools to Assist With Coding Style
 
+#### EditorConfig
+
 An [`.editorconfig` file](https://github.com/hawkw/an-editor/blob/master/.editorconfig) is available for [compatible text editors](http://editorconfig.org/#download). If the EditorConfig plugin is installed in your text editor, it will use this file to automatically configure certain formatting settings for the `an-editor` repository.
+
+#### rustfmt
+
+[`rustfmt`](https://github.com/rust-lang-nursery/rustfmt) is a tool for automatically formatting Rust source code according to style guidelines. This repository provides a `rustfmt.toml` file for automatically configuring `rustfmt` to use our style guidelines.
+
+`rustfmt` may be installed by running
+
+```bash
+$ cargo install rustfmt
+```
+
+and invoked on a crate by running
+
+```bash
+$ cargo fmt
+```
+
+Additionally, there are `rustfmt` plugins [available](https://github.com/rust-lang-nursery/rustfmt#running-rustfmt-from-your-editor) for many popular editors and IDEs.
+
+`rustfmt` may also be added as a [git pre-commit hook](https://git-scm.com/book/uz/v2/Customizing-Git-Git-Hooks) to ensure that all commits conform to the style guidelines.
