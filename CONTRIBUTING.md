@@ -1,6 +1,8 @@
 Contributing to An Editor
 =========================
 
+**Looking for a first issue?** You might want to start out by looking at [issues tagged "easy"](https://github.com/hawkw/an-editor/issues?q=is%3Aissue+is%3Aopen+label%3Aeasy). These are issues that, while important, will probably require less knowledge of Rust, less programming experience, and/or less knowledge of the `an-editor` codebase and might make good jumping-off points for potential contibutors.
+
 Merging Pull Requests
 ---------------------
 
@@ -11,10 +13,51 @@ In order to be accepted and merged, a pull request must meet the following condi
 + Build successfully on [Travis](https://travis-ci.org/hawkw/an-editor)
 + Include RustDoc comments for any public-facing API functions or types
 + Include tests for any added features
-+ Reference any closed issues with the text "Closes #XX" or "Fixes #XX" in the pull requet description
++ Reference any closed issues with the text "Closes #XX" or "Fixes #XX" in the pull request description
 
 #### Pull requests MUST NOT
 
 + Include any failing tests
 + Decrease overall project test coverage
 + Have any outstanding changes requested by a reviewer.
+
+Code Style
+----------
+
+Code committed to `an-editor` should conform to the [Rust style guidelines](https://doc.rust-lang.org/1.12.0/style/README.html) and to the ["Effective Rust" section](https://doc.rust-lang.org/book/effective-rust.html) of the Rust Book, whenever possible.
+
+In particular, it should:
+ + be indented with 4 spaces
+ + not end files with trailing whitespace
+ + follow the naming conventions in the Rust style guidelines
+
+The following deviations from the style guidelines are _permitted_, but not required:
+
++ [Comma-first style](https://gist.github.com/isaacs/357981) _may_ be used for all comma-delimited constructs. For example:
+    ```rust
+    let a_list = [ a
+                 , b
+                 , c
+                 ];
+    ```
+    and
+    ```rust
+    let a_list = [ a, b, c, d
+                 , e, f, g, h
+                 ];
+    ```
+    are considered good style.
++ When wrapping `where` clauses, the `where` clause _may_ be placed at the same indentation level as the corresponding `fn` or `impl` statement. For example:
+    ```rust
+    // Considered good style
+    fn bar<A, B>(a: A) -> B
+    where A: Something
+        , B: Something + SomethingElse {
+        ...
+    }
+    ```
+    is considered good style.
+
+### Tools to Assist With Coding Style
+
+An [`.editorconfig` file](https://github.com/hawkw/an-editor/blob/master/.editorconfig) is available for [compatible text editors](http://editorconfig.org/#download). If the EditorConfig plugin is installed in your text editor, it will use this file to automatically configure certain formatting settings for the `an-editor` repository.
