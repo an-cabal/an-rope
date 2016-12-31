@@ -1,5 +1,20 @@
 use super::Rope;
 use std::iter;
+use internals::Node;
+use internals::Node::Leaf;
+
+#[test]
+fn collapse_test_1() {
+    let l = Node::new_leaf("this is".to_string());
+    let r = Node::new_leaf(" fine".to_string());
+    let b = Node::new_branch(l, r);
+    let c = b.collapse();
+    if let Leaf(s) = c {
+        assert_eq!(s, "this is fine");
+    } else {
+        assert!(false);
+    }
+}
 
 #[test]
 fn delete_test_1() {

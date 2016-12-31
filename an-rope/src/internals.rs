@@ -153,7 +153,6 @@ impl BranchNode {
             (left, right)
         }
     }
-
 }
 
 macro_rules! or_zero {
@@ -252,6 +251,10 @@ impl Node {
                 // otherwise, just delegate out to `BranchNode::split()`
                 node.split(index)
         }
+    }
+
+    pub fn collapse(self) -> Node {
+        Node::new_leaf(self.strings().fold(LeafRepr::new(), |c, s| c + s))
     }
 
     #[inline]
