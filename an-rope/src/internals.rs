@@ -254,7 +254,7 @@ impl Node {
     }
 
     pub fn collapse(self) -> Node {
-        Node::new_leaf(self.strings().fold(LeafRepr::new(), |c, s| c + s))
+        Node::new_leaf(self.into_strings().collect())
     }
 
     #[inline]
