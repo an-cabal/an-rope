@@ -1223,51 +1223,14 @@ impl<'a> Borrow<RopeSlice<'a>> for &'a Rope {
     }
 }
 
-impl iter::Extend<char> for Rope{
+impl<A> iter::Extend<A> for Rope
+where Rope: iter::FromIterator<A>{
 
-    fn extend<T>(&mut self, iter: T)
-    where T: IntoIterator<Item=char> {
-        let s: String = iter.into_iter().collect();
-        let r: Rope = Rope::from(s);
-        self.append(r);
-    }
+    fn extend<B>(&mut self, iter: B)
+    where B: IntoIterator<Item=A> {
 
-}
+        self.append(iter.into_iter().collect());
 
-impl iter::Extend<String> for Rope {
-
-    fn extend<T>(&mut self, iter: T)
-    where T: IntoIterator<Item=String> {
-        for s in iter {self.append(Rope::from(s));}
-    }
-
-}
-
-impl<'a> iter::Extend<&'a str> for Rope {
-
-    fn extend<T>(&mut self, iter: T)
-    where T: IntoIterator<Item=&'a str> {
-        for s in iter {self.append(Rope::from(s));}
-    }
-
-}
-
-impl<'a> iter::Extend<&'a char> for Rope {
-
-    fn extend<T>(&mut self, iter: T)
-    where T: IntoIterator<Item=&'a char> {
-        let s: String = iter.into_iter().fold(String::new(), |mut acc, x| {acc.push(*x); acc});
-        let r: Rope = Rope::from(s);
-        self.append(r);
-    }
-
-}
-
-impl iter::Extend<Rope> for Rope {
-
-    fn extend<T>(&mut self, iter: T)
-    where T: IntoIterator<Item=Rope> {
-        for r in iter {self.append(r);}
     }
 
 }
