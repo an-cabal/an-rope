@@ -1,14 +1,14 @@
 use std::ops;
 use std::fmt;
-#[cfg(feature = "with_tendrils")]
+#[cfg(feature = "tendril")]
 use tendril;
 
 use self::Node::*;
 
-#[cfg(not(feature = "with_tendrils"))]
+#[cfg(not(feature = "tendril"))]
 type LeafRepr = String;
 
-#[cfg(feature = "with_tendrils")]
+#[cfg(feature = "tendril")]
 type LeafRepr = tendril::StrTendril;
 
 /// A `Node` in the `Rope`'s tree.
@@ -426,7 +426,7 @@ impl Node {
     /// Consumes `self`.
     #[inline]
     #[cfg(all( feature = "unstable"
-             , not(feature = "with_tendrils") ))]
+             , not(feature = "tendril") ))]
     pub fn into_strings(self) -> impl Iterator<Item=String> {
         self.into_leaves().map(|n| match n {
             Leaf(s) => s
@@ -443,7 +443,7 @@ impl Node {
     /// Consumes `self`.
     #[inline]
     #[cfg(all( feature = "unstable"
-             , feature = "with_tendrils" ))]
+             , feature = "tendril" ))]
     pub fn into_strings(self) -> impl Iterator<Item=String> {
         self.into_leaves().map(|n| match n {
             Leaf(s) => s.into()
@@ -471,7 +471,7 @@ impl Node {
     /// Consumes `self`.
     #[inline]
     #[cfg(all( not(feature = "unstable")
-             , not(feature = "with_tendrils") ))]
+             , not(feature = "tendril") ))]
     pub fn into_strings(self) -> Box<Iterator<Item=String>> {
         Box::new(self.into_leaves().map(|n| match n {
             Leaf(s) => s
@@ -488,7 +488,7 @@ impl Node {
     /// Consumes `self`.
     #[inline]
     #[cfg(all( not(feature = "unstable")
-             , feature = "with_tendrils" ))]
+             , feature = "tendril" ))]
     pub fn into_strings(self) -> Box<Iterator<Item=String>> {
         Box::new(self.into_leaves().map(|n| match n {
             Leaf(s) => s.into()

@@ -24,6 +24,6 @@ non-destructive, persistant API.
 
 ### cargo feature flags
 
-+ `with_tendrils`: use the [`tendril`](https://docs.rs/crate/tendril/0.2.3) library to optimise performance for small strings.
++ `tendril`: use the [`tendril`](https://docs.rs/crate/tendril/0.2.3) library to optimise performance for small strings.
 + `rebalance`: enable Rope rebalancing.
 + `unstable`: enable nightly Rust features. pass this flag if building on nightly Rust.

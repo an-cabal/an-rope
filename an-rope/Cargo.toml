@@ -13,7 +13,6 @@ license = "MIT"
 [features]
 # no features by default
 default = []
-with_tendrils = ["tendril"]
 rebalance = []
 # if building against unstable Rust
 unstable = []
