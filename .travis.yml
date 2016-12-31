@@ -12,7 +12,6 @@ rust:
 - nightly
 - beta
 - stable
-# - 1.0.0
 os:
 - linux
 - osx
@@ -50,9 +49,16 @@ after_success:
 notifications:
   slack:
     rooms:
-      - stemtumblr:5NYecEWWIW4z3LxVE98V6BZk
+    - stemtumblr:5NYecEWWIW4z3LxVE98V6BZk
     on_failure: always
     on_success: change
 env:
   global:
     secure: A/6kIeMgFnhbm1XKbh8LlaEr4hbIPMeSCHkDv3L1vewkqHptGHrsYEXVxeNtUmknG4tXCzlYs1WKVAiJaoGx8PWw9pkBzmF1rv59bZDwyO6p75g/bEWn4e9PIa/5KD2DFR/Urlr+gqj8oNOM9ixPvo1t6IyijpTrK7Gn/cdnUkQOmAOFv7xXRNuHvCaPPdkDVvMyn4xL7hyH4GfHW7l/hlLkJ5H+wFISLKLzgCoFTH4Rmzhx/fz7GYIjW7z7kP8RTcbWEj9pG9srL/79SGBc3BL6wPJj+3uoSTLHKlSSMfEZgFGe2JE3sA9p8yVNUyiOwlSQ6mwNqm081jJ7KkJUFhohjityXCxU1Mim1ZwHqxRwKeEYI9gsOzUF7s5ton35rjguz4on6mcqVguK5Jia4MxQMI1513GN2JbHMfDNB41yVxYq7odztFQ4czRLhzBlEiIbU5En8FVff4lZTLkJLDbwgxhpXYC3jC3dX9U/39hWwBXcH6cEwvL7V8FGHmt0O8N7bRxCYcMbHRxyqGTSrRUI/WbsjYYYeWawsYDfziQqnhCgL/SUThyNZnDBvrPAVk3iaCgCgjB0eWxh2F4axADf+B1vmRpD+AqHnyvDe818DBjuKmS5OZUyA0rUXhrBRpkB7JFzR+dUbfSJKu7uSNNjQa42th7Z/oyyQGk1r0U=
+deploy:
+  provider: releases
+  api_key:
+    secure: qAH9PD6nXhzS1UPgd04KEb/MKsCq3yMApRwZrlcdJzC8z6OK4ISKDb+hbRHID53ORe+WMFEoUgp0t0Eoo8ZGuUgNSqxey6FuCdIU5QXYODCNgnK1MeO0/Ws12LH5B9kBkbpeFhBfeo+4vHP2tqfmyf3xgXw5UxjvLbT6z7/r1PejnsorP2e6bMhdeI4cOH4rehLc67WF87zOXFoMPdBdwhjJrhZukRcu1WSanrD4evNjXHV5jKmrUMSqpVTc8ZK2XpRZQAoW0mZsMaUXtvEIdaeTMI/8U+NjtLwtwm3zob/DIj8b+K3O+PE6JJcovEDMB7l6XAtkzRfsk1lVd/YOhQTzzRUBqoz2I8tw60thUvSiLEOILxvmwEoPNMx2K5W5lzMKRppYia+c3q/WmNzmxI5H0cFXkh2vCGM1BfACjuydTkKWxBjanHm4NtKEpQLKolUX6D2FOpDlhb1heF6xYVrmPFQIJIGQUUedxyI7N3gci3SzW5rQfwyrkWoOokFa9c8eNxGNlSxaUDJdnjkY55lJFPUhUWTreXYNDPO3BzZDIpPErB/TJrdy4rirH2iwLHvJQpdTKCd/5XzcHFCkXFS9tAd7wR4CftqM7FSgB4cJE/K2C/226ysG4LqtzMpTJJALEfC7PKYa/90jCL8gkDoUl4oQLpKa8e3ysEoGBbs=
+  file: target/release/an_rope-*
+  on:
+    repo: hawkw/an-editor
