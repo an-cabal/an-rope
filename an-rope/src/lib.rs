@@ -35,6 +35,7 @@ use std::iter;
 #[cfg(feature = "tendril")] extern crate tendril;
 #[cfg(feature = "tendril")] use tendril::StrTendril;
 
+#[cfg(test)] #[macro_use] extern crate quickcheck;
 #[cfg(test)] mod test;
 #[cfg(all( test, feature = "unstable"))] mod bench;
 

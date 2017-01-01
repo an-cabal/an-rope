@@ -1,6 +1,21 @@
 use super::Rope;
 use std::iter;
 
+use quickcheck::{Arbitrary, Gen};
+
+impl Arbitrary for Rope {
+    fn arbitrary<G: Gen>(g: &mut G) -> Rope {
+        Rope::from(String::arbitrary(g))
+    }
+
+    fn shrink(&self) -> Box<Iterator<Item=Rope>> {
+        // Shrink a string by shrinking a vector of its characters.
+        let chars: Vec<char> = self.chars().collect();
+        Box::new(chars.shrink().map(|x| x.into_iter().collect::<Rope>()))
+    }
+
+}
+
 #[test]
 fn delete_test_1() {
     let mut r = Rope::from("this is not fine".to_string());
@@ -356,6 +371,56 @@ fn rope_char_indices() {
     }
 }
 
+mod properties {
+    use ::Rope;
+    use quickcheck::{TestResult, quickcheck};
+    quickcheck! {
+        fn rope_concat_is_string_concat(a: String, b: String) -> bool {
+            let r_a = Rope::from(a.clone()); let r_b = Rope::from(b.clone());
+            &(r_a + r_b) == &(a + b.as_str())
+        }
+
+        fn rope_with_append_prepend_is_symmetric(a: Rope, b: Rope) -> bool {
+            a.with_append(b.clone()) == b.with_prepend(a.clone()) &&
+            a.with_prepend(b.clone()) == b.with_append(a.clone())
+        }
+
+        fn rope_append_prepend_is_symmetric(a: Rope, b: Rope) -> bool {
+            a.clone().append(b.clone()) == b.clone().prepend(a.clone()) &&
+            a.clone().prepend(b.clone()) == b.clone().append(a.clone())
+        }
+
+        fn rope_append_is_string_push_str(a: String, b: String) -> bool {
+            let mut rope = Rope::from(a.clone());
+            rope.append(Rope::from(b.clone()));
+            let mut string = a;
+            string.push_str(&b[..]);
+            rope == string
+        }
+
+        fn rope_add_assign_is_string_push_str(a: String, b: String) -> bool {
+            let mut rope = Rope::from(a.clone());
+            rope += b.clone();
+            let mut string = a;
+            string.push_str(&b[..]);
+            rope == string
+        }
+
+    }
+
+    // #[test]
+    // fn rope_indexing_is_string_indexing() {
+    //     fn prop(string: String, i: usize) -> TestResult {
+    //         if i > string.len() { return TestResult::discard() }
+    //         let rope = Rope::from(string.clone());
+    //         TestResult::from_bool(rope[i] == &string.as_ref()[i])
+    //     }
+    //     quickcheck(prop as fn(String, usize) -> TestResult);
+    // }
+
+}
+
+
 mod iterator {
 
     mod Extend {
@@ -452,7 +517,26 @@ mod iterator {
 
     mod FromIterator {
         use ::Rope;
+        quickcheck! {
+            fn prop_strings_concat(v: Vec<String>) -> bool {
+                let rope: Rope = v.clone().into_iter().collect();
+                &rope == &(v.into_iter().collect::<String>()[..])
+            }
 
+            fn prop_chars_concat(v: Vec<char>) -> bool {
+                let rope: Rope = v.clone().into_iter().collect();
+                &rope == &(v.into_iter().collect::<String>()[..])
+            }
+
+            fn prop_ropes_concat(v: Vec<String>) -> bool {
+                let a: Rope = v.clone().into_iter()
+                               .map(Rope::from)
+                               .collect();
+                let b: Rope = v.clone().into_iter()
+                               .collect();
+                &a == &b
+            }
+        }
         #[test]
         fn str_slice () {
             let vec = vec!["aaaa", "bbbb", "cccc"];

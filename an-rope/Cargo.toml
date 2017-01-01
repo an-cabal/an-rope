@@ -20,3 +20,6 @@ unstable = []
 [dependencies.tendril]
 version = "0.2.3"
 optional = true
+
+[dev-dependencies]
+quickcheck = "0.3"
