@@ -654,3 +654,18 @@ mod iterator {
     }
 
 }
+
+fn graphemes_iter() {
+    let r = Rope::from("a̐éö̲\r\n");
+    let g = r.graphemes().collect::<Vec<&str>>();
+    let b: &[_] = &["a̐", "é", "ö̲", "\r\n"];
+    assert_eq!(g, b);
+}
+
+#[test]
+fn unicode_words() {
+    let r = Rope::from("The quick (\"brown\") fox can't jump 32.3 feet, right?");
+    let w = r.unicode_words().collect::<Vec<&str>>();
+    let b: &[_] = &["The", "quick", "brown", "fox", "can't", "jump", "32.3", "feet", "right"];
+    assert_eq!(w, b);
+}
