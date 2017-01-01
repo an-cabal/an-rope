@@ -42,7 +42,7 @@ use std::iter;
 #[cfg(test)] mod test;
 #[cfg(all( test, feature = "unstable"))] mod bench;
 
-
+mod unicode;
 mod slice;
 
 
