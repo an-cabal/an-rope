@@ -418,6 +418,46 @@ mod properties {
     //     quickcheck(prop as fn(String, usize) -> TestResult);
     // }
 
+    #[test]
+    fn rope_insert_char_is_string_insert_char() {
+        fn prop(a: String, ch: char, i: usize) -> TestResult {
+            // if the index is greater than the string's length...
+            if i > a.len() {
+                // ..skip the test
+                return TestResult::discard()
+            }
+
+            let mut rope = Rope::from(a.clone());
+            rope.insert(i, ch);
+
+            let mut string = a;
+            string.insert(i, ch);
+
+            TestResult::from_bool(rope == string)
+        }
+        quickcheck(prop as fn(String, char, usize) -> TestResult);
+    }
+
+    #[test]
+    fn rope_insert_str_is_string_insert_str() {
+        fn prop(a: String, b: String, i: usize) -> TestResult {
+            // if the index is greater than the string's length...
+            if i > a.len() {
+                // ..skip the test
+                return TestResult::discard()
+            }
+
+            let mut rope = Rope::from(a.clone());
+            rope.insert_str(i, &b[..]);
+
+            let mut string = a;
+            string.insert_str(i, &b[..]);
+
+            TestResult::from_bool(rope == string)
+        }
+        quickcheck(prop as fn(String, String, usize) -> TestResult);
+    }
+
 }
 
 
