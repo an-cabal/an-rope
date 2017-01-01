@@ -56,6 +56,10 @@ pub struct BranchNode {
     grapheme_len: Grapheme
   , /// The weight of a node is the summed weight of its left subtree
     weight: usize
+  , /// The number of started lines of this node
+    nlines: usize
+  , /// The number of started lines in the node's left subtree
+    wlines: usize
   , /// The left branch node
     pub left: Box<Node>
   , /// The right branch node
@@ -195,6 +199,8 @@ impl BranchNode {
         BranchNode { len: left.len() + right.len()
                    , grapheme_len: left.measure() + right.measure()
                    , weight: left.subtree_weight()
+                   , nlines: left.nlines() + right.nlines() - 1
+                   , wlines: left.subtree_wlines()
                    , left: Box::new(left)
                    , right: Box::new(right)
                    }
@@ -452,6 +458,23 @@ impl Node {
         match self { &Leaf(ref s) => s.len()
                    , &Branch(BranchNode { ref left, .. }) => left.len()
                     }
+    }
+
+
+    /// Returns the number of started lines on a node
+    #[inline]
+    pub fn nlines(&self) -> usize {
+        match self { &Leaf(ref s) => s.chars().filter(|&c| c == '\n').count() + 1
+                   , &Branch(BranchNode { nlines, ..}) => nlines
+                   }
+    }
+
+    /// Calculates the line weight of a node
+    #[inline]
+    fn subtree_wlines (&self) -> usize {
+        match self { &Leaf(ref s) => s.chars().filter(|&c| c == '\n').count() + 1
+                   , &Branch(BranchNode { ref left, .. }) => left.nlines()
+                   }
     }
 
 
@@ -902,3 +925,27 @@ impl ops::Index<usize> for Node {
         }
     }
 }
+
+
+trait IsLineEnding { fn is_line_ending(&self) -> bool; }
+
+impl IsLineEnding for char {
+    #[inline]
+    fn is_line_ending(self: &char) -> bool {
+        match *self {
+            '\u{000A}' => true,
+            _ => false
+        }
+    }
+}
+
+
+//impl Measured<Lines> for Node {
+//    fn measure(&self) -> Lines {
+//        match *self {
+//            Leaf(ref s) if s.chars().last() == Some('\n') => Lines(1),
+//            Leaf(_) => Lines(0),
+//            Branch(BranchNode { ref nlines, .. }) => Lines(nlines)
+//        }
+//    }
+//}
