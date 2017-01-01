@@ -1,3 +1,8 @@
+use unicode_segmentation::UnicodeSegmentation;
+use unicode_segmentation::{ GraphemeIndices as StrGraphemeIndices
+                          , UWordBoundIndices as StrUWordBoundIndices
+                          };
+
 use std::ops;
 use std::fmt;
 #[cfg(feature = "tendril")]
@@ -23,6 +28,7 @@ pub enum Node {
   , /// A branch concatenating together `l`eft and `r`ight nodes.
     Branch(BranchNode)
 }
+
 
 
 impl fmt::Display for Node {
@@ -540,38 +546,108 @@ impl Node {
     //     self.strings().flat_map(str::bytes)
     // }
 
+    unicode_seg_iters! {
+        #[doc=
+            "Returns an iterator over the [grapheme clusters][graphemes] of \
+             `self`.\n\
+
+             [graphemes]: \
+             http://www.unicode.org/reports/tr29/#Grapheme_Cluster_Boundaries\
+             \n\
+             The iterator is over the  *extended grapheme clusters*; as \
+             [UAX#29]\
+             (http://www.unicode.org/reports/tr29/#Grapheme_Cluster_Boundaries)\
+             recommends extended grapheme cluster boundaries for general \
+             processing."]
+        #[inline]
+        impl graphemes for Node { extend }
+    }
+    unicode_seg_iters! {
+        #[doc=
+            "Returns an iterator over the words of `self`, separated on \
+            [UAX#29 word boundaries]\
+            (http://www.unicode.org/reports/tr29/#Word_Boundaries).\n\n\
+
+            Here, \"words\" are just those substrings which, after splitting on\
+            UAX#29 word boundaries, contain any alphanumeric characters. That \
+            is, the substring must contain at least one character with the \
+            [Alphabetic](http://unicode.org/reports/tr44/#Alphabetic) \
+            property, or with [General_Category=Number]\
+            (http://unicode.org/reports/tr44/#General_Category_Values)."]
+        #[inline]
+        impl unicode_words for Node {}
+        #[doc=
+            "Returns an iterator over substrings of `self` separated on \
+            [UAX#29 word boundaries]\
+            (http://www.unicode.org/reports/tr29/#Word_Boundaries). \n\n\
+            The concatenation of the substrings returned by this function is \
+            just the original string."]
+        #[inline]
+        impl split_word_bounds for Node {}
+    }
     #[cfg(feature = "unstable")]
     #[inline]
     pub fn char_indices<'a>(&'a self)
-                       -> impl Iterator<Item=(usize, char)> + 'a {
+                           -> impl Iterator<Item=(usize, char)> + 'a {
          self.chars().enumerate()
     }
 
     #[cfg(not(feature = "unstable"))]
     #[inline]
-    pub fn char_indices<'a>(&'a self) -> Box<Iterator<Item=(usize, char)> + 'a>
-    {
+    pub fn char_indices<'a>(&'a self)
+                            -> Box<Iterator<Item=(usize, char)> + 'a> {
          Box::new(self.chars().enumerate())
     }
 
-    /// Returns an iterator over the grapheme clusters of this `Node`'s subrope'
-    ///
-    /// This is the iterator returned by `Node::into_iter`.
-    #[cfg(feature = "unstable")]
-    #[inline]
-    pub fn graphemes<'a>(&'a self) -> impl Iterator<Item=&'a str> {
-        // the compiler won't let me mark this as unimplemented using the
-        // unimplemented!() macro, due to Reasons (i suspect relating to
-        // returning `impl Trait`)
-        //  - eliza, 12/18/2016
-        panic!("Unimplemented!");
-        self.strings()
+    pub fn grapheme_indices<'a>(&'a self)  -> GraphemeIndices<'a> {
+        let mut strings = self.strings();
+        let first_string = strings.next()
+            .expect("grapheme_indices called on empty rope!");
+        GraphemeIndices { strings: Box::new(strings)
+                        , graphemes: first_string.grapheme_indices(true)
+                        , char_length_so_far: 0
+                        , curr_length: first_string.len() }
     }
-    #[cfg(not(feature = "unstable"))]
-    #[inline]
-    pub fn graphemes<'a>(&'a self) -> Box<Iterator<Item=&'a str>> {
-        unimplemented!()
+
+    pub fn split_word_bound_indices<'a>(&'a self)  -> UWordBoundIndices<'a> {
+        let mut strings = self.strings();
+        let first_string = strings.next()
+            .expect("split_word_bound_indices called on empty rope!");
+        UWordBoundIndices { strings: Box::new(strings)
+                          , bounds: first_string.split_word_bound_indices()
+                          , char_length_so_far: 0
+                          , curr_length: first_string.len() }
     }
+
+    // #[cfg(not(feature = "unstable"))]
+    // #[inline]
+    // pub fn grapheme_indices<'a>(&'a self)
+    //                         -> Box<Iterator<Item=(usize, &'a str)> + 'a> {
+    //     let strings = self.strings();
+    //     let first_graphemes = strings.next()
+    //                                  .unwrap_or_else(Iterator::empty());
+    //     Box::new(GraphemeIndices { strings: strings
+    //                              , graphemes: first_graphemes
+    //                              , char_length_so_far: 0})
+    // }
+    //
+    // #[cfg(feature = "unstable")]
+    // #[inline]
+    // pub fn split_word_bound_indices<'a>(&'a self)
+    //                        -> impl Iterator<Item=(usize, &'a str)> + 'a {
+    //     let s: String = self.strings().collect();
+    //     // TODO: rewrite this to not collect into a  string
+    //     s.split_word_bound_indices()
+    // }
+    //
+    // #[cfg(not(feature = "unstable"))]
+    // #[inline]
+    // pub fn split_word_bound_indices<'a>(&'a self)
+    //                         -> Box<Iterator<Item=(usize, &'a str)> + 'a> {
+    //     let s: String = self.strings().collect();
+    //     // TODO: rewrite this to not collect into a  string
+    //     Box::new(s.split_word_bound_indices())
+    // }
 
 }
 
@@ -633,6 +709,53 @@ impl Iterator for IntoLeaves {
         }
     }
 }
+
+pub struct GraphemeIndices<'a> {
+    strings: Box<Iterator<Item = &'a str> + 'a >
+  , graphemes: StrGraphemeIndices<'a>
+  , char_length_so_far: usize
+  , curr_length: usize
+}
+
+impl<'a> Iterator for GraphemeIndices<'a> {
+    type Item = (usize, &'a str);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.graphemes.next()
+            .map(|(i, s)| (i + self.char_length_so_far, s))
+            .or_else(|| {
+                self.strings.next()
+                    .and_then(|s| { self.char_length_so_far += self.curr_length;
+                                    self.curr_length = s.len();
+                                    self.graphemes = s.grapheme_indices(true);
+                                    self.next() })
+            })
+    }
+}
+
+pub struct UWordBoundIndices<'a> {
+    strings: Box<Iterator<Item = &'a str> + 'a >
+  , bounds: StrUWordBoundIndices<'a>
+  , char_length_so_far: usize
+  , curr_length: usize
+}
+
+impl<'a> Iterator for UWordBoundIndices<'a> {
+    type Item = (usize, &'a str);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.bounds.next()
+            .map(|(i, s)| (i + self.char_length_so_far, s))
+            .or_else(|| {
+                self.strings.next()
+                    .and_then(|s| { self.char_length_so_far += self.curr_length;
+                                    self.curr_length = s.len();
+                                    self.bounds = s.split_word_bound_indices();
+                                    self.next() })
+            })
+    }
+}
+
 
 
 impl ops::Add for Node {
