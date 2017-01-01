@@ -812,6 +812,27 @@ impl Rope {
         self.root.graphemes()
     }
 
+    /// Returns an iterator over the grapheme clusters of this `Rope`
+    ///
+    /// This is the iterator returned by `Node::into_iter`.
+    #[inline]
+    #[cfg(feature = "unstable")]
+    pub fn grapheme_indices<'a>(&'a self)
+                                -> impl Iterator<Item=(usize, &'a str)> {
+        // the compiler won't let me mark this as unimplemented using the
+        // unimplemented!() macro, due to Reasons (i suspect relating to
+        // returning `impl Trait`)
+        //  - eliza, 1/1/2017
+        panic!("Unimplemented!");
+        self.strings()
+    }
+    #[inline]
+    #[cfg(not(feature = "unstable"))]
+    pub fn grapheme_indices<'a>(&'a self)
+                                -> Box<Iterator<Item=(usize, &'a str)>> {
+        unimplemented!()
+    }
+
 
     #[inline]
     #[cfg(feature = "unstable")]
