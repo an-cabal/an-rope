@@ -1,47 +1,30 @@
-pub struct GraphemeIndex(usize);
-pub struct ByteIndex(usize);
-pub struct CharIndex(usize);
+use std::convert::Into;
+use unicode_segmentation::UnicodeSegmentation;
 
+pub struct GraphemeIndex<'a> { index: usize
+                             , into_str: &'a str
+                             }
+pub struct ByteIndex<'a> { index: usize
+                         , into_str: &'a str
+                         }
+pub struct CharIndex<'a> { index: usize
+                         , into_str: &'a str
+                         }
 
-#[cfg(feature = "unstable")]
-trait UnicodeIndexing {
-    fn graphemes<'a>(&'a self) -> impl Iterator<Item = &'a str> + 'a;
-    fn grapheme_indices<'a>(&'a self)
-                            -> impl Iterator<Item = (usize, &'a str)> + 'a;
-
-    #[inline]
-    fn grapheme_count(&self) -> usize {
-        self.graphemes().count()
+impl<'a> Into<ByteIndex<'a>> for GraphemeIndex<'a> {
+    // TODO is this reasonable?
+    fn into(self) -> ByteIndex<'a> {
+        self.into_str.grapheme_indices(true)
+            .find(|&(i, _)| i == self.index)
+            .map(|(i, _)| ByteIndex { index: i, into_str: self.into_str})
+            .expect(&format!( "Grapheme index {} off the end of string {}!"
+                             , self.index
+                             , self.into_str))
     }
+}
 
-    /// Returns the byte index corresponding to a given grapheme index
-    /// or none, if it is off the end of the string.
-    // TODO: newtypes for usize
-    fn grapheme_to_byte_index(&self, idx: GraphemeIndex) -> Option<ByteIndex> {
-        self.grapheme_indices()
-            .find(|(i, _)| i == idx.0)
-            .map(ByteIndex)
-        // TODO: what about the case where g_idx is the last grapheme
-    }
-
-    fn grapheme_to_char_index(&self, idx: GraphemeIndex) -> Option<CharIndex> {
+impl<'a> Into<CharIndex<'a>> for GraphemeIndex<'a> {
+    fn into(self) -> CharIndex<'a> {
         unimplemented!()
     }
-
-    fn char_to_grapheme_index(&self, idx: CharIndex) -> Option<GraphemeIndex> {
-        unimplemented!()
-    }
-
-    fn char_to_byte_index(&self, idx: CharIndex) -> Option<ByteIndex> {
-        unimplemented!()
-    }
-
-    fn byte_to_char_index(&self, idx: ByteIndex) -> Option<CharIndex> {
-        unimplemented!()
-    }
-
-    fn byte_to_grapheme_index(&self, idx: ByteIndex) -> Option<GraphemeIndex> {
-        unimplemented!()
-    }
-
 }
