@@ -24,6 +24,9 @@ extern crate collections;
 #[cfg(feature = "unstable")]
 use collections::range::RangeArgument;
 
+extern crate unicode_segmentation;
+
+
 use std::borrow::Borrow;
 use std::cmp;
 use std::ops;
@@ -38,6 +41,7 @@ use std::iter;
 #[cfg(test)] #[macro_use] extern crate quickcheck;
 #[cfg(test)] mod test;
 #[cfg(all( test, feature = "unstable"))] mod bench;
+
 
 mod slice;
 
@@ -70,7 +74,6 @@ impl fmt::Debug for Rope {
     }
 }
 
-
 macro_rules! str_iters {
     ( $($(#[$attr:meta])* impl $name: ident<$ty: ty> for Node {})+ ) => { $(
         $(#[$attr])*
@@ -100,9 +103,55 @@ macro_rules! str_iters {
 
 }
 
+
+macro_rules! unicode_seg_iters {
+    ( $($(#[$attr:meta])* impl $name: ident for Node { extend })+ ) => { $(
+        $(#[$attr])*
+        #[cfg(feature = "unstable")]
+        pub fn $name<'a>(&'a self) -> impl Iterator<Item=&'a str> + 'a {
+            use unicode_segmentation::UnicodeSegmentation;
+            self.strings().flat_map(|s| UnicodeSegmentation::$name(s, true))
+        }
+        $(#[$attr])*
+        #[cfg(not(feature = "unstable"))]
+        pub fn $name<'a>(&'a self) -> Box<Iterator<Item=&'a str> + 'a> {
+            use unicode_segmentation::UnicodeSegmentation;
+            Box::new(self.strings()
+                         .flat_map(|s| UnicodeSegmentation::$name(s, true)))
+        }
+    )+ };
+    ( $($(#[$attr:meta])* impl $name: ident for Node {} )+ ) => { $(
+        $(#[$attr])*
+        #[cfg(feature = "unstable")]
+        pub fn $name<'a>(&'a self) -> impl Iterator<Item=&'a str> + 'a {
+            use unicode_segmentation::UnicodeSegmentation;
+            self.strings().flat_map(UnicodeSegmentation::$name)
+        }
+        $(#[$attr])*
+        #[cfg(not(feature = "unstable"))]
+        pub fn $name<'a>(&'a self) -> Box<Iterator<Item=&'a str> + 'a> {
+            use unicode_segmentation::UnicodeSegmentation;
+            Box::new(self.strings().flat_map(UnicodeSegmentation::$name))
+        }
+    )+ };
+
+    ( $($(#[$attr:meta])* impl $name: ident<$ty: ty> for Rope {})+ )=> { $(
+        $(#[$attr])*
+        #[cfg(feature = "unstable")]
+        pub fn $name<'a>(&'a self) -> impl Iterator<Item=$ty> + 'a {
+            self.root.$name()
+        }
+        $(#[$attr])*
+        #[cfg(not(feature = "unstable"))]
+        pub fn $name<'a>(&'a self) -> Box<Iterator<Item=$ty> + 'a>{
+            self.root.$name()
+        }
+    )+ }
+
+}
+
+
 mod internals;
-
-
 
 impl Rope {
 
@@ -798,56 +847,88 @@ impl Rope {
         impl lines<&'a str> for Rope {}
     }
 
-    /// Returns an iterator over the grapheme clusters of this `Rope`
+    unicode_seg_iters! {
+        #[doc=
+            "Returns an iterator over the [grapheme clusters][graphemes] of \
+             `self`.\n\
+
+             [graphemes]: \
+             http://www.unicode.org/reports/tr29/#Grapheme_Cluster_Boundaries\
+             \n\
+             The iterator is over the  *extended grapheme clusters*; as \
+             [UAX#29]\
+             (http://www.unicode.org/reports/tr29/#Grapheme_Cluster_Boundaries)\
+             recommends extended grapheme cluster boundaries for general \
+             processing."]
+        #[inline]
+        impl graphemes<&'a str> for Rope {}
+        #[doc=
+            "Returns an iterator over the words of `self`, separated on \
+            [UAX#29 word boundaries]\
+            (http://www.unicode.org/reports/tr29/#Word_Boundaries).\n\n\
+
+            Here, \"words\" are just those substrings which, after splitting on\
+            UAX#29 word boundaries, contain any alphanumeric characters. That \
+            is, the substring must contain at least one character with the \
+            [Alphabetic](http://unicode.org/reports/tr44/#Alphabetic) \
+            property, or with [General_Category=Number]\
+            (http://unicode.org/reports/tr44/#General_Category_Values)."]
+        #[inline]
+        impl unicode_words<&'a str> for Rope {}
+        #[doc=
+            "Returns an iterator over substrings of `self` separated on \
+            [UAX#29 word boundaries]\
+            (http://www.unicode.org/reports/tr29/#Word_Boundaries). \n\n\
+            The concatenation of the substrings returned by this function is \
+            just the original string."]
+        #[inline]
+        impl split_word_bounds<&'a str> for Rope {}
+        // #[inline]
+        // impl grapheme_indices<(usize, &'a str)> for Rope {}
+        // #[inline]
+        // impl split_word_bound_indices<(usize, &'a str)> for Rope {}
+    }
+
+    /// Returns an iterator over the grapheme clusters of `self` and their
+    /// byte offsets. See `graphemes()` for more information.
     ///
-    /// This is the iterator returned by `Node::into_iter`.
-    #[inline]
-    #[cfg(feature = "unstable")]
-    pub fn graphemes<'a>(&'a self) -> impl Iterator<Item=&'a str> {
-        self.root.graphemes()
-    }
-    #[inline]
-    #[cfg(not(feature = "unstable"))]
-    pub fn graphemes<'a>(&'a self) -> Box<Iterator<Item=&'a str>> {
-        self.root.graphemes()
-    }
-
-    /// Returns an iterator over the grapheme clusters of this `Rope`
+    /// # Examples
     ///
-    /// This is the iterator returned by `Node::into_iter`.
+    /// ```
+    /// # use an_rope::Rope;
+    /// let gr_inds = Rope::from("a̐éö̲\r\n", true)
+    ///                 .grapheme_indices()
+    ///                 .collect::<Vec<(usize, &str)>>();
+    /// let b: &[_] = &[(0, "a̐"), (3, "é"), (6, "ö̲"), (11, "\r\n")];
+    ///
+    /// assert_eq!(&gr_inds[..], b);
+    /// ```
     #[inline]
-    #[cfg(feature = "unstable")]
-    pub fn grapheme_indices<'a>(&'a self)
-                                -> impl Iterator<Item=(usize, &'a str)> {
-        // the compiler won't let me mark this as unimplemented using the
-        // unimplemented!() macro, due to Reasons (i suspect relating to
-        // returning `impl Trait`)
-        //  - eliza, 1/1/2017
-        panic!("Unimplemented!");
-        self.strings()
-    }
-    #[inline]
-    #[cfg(not(feature = "unstable"))]
-    pub fn grapheme_indices<'a>(&'a self)
-                                -> Box<Iterator<Item=(usize, &'a str)>> {
-        unimplemented!()
+    pub fn grapheme_indices<'a>(&'a self)  -> internals::GraphemeIndices<'a> {
+        self.root.grapheme_indices()
     }
 
-
+    /// Returns an iterator over substrings of `self`, split on UAX#29 word
+    /// boundaries, and their offsets. See `split_word_bounds()` for more
+    /// information.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # an_rope::Rope;
+    /// let swi1 = Rope::from("Brr, it's 29.3°F!")
+    ///                 .split_word_bound_indices()
+    ///                 .collect::<Vec<(usize, &str)>>();
+    /// let b: &[_] = &[ (0, "Brr"), (3, ","), (4, " "), (5, "it's")
+    ///                , (9, " "), (10, "29.3"),  (14, "°"), (16, "F")
+    ///                , (17, "!")];
+    ///
+    /// assert_eq!(&swi1[..], b);
+    /// ```
     #[inline]
-    #[cfg(feature = "unstable")]
-    pub fn unicode_words<'a>(&'a self) -> impl Iterator<Item=&'a str> {
-        // the compiler won't let me mark this as unimplemented using the
-        // unimplemented!() macro, due to Reasons (i suspect relating to
-        // returning `impl Trait`)
-        //  - eliza, 12/23/2016
-        panic!("Unimplemented!");
-        self.strings()
-    }
-    #[inline]
-    #[cfg(not(feature = "unstable"))]
-    pub fn unicode_words<'a>(&'a self) -> Box<Iterator<Item=&'a str> + 'a>{
-        unimplemented!()
+    pub fn split_word_bound_indices<'a>(&'a self)
+                                       -> internals::UWordBoundIndices<'a> {
+        self.root.split_word_bound_indices()
     }
 
     /// Returns true if the bytes in `self` equal the bytes in `other`
