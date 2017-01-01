@@ -896,9 +896,9 @@ impl Rope {
     ///
     /// ```
     /// # use an_rope::Rope;
-    /// let gr_inds = Rope::from("a̐éö̲\r\n", true)
-    ///                 .grapheme_indices()
-    ///                 .collect::<Vec<(usize, &str)>>();
+    /// let rope = Rope::from("a̐éö̲\r\n");
+    /// let gr_inds = rope.grapheme_indices()
+    ///                   .collect::<Vec<(usize, &str)>>();
     /// let b: &[_] = &[(0, "a̐"), (3, "é"), (6, "ö̲"), (11, "\r\n")];
     ///
     /// assert_eq!(&gr_inds[..], b);
@@ -915,10 +915,10 @@ impl Rope {
     /// # Example
     ///
     /// ```
-    /// # an_rope::Rope;
-    /// let swi1 = Rope::from("Brr, it's 29.3°F!")
-    ///                 .split_word_bound_indices()
-    ///                 .collect::<Vec<(usize, &str)>>();
+    /// # use an_rope::Rope;
+    /// let rope = Rope::from("Brr, it's 29.3°F!");
+    /// let swi1 = rope.split_word_bound_indices()
+    ///                .collect::<Vec<(usize, &str)>>();
     /// let b: &[_] = &[ (0, "Brr"), (3, ","), (4, " "), (5, "it's")
     ///                , (9, " "), (10, "29.3"),  (14, "°"), (16, "F")
     ///                , (17, "!")];
