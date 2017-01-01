@@ -813,6 +813,8 @@ impl Rope {
     }
 
 
+    #[inline]
+    #[cfg(feature = "unstable")]
     pub fn unicode_words<'a>(&'a self) -> impl Iterator<Item=&'a str> {
         // the compiler won't let me mark this as unimplemented using the
         // unimplemented!() macro, due to Reasons (i suspect relating to
@@ -820,6 +822,11 @@ impl Rope {
         //  - eliza, 12/23/2016
         panic!("Unimplemented!");
         self.strings()
+    }
+    #[inline]
+    #[cfg(not(feature = "unstable"))]
+    pub fn unicode_words<'a>(&'a self) -> Box<Iterator<Item=&'a str> + 'a>{
+        unimplemented!()
     }
 
     /// Returns true if the bytes in `self` equal the bytes in `other`

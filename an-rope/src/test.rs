@@ -438,6 +438,7 @@ mod properties {
         quickcheck(prop as fn(String, char, usize) -> TestResult);
     }
 
+    #[cfg(feature = "unstable")]
     #[test]
     fn rope_insert_str_is_string_insert_str() {
         fn prop(a: String, b: String, i: usize) -> TestResult {
