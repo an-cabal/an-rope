@@ -32,12 +32,17 @@ script: |
   if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
     travis-cargo build &&
     travis-cargo test &&
-    cd an-rope && travis-cargo test && cd ..
+    cd an-rope &&
+      travis-cargo test
+    && cd ..
     travis-cargo --only stable doc
   else
     cargo build &&
     cargo test &&
-    cargo test -p an-rope
+    cd an-rope &&
+      cargo build &&
+      cargo test &&
+    cd ..
   fi
 after_success:
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then travis-cargo --only stable doc-upload;
