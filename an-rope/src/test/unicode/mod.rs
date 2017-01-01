@@ -70,16 +70,16 @@ fn test_graphemes() {
     // let gr_inds = Rope::from(s).grapheme_indices().rev().collect::<Vec<(usize, &str)>>();
     // let b: &[_] = &[(11, "\r\n"), (6, "ö̲"), (3, "é"), (0, "a̐")];
     // assert_eq!(gr_inds, b);
-    let mut gr_inds_iter = r.grapheme_indices();
-    {
-        let gr_inds = gr_inds_iter.by_ref();
-        let e1 = gr_inds.size_hint();
-        assert_eq!(e1, (1, Some(13)));
-        let c = gr_inds.count();
-        assert_eq!(c, 4);
-    }
-    let e2 = gr_inds_iter.size_hint();
-    assert_eq!(e2, (0, Some(0)));
+    // let mut gr_inds_iter = r.grapheme_indices();
+    // {
+    //     let gr_inds = gr_inds_iter.by_ref();
+    //     let e1 = gr_inds.size_hint();
+    //     assert_eq!(e1, (1, Some(13)));
+    //     let c = gr_inds.count();
+    //     assert_eq!(c, 4);
+    // }
+    // let e2 = gr_inds_iter.size_hint();
+    // assert_eq!(e2, (0, Some(0)));
 
     // make sure the reverse iterator does the right thing with "\n" at beginning of string
     // TODO: disabled until i change graphemes to double ended
