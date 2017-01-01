@@ -17,6 +17,9 @@ rebalance = []
 # if building against unstable Rust
 unstable = []
 
+[dependencies.unicode-segmentation]
+version = "1.0.1"
+
 [dependencies.tendril]
 version = "0.2.3"
 optional = true
