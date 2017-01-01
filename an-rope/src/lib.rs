@@ -1010,6 +1010,34 @@ impl cmp::PartialEq<str> for Rope {
     }
 }
 
+
+impl cmp::PartialEq<String> for Rope {
+    /// A rope equals a string if all the bytes in the string equal the rope's.
+    ///
+    /// # Examples
+    /// ```
+    /// use an_rope::Rope;
+    /// assert!(Rope::from("abcd") == String::from("abcd"));
+    /// ```
+    /// ```
+    /// use an_rope::Rope;
+    /// assert!(Rope::from("abcd") != String::from("ab"));
+    /// ```
+    /// ```
+    /// use an_rope::Rope;
+    /// assert!(Rope::from("abcd") != String::from("dcab"));
+    /// ```
+    #[inline]
+    fn eq(&self, other: &String) -> bool {
+        if self.len() == other.len() {
+            self.bytes_eq(other.bytes())
+        } else {
+            false
+        }
+    }
+}
+
+
 //-- concatenation --------------------------------------------------
 impl<'a> ops::Add for &'a Rope {
     type Output = Rope;
