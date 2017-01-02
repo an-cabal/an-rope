@@ -1,0 +1,8 @@
+[clog]
+# A repository link with the trailing '.git' which will be used to generate
+# all commit and issue links
+repository = "https://github.com/hawkw/an-editor"
+# A constant release title
+subtitle = "an editor"
+
+link-style = "github"
