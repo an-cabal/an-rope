@@ -787,8 +787,7 @@ impl ops::Index<usize> for Node {
             Leaf(ref string) => {
                 let index: usize =
                     GraphemeIndex::from(i).to_char_index(string).into();
-                // TODO: index the whole grapheme!
-                &string[index..index + 1] }
+                string.graphemes(true).nth(index - 1).expect("oob!") }
           , Branch(BranchNode { ref right, .. }) if len < i =>
                 &right[i - len]
           , Branch(BranchNode { ref left, .. }) => &left[i]
