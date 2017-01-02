@@ -1,33 +1,32 @@
 use std::convert;
 use std::ops::{Add, Sub};
+use std::default::Default;
 use internals::Node;
+
+pub trait Semigroup {
+    /// The sum operation of the semigroup
+    fn sum(self, other: Self) -> Self;
+}
 
 /// The class of monoids
 ///
-/// The class of monoids (types with an sumiative binary operation that has
-/// an identity).
+/// The class of monoids (types with an accumulative binary operation that has
+/// an default).
 ///
 /// An instance _M_ should satisfy the following laws:
 ///
-///  + _x_`.sum(`_M_`::identity())` = _x_
-///  + _M_`::identity().sum(`_x_`)` = _x_
+///  + _x_`.sum(`_M_`::default())` = _x_
+///  + _M_`::default().sum(`_x_`)` = _x_
 ///  + _x_`.sum(`_y_`.sum(`_z_`))` = _z_`.sum(`_x_`.sum(`_y_`))`
-///  + _M_`::concat(`_a_`)` = _a_`.fold(`_M_`::identity,`_M_`::sum)`
+///  + _M_`::accumulate(`_a_`)` = _a_`.fold(`_M_`::default,`_M_`::sum)`
 ///
-pub trait Monoid: Sized {
-    /// The identity operation of the monoid
-    //  TODO: can this be represented by std::default::Default instead?
-    fn identity() -> Self;
-
-    /// The sum operation of the monoid
-    //  TODO: can this be represented by std::ops::Add instead?
-    fn sum(self, other: Self) -> Self;
+pub trait Monoid: Semigroup + Default + Sized {
 
     #[inline]
-    fn concat<F>(xs: F) -> Self
+    fn accumulate<F>(xs: F) -> Self
     where F: Iterator<Item=Self>
         , Self: Sized {
-        xs.fold(Self::identity(), Self::sum)
+        xs.fold(Self::default(), Self::sum)
     }
 }
 
@@ -63,15 +62,15 @@ pub trait Metric: Monoid + Eq + Add<usize, Output=Self>
 
 #[derive(Clone, Copy, Debug, PartialOrd, Ord, PartialEq, Eq)]
 pub struct Grapheme(usize);
-impl Monoid for Grapheme {
-    #[inline] fn identity() -> Self { Grapheme(0) }
+impl Default for Grapheme {
+    #[inline] fn default() -> Self { Grapheme(0) }
+}
+impl Semigroup for Grapheme {
     #[inline] fn sum(self, other: Self) -> Self { Grapheme(self.0 + other.0) }
 }
-
 impl convert::From<usize> for Grapheme {
     #[inline] fn from(u: usize) -> Self { Grapheme(u) }
 }
-
 impl Add<usize> for Grapheme {
     type Output = Self;
     #[inline] fn add(self, rhs: usize) -> Self { Grapheme(self.0 + rhs) }
@@ -83,8 +82,10 @@ impl Sub<usize> for Grapheme {
 
 #[derive(Clone, Copy, Debug, PartialOrd, Ord, PartialEq, Eq)]
 pub struct Line(usize);
-impl Monoid for Line {
-    #[inline] fn identity() -> Self { Line(0) }
+impl Default for Line {
+    #[inline] fn default() -> Self { Line(0) }
+}
+impl Semigroup for Line {
     #[inline] fn sum(self, other: Self) -> Self { Line(self.0 + other.0) }
 }
 
