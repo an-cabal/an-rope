@@ -7,6 +7,7 @@ use unicode::GraphemeIndex;
 
 use std::ops;
 use std::fmt;
+use std::convert;
 #[cfg(feature = "tendril")]
 use tendril;
 
@@ -97,12 +98,15 @@ impl Measured<Grapheme> for str {
     ///    in `node` measured by this `Metric`, if there is an `n`th element
     /// - `None` if there is no `n`th element in `node`
     fn to_byte_index(&self, index: Grapheme) -> Option<usize>  {
-        self.graphemes(true)
-            .scan(0usize, |char_count, grapheme| {
-                    *char_count += grapheme.chars().count();
-                    Some(*char_count)
-                })
-            .nth(index.into())
+        let i: usize = index.into();
+        // TODO: CACHE THIS YOU ASSHOLE
+        if self.graphemes(true).count() == i {
+            Some(self.len())
+        } else {
+            self.grapheme_indices(true)
+                .find(|&(offset, _)| offset == i)
+                .map(|(offset, _)| offset)
+        }
     }
 
 
@@ -119,12 +123,15 @@ impl Measured<Grapheme> for str {
 
 impl Measured<Grapheme> for String {
     fn to_byte_index(&self, index: Grapheme) -> Option<usize>  {
-        self.graphemes(true)
-            .scan(0usize, |char_count, grapheme| {
-                    *char_count += grapheme.chars().count();
-                    Some(*char_count)
-                })
-            .nth(index.into())
+        let i: usize = index.into();
+        // TODO: CACHE THIS YOU ASSHOLE
+        if self.graphemes(true).count() == i {
+            Some(self.len())
+        } else {
+            self.grapheme_indices(true)
+                .find(|&(offset, _)| offset == i)
+                .map(|(offset, _)| offset)
+        }
     }
 
     #[inline]
@@ -138,18 +145,17 @@ impl Measured<Grapheme> for String {
     }
 }
 
-impl<M: Metric> Measured<M> for BranchNode
-where Node: Measured<M> {
+impl Measured<Grapheme> for BranchNode {
 
-    fn to_byte_index(&self, index: M) -> Option<usize>  {
+    fn to_byte_index(&self, index: Grapheme) -> Option<usize>  {
         unimplemented!()
     }
 
-    #[inline] fn measure(&self) -> M {
-        self.left.measure() + self.right.measure()
+    #[inline] fn measure(&self) -> Grapheme {
+        self.grapheme_len
     }
 
-    #[inline] fn measure_weight(&self) -> M { self.left.measure() }
+    #[inline] fn measure_weight(&self) -> Grapheme { self.left.measure() }
 }
 
 impl Measured<Grapheme> for Node {
@@ -209,7 +215,9 @@ impl BranchNode {
     /// O(log _n_)
     fn split<M: Metric>(self, index: M) -> (Node, Node)
     where Node: Measured<M>
-        , String: Measured<M>{
+        , BranchNode: Measured<M>
+        , String: Measured<M>
+        , M: convert::Into<usize> {
         let weight = (&self).measure_weight();
         // to determine which side of this node we are splitting on, we compare
         // the index to split to this node's weight.
@@ -220,7 +228,7 @@ impl BranchNode {
             let (left, left_right) = self.left.split(index);
             // the left side of the split left child will become the left side
             // of the split pair.
-            let right = if (&left_right).len() == 0 {
+            let right = if left_right.measure().into() == 0 {
                 // if the right side of the split is empty, then the right
                 // side of the returned pair is just this node's right child
                 *self.right
@@ -240,7 +248,7 @@ impl BranchNode {
             // the right side of the split right child will become the right
             // side of the split
 
-            let left = if (&right_left).len() == 0 {
+            let left = if right_left.measure().into() == 0 {
                 // if the left side of the split right child is empty, then the
                 // left side of the returned pair is just this node's left child
                 *self.left
@@ -335,12 +343,14 @@ impl Node {
     /// O(log _n_)
     pub fn split<M: Metric>(self, index: M) -> (Node, Node)
     where Self: Measured<M>
-        , String: Measured<M>{
+        , BranchNode: Measured<M>
+        , String: Measured<M>
+        , M: convert::Into<usize> {
         match self {
-            Leaf(ref s) if s.len() == 0 =>
+            Leaf(ref s) if s.measure().into() == 0 =>
                 // splitting an empty leaf node returns two empty leaf nodes
                 (Node::empty(), Node::empty())
-          , Leaf(ref s) if s.len() == 1 =>
+          , Leaf(ref s) if s.measure().into() == 1 =>
                 (Leaf(s.clone()), Node::empty())
           , Leaf(s) => {
                 // splitting a leaf node with length >= 2 returns two new Leaf
