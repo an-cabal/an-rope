@@ -1,9 +1,9 @@
-use std::fmt;
-use std::iter;
 use std::str;
 
 use unicode_segmentation::UnicodeSegmentation;
-use unicode_segmentation::{ GraphemeIndices as USGraphemeIndices };
+
+#[cfg(test)]
+mod test;
 
 /// The index of a Unicode grapheme
 #[derive(Copy, Clone, Debug, PartialOrd, Ord, PartialEq, Eq)]
@@ -18,6 +18,15 @@ pub struct ByteIndex(usize);
 pub struct CharIndex(usize);
 
 impl GraphemeIndex {
+
+    /// Returns the byte index in `text` corresponding to this grapheme index.
+    ///
+    /// # Arguments
+    /// - `text`: the `&str` to find the byte index for this grapheme index in
+    ///
+    /// # Panics
+    /// - If the index is to a grapheme that would lie outside of the length of
+    ///   `text`.
     pub fn to_byte_index<'a>(&self, text: &'a str) -> ByteIndex {
 
         if text.grapheme_len() == self.0 {
@@ -33,6 +42,15 @@ impl GraphemeIndex {
 
     }
 
+    /// Returns the Rust `char` index in `text` corresponding to this grapheme
+    /// index.
+    ///
+    /// # Arguments
+    /// - `text`: the `&str` to find the `char` index for this grapheme index in
+    ///
+    /// # Panics
+    /// - If the index is to a grapheme that would lie outside of the length of
+    ///   `text`.
     pub fn to_char_index<'a>(&self, text: &'a str) -> CharIndex  {
 
         text.graphemes(true)
