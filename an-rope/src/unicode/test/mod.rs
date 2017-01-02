@@ -13,7 +13,6 @@ mod testdata;
 use Rope;
 
 #[test]
-<<<<<<< HEAD
 fn graphemes_iter() {
     let r = Rope::from("a̐éö̲\r\n");
     let g = r.graphemes().collect::<Vec<&str>>();
@@ -30,8 +29,6 @@ fn unicode_words() {
 }
 
 #[test]
-=======
->>>>>>> 60efa30299772d3ba092d9eade3ffc9f748b9d8d
 fn test_graphemes() {
     use self::testdata::{TEST_SAME, TEST_DIFF};
 

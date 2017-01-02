@@ -40,6 +40,14 @@ pub trait Measured<M: Metric> {
 
     /// Measure the `weight` of `Node` by this `metric`.
     fn measure_weight(&self) -> M;
+
+    /// Convert the `Metric` into a byte index into the given `Node`
+    ///
+    /// # Returns
+    /// - `Some` with the byte index of the beginning of the `n`th  element
+    ///    in `node` measured by this `Metric`, if there is an `n`th element
+    /// - `None` if there is no `n`th element in `node`
+    fn to_byte_index(&self, index: M) -> Option<usize>;
 }
 
 /// A monoid that can be applied to a `Node` as a measurement
@@ -51,24 +59,18 @@ pub trait Metric: Monoid + Eq + Add<usize, Output=Self>
 
     fn is_splittable() -> bool;
 
-    /// Convert the `Metric` into a byte index into the given `Node`
-    ///
-    /// # Returns
-    /// - `Some` with the byte index of the beginning of the `n`th  element
-    ///    in `node` measured by this `Metric`, if there is an `n`th element
-    /// - `None` if there is no `n`th element in `node`
-    fn to_byte_index<M: Measured<Self>>(&self, node: &M) -> Option<usize>;
+
 
     /// Returns the byte index of the next element of this metric in `Node`
     #[inline]
-    fn next<M: Measured<Self> >(self, node: &M) -> Option<usize> {
-        (self + 1).to_byte_index(node)
+    fn next<M: Measured<Self> >(self, node: &str) -> Option<usize> {
+        node.to_byte_index(self + 1)
     }
 
     /// Returns the byte index of the previous element of this metric in `Node`
     #[inline]
-    fn back<M: Measured<Self>>(self, node: &M) -> Option<usize> {
-        (self - 1).to_byte_index(node)
+    fn back<M: Measured<Self>>(self, node: &str) -> Option<usize> {
+        node.to_byte_index(self - 1)
     }
 
     /// Returns true if index `i` in `node` is a boundary along this `Metric`
