@@ -45,6 +45,7 @@ pub trait Measured<M: Metric> {
 /// A monoid that can be applied to a `Node` as a measurement
 pub trait Metric: Monoid + Eq + Add<usize, Output=Self>
                          + Sub<usize, Output=Self>
+                         + Eq + Ord
                          + Sized {
 
     fn is_splittable() -> bool;
