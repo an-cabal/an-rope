@@ -88,6 +88,7 @@ impl Add<Grapheme> for Grapheme {
     type Output = Self;
     #[inline] fn add(self, rhs: Self) -> Self { Grapheme(self.0 + rhs.0) }
 }
+impl Monoid for Grapheme { }
 impl Sub<usize> for Grapheme {
     type Output = Self;
     #[inline] fn sub(self, rhs: usize) -> Self { Grapheme(self.0 - rhs) }
