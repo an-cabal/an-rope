@@ -408,7 +408,7 @@ mod properties {
 
     }
 
-    #[test]
+    #[ignore]
     fn rope_indexing_is_string_indexing() {
         fn prop(string: String, i: usize) -> TestResult {
             use ::unicode::Unicode;
@@ -424,7 +424,7 @@ mod properties {
         quickcheck(prop as fn(String, usize) -> TestResult);
     }
 
-    #[test]
+    #[ignore]
     fn rope_insert_char_is_string_insert_char() {
         fn prop(a: String, ch: char, i: usize) -> TestResult {
             // if the index is greater than the string's length...
