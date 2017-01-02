@@ -111,22 +111,26 @@ impl Measured<Grapheme> for str {
     }
 }
 
-impl Measured<Grapheme> for Node {
+impl<M> Measured<M> for BranchNode
+where Node: Measured<M>
+    , M: Metric {
 
-    #[inline]
-    fn measure(&self) -> Grapheme {
-        match *self {
-            Leaf(ref s) => s.measure()
-          , Branch(BranchNode { grapheme_len, .. }) => grapheme_len
-        }
+    #[inline] fn measure(&self) -> M {
+        self.left.measure() + self.right.measure()
     }
 
-    #[inline]
-    fn measure_weight(&self) -> Grapheme {
-        match *self {
-            Leaf(ref s) => s.measure()
-          , Branch(BranchNode { ref left, .. }) => left.measure()
-        }
+    #[inline] fn measure_weight(&self) -> M { self.left.measure() }
+}
+
+impl Measured<Grapheme> for Node {
+
+    #[inline] fn measure(&self) -> Grapheme {
+        match *self { Leaf(ref s) => s.measure(), Branch(ref n) => n.measure() }
+    }
+
+    #[inline] fn measure_weight(&self) -> Grapheme {
+        match *self { Leaf(ref s) => s.measure_weight()
+                    , Branch(ref n) => n.measure_weight() }
     }
 
 }
