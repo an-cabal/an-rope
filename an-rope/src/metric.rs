@@ -63,13 +63,13 @@ pub trait Metric: Monoid + Eq + Add<usize, Output=Self>
 
     /// Returns the byte index of the next element of this metric in `Node`
     #[inline]
-    fn next<M: Measured<Self> >(self, node: &str) -> Option<usize> {
+    fn next<M: Measured<Self> >(self, node: &M)-> Option<usize> {
         node.to_byte_index(self + 1)
     }
 
     /// Returns the byte index of the previous element of this metric in `Node`
     #[inline]
-    fn back<M: Measured<Self>>(self, node: &str) -> Option<usize> {
+    fn back<M: Measured<Self>>(self, node: &M) -> Option<usize> {
         node.to_byte_index(self - 1)
     }
 
@@ -84,6 +84,9 @@ impl Default for Grapheme {
 }
 impl convert::From<usize> for Grapheme {
     #[inline] fn from(u: usize) -> Self { Grapheme(u) }
+}
+impl convert::Into<usize> for Grapheme {
+    #[inline] fn into(self) -> usize { self.0 }
 }
 impl Add<usize> for Grapheme {
     type Output = Self;

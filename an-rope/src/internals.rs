@@ -83,16 +83,6 @@ impl Metric for Grapheme {
 
     #[inline] fn is_splittable() -> bool { false }
 
-    /// Convert the `Metric` into a byte index into the given `Node`
-    ///
-    /// # Returns
-    /// - `Some` with the byte index of the beginning of the `n`th  element
-    ///    in `node` measured by this `Metric`, if there is an `n`th element
-    /// - `None` if there is no `n`th element in `node`
-    fn to_byte_index<M: Measured<Self>>(&self, node: &M) -> Option<usize> {
-        unimplemented!()
-    }
-
     /// Returns true if index `i` in `node` is a boundary along this `Metric`
     fn is_boundary<M: Measured<Self>>(node: &M, i: usize) -> bool {
         unimplemented!()
@@ -100,6 +90,22 @@ impl Metric for Grapheme {
 }
 
 impl Measured<Grapheme> for str {
+    /// Convert the `Metric` into a byte index into the given `Node`
+    ///
+    /// # Returns
+    /// - `Some` with the byte index of the beginning of the `n`th  element
+    ///    in `node` measured by this `Metric`, if there is an `n`th element
+    /// - `None` if there is no `n`th element in `node`
+    fn to_byte_index(&self, index: Grapheme) -> Option<usize>  {
+        self.graphemes(true)
+            .scan(0usize, |char_count, grapheme| {
+                    *char_count += grapheme.chars().count();
+                    Some(*char_count)
+                })
+            .nth(index.into())
+    }
+
+
     #[inline]
     fn measure(&self) -> Grapheme {
         Grapheme::from(self.graphemes(true).count())
@@ -112,6 +118,15 @@ impl Measured<Grapheme> for str {
 }
 
 impl Measured<Grapheme> for String {
+    fn to_byte_index(&self, index: Grapheme) -> Option<usize>  {
+        self.graphemes(true)
+            .scan(0usize, |char_count, grapheme| {
+                    *char_count += grapheme.chars().count();
+                    Some(*char_count)
+                })
+            .nth(index.into())
+    }
+
     #[inline]
     fn measure(&self) -> Grapheme {
         Grapheme::from(self.graphemes(true).count())
@@ -126,6 +141,10 @@ impl Measured<Grapheme> for String {
 impl<M: Metric> Measured<M> for BranchNode
 where Node: Measured<M> {
 
+    fn to_byte_index(&self, index: M) -> Option<usize>  {
+        unimplemented!()
+    }
+
     #[inline] fn measure(&self) -> M {
         self.left.measure() + self.right.measure()
     }
@@ -134,6 +153,9 @@ where Node: Measured<M> {
 }
 
 impl Measured<Grapheme> for Node {
+    fn to_byte_index(&self, index: Grapheme) -> Option<usize>  {
+        unimplemented!()
+    }
 
     #[inline] fn measure(&self) -> Grapheme {
         match *self { Leaf(ref s) => s.measure(), Branch(ref n) => n.measure() }
@@ -325,7 +347,7 @@ impl Node {
                 // nodes, one with the left half of the string, and one with
                 // the right
                 // TODO: make this properly respect metric index boundaries
-                let index = index.to_byte_index(&s)
+                let index = s.to_byte_index(index)
                                  .expect("invalid index!");
                 let left = Leaf(s[..index].into());
                 let right = Leaf(s[index..].into());
