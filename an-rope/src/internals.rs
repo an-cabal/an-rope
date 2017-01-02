@@ -2,6 +2,7 @@ use unicode_segmentation::UnicodeSegmentation;
 use unicode_segmentation::{ GraphemeIndices as StrGraphemeIndices
                           , UWordBoundIndices as StrUWordBoundIndices
                           };
+use ::unicode::{GraphemeIndex, CharIndex};
 
 use std::ops;
 use std::fmt;
@@ -783,7 +784,11 @@ impl ops::Index<usize> for Node {
         assert!( i < len
                , "Node::index: index {} out of bounds (length {})", i, len);
         match *self {
-            Leaf(ref vec) => { &vec[i..i+1] }
+            Leaf(ref string) => {
+                let index: usize =
+                    GraphemeIndex::from(i).to_char_index(string).into();
+                // TODO: index the whole grapheme!
+                &string[index..index + 1] }
           , Branch(BranchNode { ref right, .. }) if len < i =>
                 &right[i - len]
           , Branch(BranchNode { ref left, .. }) => &left[i]
