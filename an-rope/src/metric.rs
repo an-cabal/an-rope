@@ -46,7 +46,6 @@ pub trait Measured<M: Metric> {
 pub trait Metric: Monoid + Eq + Add<usize, Output=Self>
                          + Sub<usize, Output=Self>
                          + Sized {
-    type Measured: Measured<Self>;
 
     fn is_splittable() -> bool;
 
@@ -56,20 +55,22 @@ pub trait Metric: Monoid + Eq + Add<usize, Output=Self>
     /// - `Some` with the byte index of the beginning of the `n`th  element
     ///    in `node` measured by this `Metric`, if there is an `n`th element
     /// - `None` if there is no `n`th element in `node`
-    fn to_byte_index(&self, node: &Self::Measured) -> Option<usize>;
+    fn to_byte_index<M: Measured<Self>>(&self, node: &M) -> Option<usize>;
 
     /// Returns the byte index of the next element of this metric in `Node`
-    #[inline] fn next(self, node: &Self::Measured) -> Option<usize> {
+    #[inline]
+    fn next<M: Measured<Self> >(self, node: &M) -> Option<usize> {
         (self + 1).to_byte_index(node)
     }
 
     /// Returns the byte index of the previous element of this metric in `Node`
-    #[inline] fn back(self, node: &Self::Measured) -> Option<usize> {
+    #[inline]
+    fn back<M: Measured<Self>>(self, node: &M) -> Option<usize> {
         (self - 1).to_byte_index(node)
     }
 
     /// Returns true if index `i` in `node` is a boundary along this `Metric`
-    fn is_boundary(node: &Self::Measured, i: usize) -> bool;
+    fn is_boundary<M: Measured<Self>>(node: &M, i: usize) -> bool;
 }
 
 #[derive(Clone, Copy, Debug, PartialOrd, Ord, PartialEq, Eq)]

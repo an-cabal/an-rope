@@ -80,7 +80,6 @@ impl Default for Node {
 }
 
 impl Metric for Grapheme {
-    type Measured = Node;
 
     #[inline] fn is_splittable() -> bool { false }
 
@@ -90,12 +89,12 @@ impl Metric for Grapheme {
     /// - `Some` with the byte index of the beginning of the `n`th  element
     ///    in `node` measured by this `Metric`, if there is an `n`th element
     /// - `None` if there is no `n`th element in `node`
-    fn to_byte_index(&self, node: &Self::Measured) -> Option<usize> {
+    fn to_byte_index<M: Measured<Self>>(&self, node: &M) -> Option<usize> {
         unimplemented!()
     }
 
     /// Returns true if index `i` in `node` is a boundary along this `Metric`
-    fn is_boundary(node: &Self::Measured, i: usize) -> bool {
+    fn is_boundary<M: Measured<Self>>(node: &M, i: usize) -> bool {
         unimplemented!()
     }
 }
