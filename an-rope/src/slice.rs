@@ -296,12 +296,14 @@ impl<'a> RopeSliceMut<'a>  {
     /// # }
     /// ```
     pub fn insert_rope(&mut self, index: usize, rope: Rope) {
+        use metric::Grapheme;
         assert!( index <= self.len()
                , "RopeSliceMut::insert_rope: index {} was > length {}"
                , index, self.len());
         if rope.len() > 0 {
             // split the rope at the given index
-            let (left, right) = self.take_node().split(self.offset + index);
+            let (left, right) = self.take_node()
+                                    .split(Grapheme::from(self.offset + index));
 
             // construct the new root node with `Rope` inserted
             *self.node = (left + rope.root + right).rebalance();

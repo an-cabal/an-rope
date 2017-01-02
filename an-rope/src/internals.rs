@@ -111,9 +111,20 @@ impl Measured<Grapheme> for str {
     }
 }
 
-impl<M> Measured<M> for BranchNode
-where Node: Measured<M>
-    , M: Metric {
+impl Measured<Grapheme> for String {
+    #[inline]
+    fn measure(&self) -> Grapheme {
+        Grapheme::from(self.graphemes(true).count())
+    }
+
+    #[inline]
+    fn measure_weight(&self) -> Grapheme {
+        Grapheme::from(self.graphemes(true).count())
+    }
+}
+
+impl<M: Metric> Measured<M> for BranchNode
+where Node: Measured<M> {
 
     #[inline] fn measure(&self) -> M {
         self.left.measure() + self.right.measure()
@@ -174,8 +185,10 @@ impl BranchNode {
     ///
     /// # Time complexity
     /// O(log _n_)
-    fn split(self, index: usize) -> (Node, Node) {
-        let weight = (&self).weight;
+    fn split<M: Metric>(self, index: M) -> (Node, Node)
+    where Node: Measured<M>
+        , String: Measured<M>{
+        let weight = (&self).measure_weight();
         // to determine which side of this node we are splitting on, we compare
         // the index to split to this node's weight.
         if index < weight {
@@ -298,7 +311,9 @@ impl Node {
     ///
     /// # Time complexity
     /// O(log _n_)
-    pub fn split(self, index: usize) -> (Node, Node) {
+    pub fn split<M: Metric>(self, index: M) -> (Node, Node)
+    where Self: Measured<M>
+        , String: Measured<M>{
         match self {
             Leaf(ref s) if s.len() == 0 =>
                 // splitting an empty leaf node returns two empty leaf nodes
@@ -309,6 +324,9 @@ impl Node {
                 // splitting a leaf node with length >= 2 returns two new Leaf
                 // nodes, one with the left half of the string, and one with
                 // the right
+                // TODO: make this properly respect metric index boundaries
+                let index = index.to_byte_index(&s)
+                                 .expect("invalid index!");
                 let left = Leaf(s[..index].into());
                 let right = Leaf(s[index..].into());
                 (left, right)

@@ -45,6 +45,7 @@ pub trait Measured<M: Metric> {
 /// A monoid that can be applied to a `Node` as a measurement
 pub trait Metric: Monoid + Eq + Add<usize, Output=Self>
                          + Sub<usize, Output=Self>
+                         + Sub<Self, Output=Self>
                          + Eq + Ord
                          + Sized {
 
@@ -94,6 +95,10 @@ impl Monoid for Grapheme { }
 impl Sub<usize> for Grapheme {
     type Output = Self;
     #[inline] fn sub(self, rhs: usize) -> Self { Grapheme(self.0 - rhs) }
+}
+impl Sub<Grapheme> for Grapheme {
+    type Output = Self;
+    #[inline] fn sub(self, rhs: Self) -> Self { Grapheme(self.0 - rhs.0) }
 }
 
 #[derive(Clone, Copy, Debug, PartialOrd, Ord, PartialEq, Eq)]

@@ -370,8 +370,9 @@ impl Rope {
     #[inline]
     #[cfg(not(feature = "unstable"))]
     pub fn delete(&mut self, range: ops::Range<usize>) {
-        let (l, r) = self.take_root().split(range.start);
-        let (_, r) = r.split(range.end - range.start);
+        use self::metric::Grapheme;
+        let (l, r) = self.take_root().split(Grapheme::from(range.start));
+        let (_, r) = r.split(Grapheme::from(range.end - range.start));
         self.root = Node::new_branch(l, r);
     }
 
@@ -468,6 +469,7 @@ impl Rope {
     /// assert_eq!(an_rope, Rope::from("abcd"));
     /// ```
     pub fn insert_rope(&mut self, index: usize, rope: Rope) {
+        use self::metric::Grapheme;
         if rope.len() > 0 {
             let len = self.len();
             if index == 0 {
@@ -478,7 +480,8 @@ impl Rope {
                 self.append(rope)
             } else {
                 // split the rope at the given index
-                let (left, right) = self.take_root().split(index);
+                let (left, right) = self.take_root()
+                                        .split(Grapheme::from(index));
 
                 // construct the new root node with `Rope` inserted
                 self.root = left + rope.root + right;
@@ -761,8 +764,9 @@ impl Rope {
     /// assert_eq!(cd, Rope::from(String::from("cd")));
     /// ```
     pub fn split(self, index: usize) -> (Rope, Rope) {
+        use self::metric::Grapheme;
         assert!(index <= self.len());
-        let (l, r) = self.root.split(index);
+        let (l, r) = self.root.split(Grapheme::from(index));
         (Rope { root: l }, Rope { root: r })
     }
 
