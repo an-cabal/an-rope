@@ -2,7 +2,8 @@ use unicode_segmentation::UnicodeSegmentation;
 use unicode_segmentation::{ GraphemeIndices as StrGraphemeIndices
                           , UWordBoundIndices as StrUWordBoundIndices
                           };
-use ::unicode::{GraphemeIndex, CharIndex};
+use metric::{Grapheme, Metric, Measured};
+use unicode::GraphemeIndex;
 
 use std::ops;
 use std::fmt;
@@ -50,6 +51,8 @@ impl fmt::Display for Node {
 pub struct BranchNode {
     /// The length of this node
     len: usize
+  , /// The length of this node in graphemes
+    grapheme_len: Grapheme
   , /// The weight of a node is the summed weight of its left subtree
     weight: usize
   , /// The left branch node
@@ -76,6 +79,59 @@ impl Default for Node {
     fn default() -> Self { Node::empty() }
 }
 
+impl Metric for Grapheme {
+    type Measured = Node;
+
+    #[inline] fn is_splittable() -> bool { false }
+
+    /// Convert the `Metric` into a byte index into the given `Node`
+    ///
+    /// # Returns
+    /// - `Some` with the byte index of the beginning of the `n`th  element
+    ///    in `node` measured by this `Metric`, if there is an `n`th element
+    /// - `None` if there is no `n`th element in `node`
+    fn to_byte_index(&self, node: &Self::Measured) -> Option<usize> {
+        unimplemented!()
+    }
+
+    /// Returns true if index `i` in `node` is a boundary along this `Metric`
+    fn is_boundary(node: &Self::Measured, i: usize) -> bool {
+        unimplemented!()
+    }
+}
+
+impl Measured<Grapheme> for str {
+    #[inline]
+    fn measure(&self) -> Grapheme {
+        Grapheme::from(self.graphemes(true).count())
+    }
+
+    #[inline]
+    fn measure_weight(&self) -> Grapheme {
+        Grapheme::from(self.graphemes(true).count())
+    }
+}
+
+impl Measured<Grapheme> for Node {
+
+    #[inline]
+    fn measure(&self) -> Grapheme {
+        match *self {
+            Leaf(ref s) => s.measure()
+          , Branch(BranchNode { grapheme_len, .. }) => grapheme_len
+        }
+    }
+
+    #[inline]
+    fn measure_weight(&self) -> Grapheme {
+        match *self {
+            Leaf(ref s) => s.measure()
+          , Branch(BranchNode { ref left, .. }) => left.measure()
+        }
+    }
+
+}
+
 
 #[cfg(feature = "rebalance")]
 const FIB_LOOKUP: [usize; 93] = [
@@ -95,6 +151,7 @@ impl BranchNode {
     #[inline]
     fn new(left: Node, right: Node) -> Self {
         BranchNode { len: left.len() + right.len()
+                   , grapheme_len: left.measure() + right.measure()
                    , weight: left.subtree_weight()
                    , left: Box::new(left)
                    , right: Box::new(right)
