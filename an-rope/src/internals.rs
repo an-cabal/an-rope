@@ -888,7 +888,7 @@ impl ops::Index<usize> for Node {
     type Output = str;
 
     fn index(&self, i: usize) -> &str {
-        let len = self.len();
+        let len = self.measure().into();
         assert!( i < len
                , "Node::index: index {} out of bounds (length {})", i, len);
         match *self {
