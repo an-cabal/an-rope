@@ -40,7 +40,7 @@ use std::iter;
 #[cfg(all( test, feature = "unstable"))] mod bench;
 
 mod slice;
-
+mod metric;
 
 use self::internals::Node;
 pub use self::slice::{RopeSlice, RopeSliceMut};

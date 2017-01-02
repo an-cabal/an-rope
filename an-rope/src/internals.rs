@@ -24,7 +24,6 @@ pub enum Node {
     Branch(BranchNode)
 }
 
-
 impl fmt::Display for Node {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.strings()
