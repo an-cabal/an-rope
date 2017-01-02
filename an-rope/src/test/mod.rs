@@ -412,7 +412,7 @@ mod properties {
     fn rope_indexing_is_string_indexing() {
         fn prop(string: String, i: usize) -> TestResult {
             use ::unicode::Unicode;
-            if i >= string.grapheme_len() || i == 0 {
+            if i >= string.grapheme_len() || !string.is_char_boundary(i)  {
                 return TestResult::discard()
             }
             let rope = Rope::from(string.clone());
@@ -425,7 +425,7 @@ mod properties {
     fn rope_insert_char_is_string_insert_char() {
         fn prop(a: String, ch: char, i: usize) -> TestResult {
             // if the index is greater than the string's length...
-            if i > a.len() {
+            if i > a.len() || !a.is_char_boundary(i) {
                 // ..skip the test
                 return TestResult::discard()
             }
@@ -446,7 +446,7 @@ mod properties {
     fn rope_insert_str_is_string_insert_str() {
         fn prop(a: String, b: String, i: usize) -> TestResult {
             // if the index is greater than the string's length...
-            if i > a.len() {
+            if i > a.len() || !a.is_char_boundary(i) {
                 // ..skip the test
                 return TestResult::discard()
             }
