@@ -1,4 +1,5 @@
 use std::str;
+use std::convert;
 
 use unicode_segmentation::UnicodeSegmentation;
 
@@ -75,6 +76,15 @@ impl CharIndex {
 
         unimplemented!()
     }
+}
+
+// TODO: replace with impl Index<CharIndex> for str
+impl convert::Into<usize> for CharIndex {
+    #[inline] fn into(self) -> usize { self.0 }
+}
+
+impl convert::From<usize> for GraphemeIndex {
+    #[inline] fn from(u: usize) -> Self { GraphemeIndex(u) }
 }
 
 impl ByteIndex {

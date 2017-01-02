@@ -408,15 +408,15 @@ mod properties {
 
     }
 
-    // #[test]
-    // fn rope_indexing_is_string_indexing() {
-    //     fn prop(string: String, i: usize) -> TestResult {
-    //         if i > string.len() { return TestResult::discard() }
-    //         let rope = Rope::from(string.clone());
-    //         TestResult::from_bool(rope[i] == &string.as_ref()[i])
-    //     }
-    //     quickcheck(prop as fn(String, usize) -> TestResult);
-    // }
+    #[test]
+    fn rope_indexing_is_string_indexing() {
+        fn prop(string: String, i: usize) -> TestResult {
+            if i > string.len() { return TestResult::discard() }
+            let rope = Rope::from(string.clone());
+            TestResult::from_bool(&rope[i] == &string[i..i+1])
+        }
+        quickcheck(prop as fn(String, usize) -> TestResult);
+    }
 
     #[test]
     fn rope_insert_char_is_string_insert_char() {
