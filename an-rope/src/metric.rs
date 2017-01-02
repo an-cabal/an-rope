@@ -35,6 +35,12 @@ pub trait Metric: Monoid + Eq + Add<usize, Output=Self>
                               + Sub<usize, Output=Self>
                               + Sized {
     /// Apply this `Metric` to the given `Node`
+    ///
+    /// Although we aren't currently enforcing this, `measure`ing a `Node` with
+    /// two children should produce the same result as `measure`ing both
+    /// children and `Monoid::sum`ming the result. That is to say, `measure`
+    /// should be a [_monoid homomorphism_]
+    /// (https://en.wikipedia.org/wiki/Monoid#Monoid_homomorphisms).
     fn measure(node: &Node) -> Self;
 
     /// Convert the `Metric` into a byte index into the given `Node`
