@@ -464,7 +464,7 @@ impl Node {
     /// Returns the number of started lines on a node
     #[inline]
     pub fn nlines(&self) -> usize {
-        match self { &Leaf(ref s) => s.chars().filter(|&c| c == '\n').count() + 1
+        match self { &Leaf(ref s) => s.chars().filter(char::is_line_ending).count() + 1
                    , &Branch(BranchNode { nlines, ..}) => nlines
                    }
     }
@@ -472,7 +472,7 @@ impl Node {
     /// Calculates the line weight of a node
     #[inline]
     fn subtree_wlines (&self) -> usize {
-        match self { &Leaf(ref s) => s.chars().filter(|&c| c == '\n').count() + 1
+        match self { &Leaf(ref s) => s.chars().filter(char::is_line_ending).count() + 1
                    , &Branch(BranchNode { ref left, .. }) => left.nlines()
                    }
     }
@@ -926,6 +926,35 @@ impl ops::Index<usize> for Node {
     }
 }
 
+#[derive(Clone, Copy)]
+pub struct Lines(usize);
+impl Lines {
+    pub fn new(n: usize) -> Self {
+        Lines(n)
+    }
+}
+
+impl ops::Index<Lines> for Node {
+    type Output = str;
+
+    // TODO: limit to lines, merge from other nodes etc.
+    fn index(&self, i: Lines) -> &str {
+        let Lines(l) = i;
+        let nlines = self.nlines();
+        assert!( l < nlines
+               ,"Node::index: index Lines({}) out of bounds ({} lines)", l, nlines);
+        match *self {
+            Leaf(ref s) => if let Some(line) = s.lines().nth(l) {
+                line
+            } else {
+                unreachable!("No {}th line. This is a bug.", l)
+            }
+          , Branch(BranchNode { ref right, wlines, .. }) if wlines <= l =>
+                &right[Lines(l - wlines + 1)]
+          , Branch(BranchNode { ref left, .. }) => &left[i]
+        }
+    }
+}
 
 trait IsLineEnding { fn is_line_ending(&self) -> bool; }
 

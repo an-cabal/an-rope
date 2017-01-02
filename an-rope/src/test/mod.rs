@@ -1,5 +1,8 @@
 use super::Rope;
 use std::iter;
+use internals::Node;
+use internals::Node::Leaf;
+use internals::Lines;
 
 use quickcheck::{Arbitrary, Gen};
 
@@ -14,6 +17,20 @@ impl Arbitrary for Rope {
         Box::new(chars.shrink().map(|x| x.into_iter().collect::<Rope>()))
     }
 
+}
+
+#[test]
+fn line_index_test_1() {
+    let n1 = Node::new_leaf("asdf\nqwer".to_string());
+    let n2 = Node::new_leaf("yxcv\n1234\n5678".to_string());
+    assert_eq!(n1.nlines(), 2);
+    assert_eq!(n2.nlines(), 3);
+    let t = Node::new_branch(n1, n2);
+    assert_eq!(t.nlines(), 4);
+    assert_eq!(t[Lines::new(0)], "asdf".to_string());
+    assert_eq!(t[Lines::new(1)], "qwer".to_string());
+    assert_eq!(t[Lines::new(2)], "1234".to_string());
+    assert_eq!(t[Lines::new(3)], "5678".to_string());
 }
 
 #[test]
