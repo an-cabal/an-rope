@@ -1,7 +1,7 @@
 use std::convert;
 use std::ops::{Add, Sub};
 use std::default::Default;
-use internals::Node;
+use internals::{Node, BranchNode};
 
 
 /// The class of monoids
@@ -28,18 +28,27 @@ pub trait Monoid: Add<Self, Output=Self> + Default + Sized {
     }
 }
 
-/// A monoid that can be applied to a `Node` as a measurement
-pub trait Metric: Monoid + Eq + Add<usize, Output=Self>
-                              + Sub<usize, Output=Self>
-                              + Sized {
-    /// Apply this `Metric` to the given `Node`
+pub trait Measured<M: Metric> {
+    /// Apply `Metric` to `Self`
     ///
     /// Although we aren't currently enforcing this, `measure`ing a `Node` with
     /// two children should produce the same result as `measure`ing both
     /// children and `Monoid::sum`ming the result. That is to say, `measure`
     /// should be a [_monoid homomorphism_]
     /// (https://en.wikipedia.org/wiki/Monoid#Monoid_homomorphisms).
-    fn measure(node: &Node) -> Self;
+    fn measure(&self) -> M;
+
+    /// Measure the `weight` of `Node` by this `metric`.
+    fn measure_weight(&self) -> M;
+}
+
+/// A monoid that can be applied to a `Node` as a measurement
+pub trait Metric: Monoid + Eq + Add<usize, Output=Self>
+                         + Sub<usize, Output=Self>
+                         + Sized {
+    type Measured: Measured<Self>;
+
+    fn is_splittable() -> bool;
 
     /// Convert the `Metric` into a byte index into the given `Node`
     ///
@@ -47,21 +56,20 @@ pub trait Metric: Monoid + Eq + Add<usize, Output=Self>
     /// - `Some` with the byte index of the beginning of the `n`th  element
     ///    in `node` measured by this `Metric`, if there is an `n`th element
     /// - `None` if there is no `n`th element in `node`
-    fn to_byte_index(&self, node: &Node) -> Option<usize>;
+    fn to_byte_index(&self, node: &Self::Measured) -> Option<usize>;
 
     /// Returns the byte index of the next element of this metric in `Node`
-    #[inline] fn next(self, node: &Node) -> Option<usize> {
+    #[inline] fn next(self, node: &Self::Measured) -> Option<usize> {
         (self + 1).to_byte_index(node)
     }
 
     /// Returns the byte index of the previous element of this metric in `Node`
-    #[inline] fn back(self, node: &Node) -> Option<usize> {
+    #[inline] fn back(self, node: &Self::Measured) -> Option<usize> {
         (self - 1).to_byte_index(node)
     }
 
     /// Returns true if index `i` in `node` is a boundary along this `Metric`
-    // TODO: should this be a method on `Node`s instead?
-    fn is_boundary(node: &Node, i: usize) -> bool;
+    fn is_boundary(node: &Self::Measured, i: usize) -> bool;
 }
 
 #[derive(Clone, Copy, Debug, PartialOrd, Ord, PartialEq, Eq)]
