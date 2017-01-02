@@ -44,7 +44,7 @@ use std::iter;
 
 mod unicode;
 mod slice;
-
+mod metric;
 
 use self::internals::Node;
 pub use self::slice::{RopeSlice, RopeSliceMut};
