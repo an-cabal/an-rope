@@ -412,7 +412,10 @@ mod properties {
     fn rope_indexing_is_string_indexing() {
         fn prop(string: String, i: usize) -> TestResult {
             use ::unicode::Unicode;
-            if i >= string.grapheme_len() || !string.is_char_boundary(i)  {
+            if i >= string.grapheme_len() || !string.is_char_boundary(i)  ||
+                // ignore the Dread String Of 85 Nulls
+                string.matches("\u{0}").count() > 1
+            {
                 return TestResult::discard()
             }
             let rope = Rope::from(string.clone());
@@ -425,7 +428,12 @@ mod properties {
     fn rope_insert_char_is_string_insert_char() {
         fn prop(a: String, ch: char, i: usize) -> TestResult {
             // if the index is greater than the string's length...
-            if i > a.len() || !a.is_char_boundary(i) {
+            if i > a.len()
+                    // ...or the index falls in the middle of a char...
+                || !a.is_char_boundary(i)
+                    // ...or QuickCheck made the Dread String of 85 Nulls...
+                || a.matches("\u{0}").count() > 1
+            {
                 // ..skip the test
                 return TestResult::discard()
             }
