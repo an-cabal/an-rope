@@ -1,4 +1,4 @@
-where_indent = "Visual"
+where_indent = "Inherit"
 struct_lit_style = "Visual"
 chain_base_indent = "Tabbed"
 chain_indent = "Visual"
