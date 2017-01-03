@@ -847,8 +847,8 @@ impl Rope {
         impl char_indices<(usize, char)> for Rope {}
         #[inline]
         impl split_whitespace<&'a str> for Rope {}
-        #[inline]
-        impl lines<&'a str> for Rope {}
+        // #[inline]
+        // impl lines<&'a str> for Rope {}
     }
 
     unicode_seg_iters! {
@@ -1024,6 +1024,35 @@ impl Rope {
                         -> RopeSliceMut<'a> {
         RopeSliceMut::new(&mut self.root, range)
     }
+
+    /// Returns an iterator over all the strings in this `Node`s subrope'
+    #[cfg(feature = "unstable")]
+    #[inline]
+    pub fn lines<'a>(&'a self) -> impl Iterator<Item=RopeSlice<'a>> {
+        self.char_indices()
+            .filter_map(|(i, c)| if c.is_line_ending() { Some(i) } else {None})
+            .scan(0, |mut l, i|  {
+                let last = l;
+                *l = i;
+                self.slice(last..i)
+        	})
+    }
+
+    /// Returns an iterator over all the strings in this `Node`s subrope'
+    #[cfg(not(feature = "unstable"))]
+    #[inline]
+    pub fn lines<'a>(&'a self) -> Box<Iterator<Item=RopeSlice<'a>> +'a > {
+        use internals::IsLineEnding;
+        Box::new(self.char_indices()
+                      .filter_map(|(i, c)| if c.is_line_ending() { Some(i) }
+                                           else { None })
+                      .scan(0, move |mut l, i|  {
+                            let last = *l;
+                            *l = i;
+                            Some(self.slice(last..i))
+                        }))
+    }
+
 
 
 }

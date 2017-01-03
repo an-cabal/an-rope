@@ -227,11 +227,11 @@ impl<'a> RopeSliceMut<'a>  {
         Box::new(self.slice_strings_iter(self.node.split_whitespace()))
     }
 
-    #[cfg(not(feature = "unstable"))]
-    #[inline]
-    pub fn lines(&'a self) -> Box<Iterator<Item=&'a str> + 'a>  {
-        Box::new(self.slice_strings_iter(self.node.lines()))
-    }
+    // #[cfg(not(feature = "unstable"))]
+    // #[inline]
+    // pub fn lines(&'a self) -> Box<Iterator<Item=&'a str> + 'a>  {
+    //     Box::new(self.slice_strings_iter(self.node.lines()))
+    // }
 
     #[cfg(not(feature = "unstable"))]
     #[inline]
@@ -573,11 +573,11 @@ impl<'a> RopeSlice<'a> {
         Box::new(self.slice_strings_iter(self.node.split_whitespace()))
     }
 
-    #[cfg(not(feature = "unstable"))]
-    #[inline]
-    pub fn lines(&'a self) -> Box<Iterator<Item=&'a str> + 'a>  {
-        Box::new(self.slice_strings_iter(self.node.lines()))
-    }
+    // #[cfg(not(feature = "unstable"))]
+    // #[inline]
+    // pub fn lines(&'a self) -> Box<Iterator<Item=&'a str> + 'a>  {
+    //     Box::new(self.slice_strings_iter(self.node.lines()))
+    // }
 
     #[cfg(not(feature = "unstable"))]
     #[inline]

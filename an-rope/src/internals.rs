@@ -5,6 +5,7 @@ use unicode_segmentation::{ GraphemeIndices as StrGraphemeIndices
 use metric::{Grapheme, Line, Metric, Measured};
 use unicode::GraphemeIndex;
 
+use ::RopeSlice;
 use std::ops;
 use std::fmt;
 use std::convert;
@@ -680,6 +681,14 @@ impl Node {
         }))
     }
 
+
+    /// Returns an iterator over all the strings in this `Node`s subrope'
+    #[cfg(not(feature = "unstable"))]
+    #[inline]
+    pub fn lines<'a>(&'a self) -> Box<Iterator<Item = RopeSlice<'a>> + 'a> {
+        unimplemented!() // nodes need to be sliceable
+    }
+
     /// Returns a move iterator over all the strings in this `Node`s subrope'
     ///
     /// Consumes `self`.
@@ -742,8 +751,8 @@ impl Node {
         // impl char_indices<(usize, char)> for Node {}
         #[inline]
         impl split_whitespace<&'a str> for Node {}
-        #[inline]
-        impl lines<&'a str> for Node {}
+        // #[inline]
+        // impl lines<&'a str> for Node {}
     }
 
     // /// Returns n iterator over the bytes of this `Node`'s subrope
@@ -964,8 +973,6 @@ impl<'a> Iterator for UWordBoundIndices<'a> {
     }
 }
 
-
-
 impl ops::Add for Node {
     type Output = Self;
     /// Concatenate two `Node`s, returning a `Branch` node.
@@ -1004,7 +1011,7 @@ impl ops::Index<usize> for Node {
 }
 
 
-trait IsLineEnding { fn is_line_ending(&self) -> bool; }
+pub trait IsLineEnding { fn is_line_ending(&self) -> bool; }
 
 impl IsLineEnding for char {
     #[inline]
