@@ -115,9 +115,17 @@ impl Add<Line> for Line {
     type Output = Self;
     #[inline] fn add(self, rhs: Self) -> Self { Line(self.0 + rhs.0) }
 }
+impl Sub<Line> for Line {
+    type Output = Self;
+    #[inline] fn sub(self, rhs: Self) -> Self { Line(self.0 - rhs.0) }
+}
 impl convert::From<usize> for Line {
     #[inline] fn from(u: usize) -> Self { Line(u) }
 }
+impl convert::Into<usize> for Line {
+    #[inline] fn into(self) -> usize { self.0 }
+}
+impl Monoid for Line { }
 impl Add<usize> for Line {
     type Output = Self;
     #[inline] fn add(self, rhs: usize) -> Self { Line(self.0 + rhs) }

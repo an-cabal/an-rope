@@ -2,7 +2,7 @@ use unicode_segmentation::UnicodeSegmentation;
 use unicode_segmentation::{ GraphemeIndices as StrGraphemeIndices
                           , UWordBoundIndices as StrUWordBoundIndices
                           };
-use metric::{Grapheme, Metric, Measured};
+use metric::{Grapheme, Line, Metric, Measured};
 use unicode::GraphemeIndex;
 
 use std::ops;
@@ -57,9 +57,9 @@ pub struct BranchNode {
   , /// The weight of a node is the summed weight of its left subtree
     weight: usize
   , /// The number of started lines of this node
-    nlines: usize
+    nlines: Line
   , /// The number of started lines in the node's left subtree
-    wlines: usize
+    wlines: Line
   , /// The left branch node
     pub left: Box<Node>
   , /// The right branch node
@@ -179,6 +179,93 @@ impl Measured<Grapheme> for Node {
 }
 
 
+impl Metric for Line {
+
+    #[inline] fn is_splittable() -> bool { true }
+
+    /// Returns true if index `i` in `node` is a boundary along this `Metric`
+    fn is_boundary<M: Measured<Self>>(node: &M, i: usize) -> bool {
+        unimplemented!()
+    }
+}
+
+impl Measured<Line> for str {
+    fn to_byte_index(&self, index: Line) -> Option<usize>  {
+        let i: usize = index.into();
+        self.char_indices().filter_map(|(ofs, c)| if c.is_line_ending() {
+            // TODO: Can I do this? I want to do this.
+            Some(ofs + 1)
+        } else {
+            None
+        }).nth(i)
+    }
+
+
+    #[inline]
+    fn measure(&self) -> Line {
+        Line::from(self.chars().filter(char::is_line_ending).count())
+    }
+
+    #[inline]
+    fn measure_weight(&self) -> Line {
+        Line::from(self.chars().filter(char::is_line_ending).count())
+    }
+}
+
+impl Measured<Line> for String {
+    fn to_byte_index(&self, index: Line) -> Option<usize>  {
+        let i: usize = index.into();
+        self.char_indices().filter_map(|(ofs, c)| if c.is_line_ending() {
+            // TODO: Can I do this? I want to do this.
+            Some(ofs + 1)
+        } else {
+            None
+        }).nth(i)
+    }
+
+    #[inline]
+    fn measure(&self) -> Line {
+        Line::from(self.chars().filter(char::is_line_ending).count())
+    }
+
+    #[inline]
+    fn measure_weight(&self) -> Line {
+        Line::from(self.chars().filter(char::is_line_ending).count())
+    }
+}
+
+impl Measured<Line> for BranchNode {
+
+    fn to_byte_index(&self, index: Line) -> Option<usize>  {
+        unimplemented!()
+    }
+
+    #[inline] fn measure(&self) -> Line {
+        self.nlines
+    }
+
+    #[inline] fn measure_weight(&self) -> Line {
+        self.wlines
+    }
+}
+
+impl Measured<Line> for Node {
+    fn to_byte_index(&self, index: Line) -> Option<usize>  {
+        unimplemented!()
+    }
+
+    #[inline] fn measure(&self) -> Line {
+        match *self { Leaf(ref s) => s.measure(), Branch(ref n) => n.measure() }
+    }
+
+    #[inline] fn measure_weight(&self) -> Line {
+        match *self { Leaf(ref s) => s.measure_weight()
+                    , Branch(ref n) => n.measure_weight() }
+    }
+
+}
+
+
 #[cfg(feature = "rebalance")]
 const FIB_LOOKUP: [usize; 93] = [
  0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181, 6765, 10946, 17711, 28657, 46368, 75025, 121393, 196418, 317811, 514229, 832040, 1346269, 2178309, 3524578, 5702887, 9227465, 14930352, 24157817, 39088169, 63245986, 102334155, 165580141, 267914296, 433494437, 701408733, 1134903170, 1836311903, 2971215073, 4807526976, 7778742049, 12586269025, 20365011074, 32951280099, 53316291173, 86267571272, 139583862445, 225851433717, 365435296162, 591286729879, 956722026041, 1548008755920, 2504730781961, 4052739537881, 6557470319842, 10610209857723, 17167680177565, 27777890035288, 44945570212853, 72723460248141, 117669030460994, 190392490709135, 308061521170129, 498454011879264, 806515533049393, 1304969544928657, 2111485077978050, 3416454622906707, 5527939700884757, 8944394323791464, 14472334024676221, 23416728348467685, 37889062373143906, 61305790721611591, 99194853094755497, 160500643816367088, 259695496911122585, 420196140727489673, 679891637638612258, 1100087778366101931, 1779979416004714189, 2880067194370816120, 4660046610375530309, 7540113804746346429 ];
@@ -196,11 +283,15 @@ impl BranchNode {
 
     #[inline]
     fn new(left: Node, right: Node) -> Self {
+        let grapheme_left : Grapheme = left.measure();
+        let grapheme_right : Grapheme = right.measure();
+        let line_left : Line = left.measure();
+        let line_right : Line = right.measure();
         BranchNode { len: left.len() + right.len()
-                   , grapheme_len: left.measure() + right.measure()
+                   , grapheme_len: grapheme_left + grapheme_right
                    , weight: left.subtree_weight()
-                   , nlines: left.nlines() + right.nlines() - 1
-                   , wlines: left.subtree_wlines()
+                   , nlines: line_left + line_right
+                   , wlines: left.measure()
                    , left: Box::new(left)
                    , right: Box::new(right)
                    }
@@ -458,23 +549,6 @@ impl Node {
         match self { &Leaf(ref s) => s.len()
                    , &Branch(BranchNode { ref left, .. }) => left.len()
                     }
-    }
-
-
-    /// Returns the number of started lines on a node
-    #[inline]
-    pub fn nlines(&self) -> usize {
-        match self { &Leaf(ref s) => s.chars().filter(char::is_line_ending).count() + 1
-                   , &Branch(BranchNode { nlines, ..}) => nlines
-                   }
-    }
-
-    /// Calculates the line weight of a node
-    #[inline]
-    fn subtree_wlines (&self) -> usize {
-        match self { &Leaf(ref s) => s.chars().filter(char::is_line_ending).count() + 1
-                   , &Branch(BranchNode { ref left, .. }) => left.nlines()
-                   }
     }
 
 
@@ -911,7 +985,8 @@ impl ops::Index<usize> for Node {
     type Output = str;
 
     fn index(&self, i: usize) -> &str {
-        let len = self.measure().into();
+        let grapheme_len : Grapheme = self.measure();
+        let len = grapheme_len.into();
         assert!( i < len
                , "Node::index: index {} out of bounds (length {})", i, len);
         match *self {
@@ -926,35 +1001,6 @@ impl ops::Index<usize> for Node {
     }
 }
 
-#[derive(Clone, Copy)]
-pub struct Lines(usize);
-impl Lines {
-    pub fn new(n: usize) -> Self {
-        Lines(n)
-    }
-}
-
-impl ops::Index<Lines> for Node {
-    type Output = str;
-
-    // TODO: limit to lines, merge from other nodes etc.
-    fn index(&self, i: Lines) -> &str {
-        let Lines(l) = i;
-        let nlines = self.nlines();
-        assert!( l < nlines
-               ,"Node::index: index Lines({}) out of bounds ({} lines)", l, nlines);
-        match *self {
-            Leaf(ref s) => if let Some(line) = s.lines().nth(l) {
-                line
-            } else {
-                unreachable!("No {}th line. This is a bug.", l)
-            }
-          , Branch(BranchNode { ref right, wlines, .. }) if wlines <= l =>
-                &right[Lines(l - wlines + 1)]
-          , Branch(BranchNode { ref left, .. }) => &left[i]
-        }
-    }
-}
 
 trait IsLineEnding { fn is_line_ending(&self) -> bool; }
 
@@ -967,14 +1013,3 @@ impl IsLineEnding for char {
         }
     }
 }
-
-
-//impl Measured<Lines> for Node {
-//    fn measure(&self) -> Lines {
-//        match *self {
-//            Leaf(ref s) if s.chars().last() == Some('\n') => Lines(1),
-//            Leaf(_) => Lines(0),
-//            Branch(BranchNode { ref nlines, .. }) => Lines(nlines)
-//        }
-//    }
-//}
