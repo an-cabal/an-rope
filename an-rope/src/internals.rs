@@ -190,52 +190,54 @@ impl Metric for Line {
 }
 
 impl Measured<Line> for str {
+    // This can only handle line endings at the end of a string.
     fn to_byte_index(&self, index: Line) -> Option<usize>  {
-        let i: usize = index.into();
-        self.char_indices().filter_map(|(ofs, c)| if c.is_line_ending() {
-            // TODO: Can I do this? I want to do this.
-            Some(ofs + 1)
-        } else {
-            None
-        }).nth(i)
+        match index.into() {
+            0 => Some(self.len())
+          , _ => None
+        }
     }
-
 
     #[inline]
     fn measure(&self) -> Line {
-        Line::from(self.chars().filter(char::is_line_ending).count())
+        Line::from(
+            if self.chars().last().unwrap_or('\0').is_line_ending() { 1
+            } else { 0 })
     }
 
     #[inline]
     fn measure_weight(&self) -> Line {
-        Line::from(self.chars().filter(char::is_line_ending).count())
+        Line::from(
+            if self.chars().last().unwrap_or('\0').is_line_ending() { 1
+            } else { 0 })
     }
 }
 
 impl Measured<Line> for String {
+    // This can only handle line endings at the end of a string.
     fn to_byte_index(&self, index: Line) -> Option<usize>  {
-        let i: usize = index.into();
-        self.char_indices().filter_map(|(ofs, c)| if c.is_line_ending() {
-            // TODO: Can I do this? I want to do this.
-            Some(ofs + 1)
-        } else {
-            None
-        }).nth(i)
+        match index.into() {
+            0 => Some(self.len())
+          , _ => None
+        }
     }
 
     #[inline]
     fn measure(&self) -> Line {
-        Line::from(self.chars().filter(char::is_line_ending).count())
+        Line::from(
+            if self.chars().last().unwrap_or('\0').is_line_ending() { 1
+            } else { 0 })
     }
 
     #[inline]
     fn measure_weight(&self) -> Line {
-        Line::from(self.chars().filter(char::is_line_ending).count())
+        Line::from(
+            if self.chars().last().unwrap_or('\0').is_line_ending() { 1
+            } else { 0 })
     }
 }
 
 impl Measured<Line> for BranchNode {
-
     fn to_byte_index(&self, index: Line) -> Option<usize>  {
         unimplemented!()
     }
@@ -325,7 +327,7 @@ impl BranchNode {
             let (left, left_right) = self.left.split(index);
             // the left side of the split left child will become the left side
             // of the split pair.
-            let right = if left_right.measure().into() == 0 {
+            let right = if left_right.len() == 0 {
                 // if the right side of the split is empty, then the right
                 // side of the returned pair is just this node's right child
                 *self.right
@@ -345,7 +347,7 @@ impl BranchNode {
             // the right side of the split right child will become the right
             // side of the split
 
-            let left = if right_left.measure().into() == 0 {
+            let left = if right_left.len() == 0 {
                 // if the left side of the split right child is empty, then the
                 // left side of the returned pair is just this node's left child
                 *self.left
@@ -444,7 +446,7 @@ impl Node {
         , String: Measured<M>
         , M: convert::Into<usize> {
         match self {
-            Leaf(ref s) if s.measure().into() == 0 =>
+            Leaf(ref s) if s.len() == 0 =>
                 // splitting an empty leaf node returns two empty leaf nodes
                 (Node::empty(), Node::empty())
           , Leaf(ref s) if s.measure().into() == 1 =>
