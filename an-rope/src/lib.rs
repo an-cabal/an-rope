@@ -1035,10 +1035,18 @@ impl convert::Into<Vec<u8>> for Rope {
 
 }
 
+fn str_to_tree(string: String) -> Node {
+    assert!(string.len() > 0);
+    let mut strings = string.rsplit('\n');
+    let last: Node = Node::new_leaf(String::from(strings.next().unwrap()));
+    let leaves = strings.map(|s| Node::new_leaf(String::from(s) + "\n"));
+    leaves.fold(last, |r, l| Node::new_branch(l, r))
+}
+
 #[cfg(feature = "tendril")]
 impl convert::From<StrTendril> for Rope {
     fn from(tendril: StrTendril) -> Rope {
-        Rope { root: Node::new_leaf(tendril) }
+        Rope { root: str_to_tree(tendril) }
     }
 }
 
@@ -1050,7 +1058,7 @@ impl convert::From<String> for Rope {
     fn from(string: String) -> Rope {
         Rope {
             root: if string.len() == 0 { Node::empty() }
-                  else { Node::new_leaf(StrTendril::from(string)) }
+                  else { str_to_tree(StrTendril::from(string)) }
         }
     }
 
@@ -1060,7 +1068,7 @@ impl convert::From<String> for Rope {
     fn from(string: String) -> Rope {
         Rope {
             root: if string.len() == 0 { Node::empty() }
-                  else { Node::new_leaf(string) }
+                  else { str_to_tree(string) }
         }
     }
 }
