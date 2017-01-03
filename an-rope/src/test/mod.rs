@@ -488,6 +488,45 @@ fn with_insert_str_test_1() {
     assert_eq!(&s_2, "aaaaabbbbbccccc");
 }
 
+
+#[test]
+fn rope_lines_iter() {
+    let s = "line a\n\
+             line b\n\
+             line c\n\
+             line d";
+    let r = Rope::from(s);
+    assert_eq!(s.lines().collect::<Vec<_>>(), r.lines().collect::<Vec<_>>());
+    let r = Rope::from("line a\n") +
+            Rope::from("line b\n") +
+            Rope::from("line c\n") +
+            Rope::from("line d\n");
+    assert_eq!(s.lines().collect::<Vec<_>>(), r.lines().collect::<Vec<_>>());
+}
+
+#[test]
+fn rope_lines_iter_split_on_node() {
+    use super::internals::Node;
+    use super::internals::Node::Leaf;
+    let s = "line a\n\
+             line b\n\
+             line c\n";
+    let r = Rope {
+        root: Node::new_branch(
+                Node::new_branch( Leaf("line".to_string())
+                                , Leaf(" a\n".to_string())
+                                )
+              , Node::new_branch( Leaf("line b\n".to_string())
+                                , Node::new_branch( Leaf("li".to_string())
+                                                  , Leaf("ne c\n".to_string())
+                                                  )
+                                )
+              )
+    };
+    assert_eq!(s.lines().collect::<Vec<_>>(), r.lines().collect::<Vec<_>>());
+}
+
+
 #[test]
 fn rope_char_indices() {
     let rope = Rope::from("aaaaa")
