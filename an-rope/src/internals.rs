@@ -317,7 +317,7 @@ impl BranchNode {
     where Node: Measured<M>
         , BranchNode: Measured<M>
         , String: Measured<M>
-        , M: convert::Into<usize> + Copy {
+        , M: convert::Into<usize> {
         let weight = (&self).measure_weight();
         // to determine which side of this node we are splitting on, we compare
         // the index to split to this node's weight.
@@ -442,7 +442,7 @@ impl Node {
     where Self: Measured<M>
         , BranchNode: Measured<M>
         , String: Measured<M>
-        , M: convert::Into<usize> + Copy {
+        , M: convert::Into<usize> {
         match self {
             Leaf(ref s) if s.len() == 0 =>
                 // splitting an empty leaf node returns two empty leaf nodes
@@ -454,11 +454,8 @@ impl Node {
                 // nodes, one with the left half of the string, and one with
                 // the right
                 // TODO: make this properly respect metric index boundaries
-                let index
-                    = s.to_byte_index(index)
-                       .expect(&format!( "index {} in `{:?}` do not lie on \
-                                          character boundary"
-                                        , index.into(), s));
+                let index = s.to_byte_index(index)
+                                 .expect("invalid index!");
                 let left = Leaf(s[..index].into());
                 let right = Leaf(s[index..].into());
                 (left, right)
