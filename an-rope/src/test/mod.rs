@@ -597,8 +597,9 @@ mod properties {
     #[ignore]
     fn rope_insert_char_is_string_insert_char() {
         fn prop(a: String, ch: char, i: usize) -> TestResult {
+            use unicode::Unicode;
             // if the index is greater than the string's length...
-            if i > a.len()
+            if i > a.grapheme_len()
                     // ...or the index falls in the middle of a char...
                 || !a.is_char_boundary(i)
                     // ...or QuickCheck made the Dread String of 85 Nulls...
@@ -623,8 +624,15 @@ mod properties {
     #[test]
     fn rope_insert_str_is_string_insert_str() {
         fn prop(a: String, b: String, i: usize) -> TestResult {
+            use unicode::Unicode;
             // if the index is greater than the string's length...
-            if i > a.len() || !a.is_char_boundary(i) {
+            if i > a.grapheme_len()
+                || a.grapheme_len() > 1
+                    // ...or the index falls in the middle of a char...
+                || !a.is_char_boundary(i)
+                    // ...or QuickCheck made the Dread String of 85 Nulls...
+                || a.contains("\u{0}") || b.contains("\u{0}")
+            {
                 // ..skip the test
                 return TestResult::discard()
             }
