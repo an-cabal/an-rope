@@ -1030,12 +1030,14 @@ impl Rope {
     #[inline]
     pub fn lines<'a>(&'a self) -> impl Iterator<Item=RopeSlice<'a>> {
         self.char_indices()
-            .filter_map(|(i, c)| if c.is_line_ending() { Some(i) } else {None})
-            .scan(0, |mut l, i|  {
-                let last = l;
-                *l = i;
-                self.slice(last..i)
-        	})
+            .filter_map(|(i, c)| if c.is_line_ending() { Some(i) }
+                                 else { None })
+            .scan(0, move |mut l, i|  {
+                  let last = *l;
+                  *l = i;
+                  Some(self.slice(last..i))
+              })
+            .skip(1)
     }
 
     /// Returns an iterator over all the strings in this `Node`s subrope'
@@ -1043,12 +1045,17 @@ impl Rope {
     #[inline]
     pub fn lines<'a>(&'a self) -> Box<Iterator<Item=RopeSlice<'a>> +'a > {
         use internals::IsLineEnding;
+        let last_idx = self.len() - 1;
         Box::new(self.char_indices()
-                      .filter_map(|(i, c)| if c.is_line_ending() { Some(i) }
-                                           else { None })
+                     .filter_map(move |(i, c)|
+                        if c.is_line_ending() { Some(i) }
+                        // special case: slice to the end of the rope even if
+                        // it doesn't end in a newline character
+                        else if i == last_idx { Some(i + 1) }
+                        else { None })
                       .scan(0, move |mut l, i|  {
                             let last = *l;
-                            *l = i;
+                            *l = i + 1;
                             Some(self.slice(last..i))
                         }))
     }

@@ -377,7 +377,7 @@ impl Node {
                 // then that leaf must be the spanning node. return it.
                 (self, i)
           , Branch(BranchNode { ref right, weight, .. }) if weight < i => {
-                assert!(or_zero!(right.len(), i) >= span_len);
+                // assert!(or_zero!(right.len(), i) >= span_len);
                 // if this node is a branch, and the weight is less than the
                 // index, where the span begins, then the first index of the
                 // span is on the right side
