@@ -390,10 +390,11 @@ impl Rope {
     #[cfg(feature = "unstable")]
     pub fn delete<R>(&mut self, range: R)
     where R: RangeArgument<usize> {
-        let start = *range.start().unwrap_or(&0);
-        let end = *range.end().unwrap_or(&self.len());
-        let (l, r) = self.take_root().split(start);
-        let (_, r) = r.split(end - start);
+        use self::metric::Grapheme;
+        let start: usize = *range.start().unwrap_or(&0);
+        let end: usize = *range.end().unwrap_or(&self.len());
+        let (l, r) = self.take_root().split(Grapheme::from(start));
+        let (_, r) = r.split(Grapheme::from(end));
         self.root = Node::new_branch(l, r);
     }
     #[inline]
