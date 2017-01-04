@@ -624,6 +624,18 @@ impl<'a> cmp::PartialEq<str> for RopeSlice<'a> {
 }
 
 
+impl<'a> cmp::PartialEq<&'a str> for RopeSlice<'a>  {
+    /// A rope equals another rope if all the bytes in both are equal.
+    #[inline]
+    fn eq(&self, other: &&'a str) -> bool {
+        if self.len() == other.len() {
+            self.bytes_eq((*other).bytes())
+        } else {
+            false
+        }
+    }
+}
+
 impl<'a> cmp::Eq for RopeSliceMut<'a> {}
 impl<'a> cmp::PartialEq for RopeSliceMut<'a> {
     /// A rope equals another rope if all the bytes in both are equal.
