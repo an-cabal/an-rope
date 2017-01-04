@@ -198,7 +198,11 @@ fn delete_test_6() {
 }
 
 #[test]
-#[should_panic(expected = "invalid index!")]
+// TODO: panic messages differ on nightly/stable, should fix this...
+#[cfg_attr(feature = "unstable", should_panic(expected = "invalid index!"))]
+#[cfg_attr( not(feature = "unstable")
+          , should_panic(expected = "attempt to subtract with overflow"))]
+#[should_panic]
 fn delete_test_7() {
     let mut r = Rope::from("this is not fine".to_string());
     r.delete((12..8)); // lol, fuck you
