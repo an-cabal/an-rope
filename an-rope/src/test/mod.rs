@@ -191,14 +191,14 @@ fn delete_test_5() {
 // this range syntax only works on nightly rust
 #[cfg(feature = "unstable")]
 #[test]
-#[should_panic(expected = "do not lie on character boundary")]
+#[should_panic(expected = "invalid index! 42 in \"this is not fine\"")]
 fn delete_test_6() {
     let mut r = Rope::from("this is not fine".to_string());
     r.delete((..42));
 }
 
 #[test]
-#[should_panic(expected = "attempt to subtract with overflow")]
+#[should_panic(expected = "invalid index!")]
 fn delete_test_7() {
     let mut r = Rope::from("this is not fine".to_string());
     r.delete((12..8)); // lol, fuck you
