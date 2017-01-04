@@ -496,12 +496,12 @@ fn rope_lines_iter() {
              line c\n\
              line d";
     let r = Rope::from(s);
-    assert_eq!(s.lines().collect::<Vec<_>>(), r.lines().collect::<Vec<_>>());
+    assert_eq!(r.lines().collect::<Vec<_>>(), s.lines().collect::<Vec<_>>());
     let r = Rope::from("line a\n") +
             Rope::from("line b\n") +
             Rope::from("line c\n") +
             Rope::from("line d\n");
-    assert_eq!(s.lines().collect::<Vec<_>>(), r.lines().collect::<Vec<_>>());
+    assert_eq!(r.lines().collect::<Vec<_>>(), s.lines().collect::<Vec<_>>());
 }
 
 #[test]
@@ -523,7 +523,7 @@ fn rope_lines_iter_split_on_node() {
                                 )
               )
     };
-    assert_eq!(s.lines().collect::<Vec<_>>(), r.lines().collect::<Vec<_>>());
+    assert_eq!(r.lines().collect::<Vec<_>>(), s.lines().collect::<Vec<_>>());
 }
 
 
