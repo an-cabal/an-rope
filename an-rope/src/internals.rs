@@ -376,15 +376,14 @@ impl Node {
                 // if this function has walked as far as a leaf node,
                 // then that leaf must be the spanning node. return it.
                 (self, i)
-          , Branch(BranchNode { ref right, weight, .. }) if weight < i => {
-                // assert!(or_zero!(right.len(), i) >= span_len);
+          , Branch(BranchNode { ref right, ref left, weight, .. })
+            if weight < i => {
                 // if this node is a branch, and the weight is less than the
                 // index, where the span begins, then the first index of the
                 // span is on the right side
-
-                right.spanning(or_zero!(i, weight)
-                    // avoid integer overflow
-                  , span_len)
+                let span_i = or_zero!(i, left.len());
+                assert!(or_zero!(right.len(), span_i) >= span_len);
+                right.spanning(span_i, span_len)
             }
           , Branch(BranchNode { ref left, .. })
             // if the left child is long enough to contain the entire span,
@@ -393,7 +392,6 @@ impl Node {
           , // otherwise, if the span is longer than the left child, then this
             // node must be the minimum spanning node
             Branch(_) => (self, i)
-
         }
     }
 
@@ -405,15 +403,14 @@ impl Node {
                 // if this function has walked as far as a leaf node,
                 // then that leaf must be the spanning node. return it.
                 (self, i)
-          , Branch(BranchNode { ref mut right, weight, .. }) if weight < i => {
-                assert!(or_zero!(right.len(), i) >= span_len);
+          , Branch(BranchNode { ref mut right, ref left, weight, .. })
+            if weight < i => {
                 // if this node is a branch, and the weight is less than the
                 // index, where the span begins, then the first index of the
                 // span is on the right side
-
-                right.spanning_mut(or_zero!(i, weight)
-                    // avoid integer overflow
-                  , span_len)
+                let span_i = or_zero!(i, left.len());
+                assert!(or_zero!(right.len(), span_i) >= span_len);
+                right.spanning_mut(span_i, span_len)
             }
           , Branch(BranchNode { ref mut left, .. })
             // if the left child is long enough to contain the entire span,
@@ -623,17 +620,24 @@ impl Node {
         IntoLeaves(vec![self])
     }
 
+    unstable_iters! {
+        #[doc=
+            "Returns an iterator over all the strings in this `Node`s subrope."]
+        #[inline]
+        pub fn strings<'a>(&'a self) -> impl Iterator<Item=&'a str> + 'a {
+            self.leaves().map(|n| match n {
+                &Leaf(ref s) => s.as_ref()
+              , _ => unreachable!("Node.leaves() iterator contained something \
+                                   that wasn't a leaf. Barring _force majeure_, \
+                                   this should be impossible. Something's broken.")
+            })
+        }
 
-    /// Returns an iterator over all the strings in this `Node`s subrope'
-    #[cfg(feature = "unstable")]
-    #[inline]
-    pub fn strings<'a>(&'a self) -> impl Iterator<Item=&'a str> {
-        self.leaves().map(|n| match n {
-            &Leaf(ref s) => s.as_ref()
-          , _ => unreachable!("Node.leaves() iterator contained something \
-                               that wasn't a leaf. Barring _force majeure_, \
-                               this should be impossible. Something's broken.")
-        })
+        #[inline]
+        pub fn char_indices<'a>(&'a self)
+                               -> impl Iterator<Item=(usize, char)> + 'a {
+             self.chars().enumerate()
+        }
     }
 
     /// Returns a move iterator over all the strings in this `Node`s subrope'
@@ -667,26 +671,6 @@ impl Node {
                                  majeure_, this should be impossible. \
                                  Something's broken.")
         })
-    }
-
-    /// Returns an iterator over all the strings in this `Node`s subrope'
-    #[cfg(not(feature = "unstable"))]
-    #[inline]
-    pub fn strings<'a>(&'a self) -> Box<Iterator<Item=&'a str> + 'a> {
-        Box::new(self.leaves().map(|n| match n {
-            &Leaf(ref s) => s.as_ref()
-          , _ => unreachable!("Node.leaves() iterator contained something \
-                               that wasn't a leaf. Barring _force majeure_, \
-                               this should be impossible. Something's broken.")
-        }))
-    }
-
-
-    /// Returns an iterator over all the strings in this `Node`s subrope'
-    #[cfg(not(feature = "unstable"))]
-    #[inline]
-    pub fn lines<'a>(&'a self) -> Box<Iterator<Item = RopeSlice<'a>> + 'a> {
-        unimplemented!() // nodes need to be sliceable
     }
 
     /// Returns a move iterator over all the strings in this `Node`s subrope'
@@ -801,19 +785,6 @@ impl Node {
             just the original string."]
         #[inline]
         impl split_word_bounds for Node {}
-    }
-    #[cfg(feature = "unstable")]
-    #[inline]
-    pub fn char_indices<'a>(&'a self)
-                           -> impl Iterator<Item=(usize, char)> + 'a {
-         self.chars().enumerate()
-    }
-
-    #[cfg(not(feature = "unstable"))]
-    #[inline]
-    pub fn char_indices<'a>(&'a self)
-                            -> Box<Iterator<Item=(usize, char)> + 'a> {
-         Box::new(self.chars().enumerate())
     }
 
     pub fn grapheme_indices<'a>(&'a self)  -> GraphemeIndices<'a> {

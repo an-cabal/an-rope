@@ -190,60 +190,23 @@ impl<'a> RopeSliceMut<'a>  {
          .skip_while(|&s| s == ""))
     }
 
-    #[cfg(feature = "unstable")]
-    pub fn chars(&'a self) -> impl Iterator<Item=char> +'a  {
-        self.slice_char_iter(self.node.chars())
-    }
-
-    #[cfg(feature = "unstable")]
-    pub fn bytes(&'a self) -> impl Iterator<Item=u8> + 'a  {
-        self.slice_char_iter(self.node.bytes())
-    }
-
-    #[cfg(feature = "unstable")]
-    #[inline]
-    pub fn split_whitespace(&'a self) -> impl Iterator<Item=&'a str> {
-        self.slice_strings_iter(self.node.split_whitespace())
-    }
-
-    #[cfg(feature = "unstable")]
-    #[inline]
-    pub fn lines(&'a self) -> impl Iterator<Item=&'a str> {
-        self.slice_strings_iter(self.node.lines())
-    }
-
-    #[cfg(feature = "unstable")]
-    #[inline]
-    pub fn char_indices(&'a self) -> impl Iterator<Item=(usize, char)> + 'a {
-        self.chars().enumerate()
-    }
-
-    #[cfg(not(feature = "unstable"))]
-    pub fn chars(&'a self) -> Box<Iterator<Item=char> + 'a>  {
-        Box::new(self.slice_char_iter(self.node.chars()))
-    }
-
-    #[cfg(not(feature = "unstable"))]
-    pub fn bytes(&'a self) -> Box<Iterator<Item=u8> + 'a> {
-        Box::new(self.slice_char_iter(self.node.bytes()))
-    }
-
-    #[cfg(not(feature = "unstable"))]
-    #[inline]
-    pub fn split_whitespace(&'a self) -> Box<Iterator<Item=&'a str> + 'a> {
-        Box::new(self.slice_strings_iter(self.node.split_whitespace()))
-    }
-
-    // #[cfg(not(feature = "unstable"))]
-    // #[inline]
-    // pub fn lines(&'a self) -> Box<Iterator<Item=&'a str> + 'a>  {
-    //     Box::new(self.slice_strings_iter(self.node.lines()))
-    // }
-
-    #[cfg(not(feature = "unstable"))]
-    #[inline]
-    pub fn char_indices(&'a self) -> Box<Iterator<Item=(usize, char)> + 'a>  {
-        Box::new(self.chars().enumerate())
+    unstable_iters! {
+        #[inline]
+        pub fn chars(&'a self) -> impl Iterator<Item=char> + 'a  {
+            self.slice_char_iter(self.node.chars())
+        }
+        #[inline]
+        pub fn char_indices(&'a self) -> impl Iterator<Item=(usize, char)> + 'a {
+            self.chars().enumerate()
+        }
+        #[inline]
+        pub fn bytes(&'a self) -> impl Iterator<Item=u8> + 'a  {
+            self.slice_char_iter(self.node.bytes())
+        }
+        #[inline]
+        pub fn split_whitespace(&'a self) -> impl Iterator<Item=&'a str> + 'a  {
+            self.slice_strings_iter(self.node.split_whitespace())
+        }
     }
 
     /// Returns true if the bytes in `self` equal the bytes in `other`
@@ -408,6 +371,26 @@ impl<'a> RopeSliceMut<'a>  {
 }
 
 impl<'a> RopeSlice<'a> {
+    unstable_iters! {
+        #[inline]
+        pub fn chars(&'a self) -> impl Iterator<Item=char> + 'a  {
+            self.slice_char_iter(self.node.chars())
+        }
+        #[inline]
+        pub fn char_indices(&'a self) -> impl Iterator<Item=(usize, char)> + 'a {
+            self.chars().enumerate()
+        }
+        #[inline]
+        pub fn bytes(&'a self) -> impl Iterator<Item=u8> + 'a  {
+            self.slice_char_iter(self.node.bytes())
+        }
+        #[inline]
+        pub fn split_whitespace(&'a self) -> impl Iterator<Item=&'a str> + 'a  {
+            self.slice_strings_iter(self.node.split_whitespace())
+        }
+    }
+
+
     #[cfg(feature = "unstable")]
     pub fn new<R>(node: &'a Node, range: R) -> Self
     where R: RangeArgument<usize> {
@@ -534,62 +517,6 @@ impl<'a> RopeSlice<'a> {
             }
         })
          .skip_while(|&s| s == ""))
-    }
-
-    #[cfg(feature = "unstable")]
-    pub fn chars(&'a self) -> impl Iterator<Item=char> +'a  {
-        self.slice_char_iter(self.node.chars())
-    }
-
-    #[cfg(feature = "unstable")]
-    pub fn bytes(&'a self) -> impl Iterator<Item=u8> + 'a  {
-        self.slice_char_iter(self.node.bytes())
-    }
-
-    #[cfg(feature = "unstable")]
-    #[inline]
-    pub fn split_whitespace(&'a self) -> impl Iterator<Item=&'a str> {
-        self.slice_strings_iter(self.node.split_whitespace())
-    }
-
-    #[cfg(feature = "unstable")]
-    #[inline]
-    pub fn lines(&'a self) -> impl Iterator<Item=&'a str> {
-        self.slice_strings_iter(self.node.lines())
-    }
-
-    #[cfg(feature = "unstable")]
-    #[inline]
-    pub fn char_indices(&'a self) -> impl Iterator<Item=(usize, char)> + 'a {
-        self.chars().enumerate()
-    }
-
-    #[cfg(not(feature = "unstable"))]
-    pub fn chars(&'a self) -> Box<Iterator<Item=char> + 'a>  {
-        Box::new(self.slice_char_iter(self.node.chars()))
-    }
-
-    #[cfg(not(feature = "unstable"))]
-    pub fn bytes(&'a self) -> Box<Iterator<Item=u8> + 'a> {
-        Box::new(self.slice_char_iter(self.node.bytes()))
-    }
-
-    #[cfg(not(feature = "unstable"))]
-    #[inline]
-    pub fn split_whitespace(&'a self) -> Box<Iterator<Item=&'a str> + 'a>  {
-        Box::new(self.slice_strings_iter(self.node.split_whitespace()))
-    }
-
-    // #[cfg(not(feature = "unstable"))]
-    // #[inline]
-    // pub fn lines(&'a self) -> Box<Iterator<Item=&'a str> + 'a>  {
-    //     Box::new(self.slice_strings_iter(self.node.lines()))
-    // }
-
-    #[cfg(not(feature = "unstable"))]
-    #[inline]
-    pub fn char_indices(&'a self) -> Box<Iterator<Item=(usize, char)> + 'a> {
-        Box::new(self.chars().enumerate())
     }
 
     /// Returns true if the bytes in `self` equal the bytes in `other`

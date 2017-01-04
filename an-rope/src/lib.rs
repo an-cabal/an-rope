@@ -43,7 +43,6 @@ use std::iter;
 #[cfg(all( test, feature = "unstable"))] mod bench;
 
 mod unicode;
-mod slice;
 mod metric;
 
 use self::internals::Node;
@@ -73,31 +72,69 @@ impl fmt::Debug for Rope {
         write!(f, "Rope[\"{}\"] {:?}", self.root, self.root)
     }
 }
+ #[cfg(feature = "unstable")]
+macro_rules! unstable_iters {
+    ( $($(#[$attr:meta])*
+     pub fn $name:ident$(<$lf:tt>)*(&'a $sel:ident) -> $ty:ty {
+         $body:expr
+     })+ ) => { $(
+         $(#[$attr])*
+         pub fn $name$(<$lf>)*(&'a $sel) -> $ty {
+             $body
+         }
+    )+ };
+    ( $($(#[$attr:meta])*
+    pub fn $name:ident$(<$lf:tt>)*(&'a mut $sel:ident) -> $ty:ty {
+         $body:expr
+     })+ ) => { $(
+         $(#[$attr])*
+         #[cfg(feature = "unstable")]
+         pub fn $name$(<$lf>)*(&'a mut $sel) -> $ty {
+             $body
+         }
+    )+ };
+}
 
+#[cfg(not(feature = "unstable"))]
+macro_rules! unstable_iters {
+    ( $($(#[$attr:meta])*
+    pub fn $name:ident$(<$lf:tt>)*(&'a $sel:ident) -> impl Iterator<Item=$ty:ty> + 'a {
+         $body:expr
+     })+ ) => ($(
+         $(#[$attr])*
+         #[cfg(not(feature = "unstable"))]
+         pub fn $name$(<$lf>)*(&'a $sel) -> Box<Iterator<Item=$ty> + 'a> {
+             Box::new($body)
+         }
+     )+);
+    ( $( $(#[$attr:meta])*
+    pub fn $name:ident$(<$lf:tt>)*(&'a mut $sel:ident) - impl Iterator<Item=$ty:ty> + 'a {
+         $body:expr
+     })+ ) => { $({
+         $(#[$attr])*
+         #[cfg(not(feature = "unstable"))]
+         pub fn $name$(<$lf>)*(&'a mut $sel) -> Box<Iterator<Item=$ty> + 'a> {
+             Box::new($body)
+         }
+     })+
+    };
+}
 macro_rules! str_iters {
     ( $($(#[$attr:meta])* impl $name: ident<$ty: ty> for Node {})+ ) => { $(
-        $(#[$attr])*
-        #[cfg(feature = "unstable")]
-        pub fn $name<'a>(&'a self) -> impl Iterator<Item=$ty> + 'a {
-            self.strings().flat_map(str::$name)
-        }
-        $(#[$attr])*
-        #[cfg(not(feature = "unstable"))]
-        pub fn $name<'a>(&'a self) -> Box<Iterator<Item=$ty> + 'a> {
-            Box::new(self.strings().flat_map(str::$name))
+        unstable_iters! {
+            $(#[$attr])*
+            pub fn $name<'a>(&'a self) -> impl Iterator<Item=$ty> + 'a{
+                self.strings().flat_map(str::$name)
+            }
         }
     )+ };
 
     ( $($(#[$attr:meta])* impl $name: ident<$ty: ty> for Rope {})+ )=> { $(
-        $(#[$attr])*
-        #[cfg(feature = "unstable")]
-        pub fn $name<'a>(&'a self) -> impl Iterator<Item=$ty> + 'a {
-            self.root.$name()
-        }
-        $(#[$attr])*
-        #[cfg(not(feature = "unstable"))]
-        pub fn $name<'a>(&'a self) -> Box<Iterator<Item=$ty> + 'a>{
-            self.root.$name()
+        unstable_iters! {
+            $(#[$attr])*
+            pub fn $name<'a>(&'a self) -> impl Iterator<Item=$ty>  + 'a{
+                self.root.$name()
+            }
         }
     )+ }
 
@@ -106,52 +143,44 @@ macro_rules! str_iters {
 
 macro_rules! unicode_seg_iters {
     ( $($(#[$attr:meta])* impl $name: ident for Node { extend })+ ) => { $(
-        $(#[$attr])*
-        #[cfg(feature = "unstable")]
-        pub fn $name<'a>(&'a self) -> impl Iterator<Item=&'a str> + 'a {
-            use unicode_segmentation::UnicodeSegmentation;
-            self.strings().flat_map(|s| UnicodeSegmentation::$name(s, true))
-        }
-        $(#[$attr])*
-        #[cfg(not(feature = "unstable"))]
-        pub fn $name<'a>(&'a self) -> Box<Iterator<Item=&'a str> + 'a> {
-            use unicode_segmentation::UnicodeSegmentation;
-            Box::new(self.strings()
-                         .flat_map(|s| UnicodeSegmentation::$name(s, true)))
+
+        unstable_iters! {
+            $(#[$attr])*
+            pub fn $name<'a>(&'a self) -> impl Iterator<Item=&'a str> + 'a {
+                { // this block is required so that the macro will bind the
+                  // `use` statement
+                    use unicode_segmentation::UnicodeSegmentation;
+                    self.strings()
+                        .flat_map(|s| UnicodeSegmentation::$name(s, true))
+                }
+            }
         }
     )+ };
     ( $($(#[$attr:meta])* impl $name: ident for Node {} )+ ) => { $(
-        $(#[$attr])*
-        #[cfg(feature = "unstable")]
-        pub fn $name<'a>(&'a self) -> impl Iterator<Item=&'a str> + 'a {
-            use unicode_segmentation::UnicodeSegmentation;
-            self.strings().flat_map(UnicodeSegmentation::$name)
-        }
-        $(#[$attr])*
-        #[cfg(not(feature = "unstable"))]
-        pub fn $name<'a>(&'a self) -> Box<Iterator<Item=&'a str> + 'a> {
-            use unicode_segmentation::UnicodeSegmentation;
-            Box::new(self.strings().flat_map(UnicodeSegmentation::$name))
+        unstable_iters!{
+            $(#[$attr])*
+            pub fn $name<'a>(&'a self) -> impl Iterator<Item=&'a str> + 'a {
+                { // this block is required so that the macro will bind the
+                  // `use` statement
+                    use unicode_segmentation::UnicodeSegmentation;
+                    self.strings().flat_map(UnicodeSegmentation::$name)
+                }
+            }
         }
     )+ };
-
     ( $($(#[$attr:meta])* impl $name: ident<$ty: ty> for Rope {})+ )=> { $(
-        $(#[$attr])*
-        #[cfg(feature = "unstable")]
-        pub fn $name<'a>(&'a self) -> impl Iterator<Item=$ty> + 'a {
-            self.root.$name()
-        }
-        $(#[$attr])*
-        #[cfg(not(feature = "unstable"))]
-        pub fn $name<'a>(&'a self) -> Box<Iterator<Item=$ty> + 'a>{
-            self.root.$name()
+        unstable_iters! {
+            $(#[$attr])*
+            pub fn $name<'a>(&'a self) -> impl Iterator<Item=$ty> + 'a {
+                self.root.$name()
+            }
         }
     )+ }
 
 }
 
-
 mod internals;
+mod slice;
 
 impl Rope {
 
@@ -790,24 +819,34 @@ impl Rope {
         self.root.is_balanced()
     }
 
-    /// Returns an iterator over all the strings in this `Rope`
-    #[cfg(feature = "unstable")]
-    #[inline]
-    pub fn strings<'a>(&'a self) -> impl Iterator<Item=&'a str> {
-        // TODO: since all the iterator methods on `Rope` just call the
-        //       methods on `Node`, do we wanna just make `Node` pub
-        //       and add a deref conversion from a `Rope` handle to its'
-        //       root `Node`?
-        //          - eliza, 12/18/2016
-        self.root.strings()
+    unstable_iters! {
+        #[doc="Returns an iterator over all the strings in this `Rope`"]
+        #[inline]
+        pub fn strings<'a>(&'a self) -> impl Iterator<Item=&'a str> + 'a {
+            self.root.strings()
+        }
+
+        #[doc="Returns an iterator over all the lines of text in this `Rope`."]
+        pub fn lines<'a>(&'a self) -> impl Iterator<Item=RopeSlice<'a>> +'a  {
+            {   // create a new block here so the macro will bind the `use` stmt
+                use internals::IsLineEnding;
+                let last_idx = self.len() - 1;
+                Box::new(self.char_indices()
+                             .filter_map(move |(i, c)|
+                                if c.is_line_ending() { Some(i) }
+                                // special case: slice to the end of the rope
+                                // even if it doesn't end in a newline character
+                                else if i == last_idx { Some(i + 1) }
+                                else { None })
+                              .scan(0, move |mut l, i|  {
+                                    let last = *l;
+                                    *l = i + 1;
+                                    Some(self.slice(last..i))
+                                }))
+            }
+        }
     }
 
-    /// Returns an iterator over all the strings in this `Rope`
-    #[cfg(not(feature = "unstable"))]
-    #[inline]
-    pub fn strings<'a>(&'a self) -> Box<Iterator<Item=&'a str> + 'a> {
-        self.root.strings()
-    }
 
     /// Returns a move iterator over all the strings in this `Rope`
     ///
@@ -1024,43 +1063,6 @@ impl Rope {
                         -> RopeSliceMut<'a> {
         RopeSliceMut::new(&mut self.root, range)
     }
-
-    /// Returns an iterator over all the strings in this `Node`s subrope'
-    #[cfg(feature = "unstable")]
-    #[inline]
-    pub fn lines<'a>(&'a self) -> impl Iterator<Item=RopeSlice<'a>> {
-        self.char_indices()
-            .filter_map(|(i, c)| if c.is_line_ending() { Some(i) }
-                                 else { None })
-            .scan(0, move |mut l, i|  {
-                  let last = *l;
-                  *l = i;
-                  Some(self.slice(last..i))
-              })
-            .skip(1)
-    }
-
-    /// Returns an iterator over all the strings in this `Node`s subrope'
-    #[cfg(not(feature = "unstable"))]
-    #[inline]
-    pub fn lines<'a>(&'a self) -> Box<Iterator<Item=RopeSlice<'a>> +'a > {
-        use internals::IsLineEnding;
-        let last_idx = self.len() - 1;
-        Box::new(self.char_indices()
-                     .filter_map(move |(i, c)|
-                        if c.is_line_ending() { Some(i) }
-                        // special case: slice to the end of the rope even if
-                        // it doesn't end in a newline character
-                        else if i == last_idx { Some(i + 1) }
-                        else { None })
-                      .scan(0, move |mut l, i|  {
-                            let last = *l;
-                            *l = i + 1;
-                            Some(self.slice(last..i))
-                        }))
-    }
-
-
 
 }
 
