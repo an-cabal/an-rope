@@ -26,7 +26,6 @@ use super::internals::Node;
 ///
 /// A RopeSlice represents an immutable borrowed slice of some or all the
 /// characters in a `Rope`.
-#[derive(Debug)]
 pub struct RopeSlice<'a> { node: &'a Node
                          , offset: usize
                          , len: usize
@@ -36,6 +35,14 @@ impl<'a> fmt::Display for RopeSlice<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // TODO: don't create an intermediate string?
         write!(f, "{}", self.chars().collect::<String>())
+    }
+}
+
+impl<'a> fmt::Debug for RopeSlice<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // TODO: don't create an intermediate string?
+        write!( f, "RopeSlice {{ offset: {}, len {} }} [{:?}]"
+              , self.offset, self.len, self.chars().collect::<String>())
     }
 }
 
