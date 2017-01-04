@@ -182,6 +182,8 @@ macro_rules! unicode_seg_iters {
 mod internals;
 mod slice;
 
+use self::metric::{Measured, Grapheme};
+
 impl Rope {
 
     /// Converts a vector of bytes to a `Rope`.
@@ -367,6 +369,8 @@ impl Rope {
         self.insert_rope(index, Rope::from(s))
     }
 
+
+
     /// Delete the range `range` from this `Rope`,
     ///
     /// # Panics
@@ -390,17 +394,20 @@ impl Rope {
     #[cfg(feature = "unstable")]
     pub fn delete<R>(&mut self, range: R)
     where R: RangeArgument<usize> {
-        use self::metric::Grapheme;
-        let start: usize = *range.start().unwrap_or(&0);
-        let end: usize = *range.end().unwrap_or(&self.len());
-        let (l, r) = self.take_root().split(Grapheme::from(start));
-        let (_, r) = r.split(Grapheme::from(end));
+        let start = range.start().map(|s| Grapheme::from(*s))
+                         .unwrap_or_else(|| { Grapheme::from(0) });
+        let end = range.end().map(|e| Grapheme::from(*e))
+                        .unwrap_or_else(|| { self.root.grapheme_len() });
+
+        assert!( start <= end
+               , "invalid index! start {:?} > end {:?}", end, start);
+        let (l, r) = self.take_root().split(start);
+        let (_, r) = r.split(end - start);
         self.root = Node::new_branch(l, r);
     }
     #[inline]
     #[cfg(not(feature = "unstable"))]
     pub fn delete(&mut self, range: ops::Range<usize>) {
-        use self::metric::Grapheme;
         let (l, r) = self.take_root().split(Grapheme::from(range.start));
         let (_, r) = r.split(Grapheme::from(range.end - range.start));
         self.root = Node::new_branch(l, r);
