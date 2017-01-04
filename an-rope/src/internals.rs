@@ -109,8 +109,7 @@ impl Measured<Grapheme> for str {
             Some(self.len())
         } else {
             self.grapheme_indices(true)
-                .find(|&(offset, _)| offset == i)
-                .map(|(offset, _)| offset)
+                .position(|(offset, _)| offset == i)
         }
     }
 
@@ -134,8 +133,8 @@ impl Measured<Grapheme> for String {
             Some(self.len())
         } else {
             self.grapheme_indices(true)
-                .find(|&(offset, _)| offset == i)
-                .map(|(offset, _)| offset)
+                .position(|(offset, _)| offset == i)
+                // .map(|(offset, _)| offset)
         }
     }
 
@@ -282,6 +281,10 @@ fn fibonacci(n: usize) -> usize {
     else { fibonacci(n - 1) + fibonacci(n - 2) }
 }
 
+macro_rules! or_zero {
+    ($a: expr, $b: expr) => { if $a > $b { $a - $b } else { 0 } }
+}
+
 impl BranchNode {
 
     #[inline]
@@ -299,6 +302,7 @@ impl BranchNode {
                    , right: Box::new(right)
                    }
     }
+
 
     /// Split this branch node on the specified `index`.
     ///
@@ -365,10 +369,16 @@ impl BranchNode {
 
 }
 
-macro_rules! or_zero {
-    ($a: expr, $b: expr) => { if $a > $b { $a - $b } else { 0 } }
-}
 impl Node {
+
+    #[inline] pub fn grapheme_len(&self) -> Grapheme {
+        // todo: refactor
+        use unicode::Unicode;
+        match *self {
+            Branch(BranchNode { grapheme_len, ..}) => grapheme_len
+          , Leaf(ref s) => Grapheme::from(s.grapheme_len())
+        }
+    }
 
     pub fn spanning(&self, i: usize, span_len: usize) -> (&Node, usize) {
         assert!(self.len() >= span_len);
