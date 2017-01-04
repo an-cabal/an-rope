@@ -47,9 +47,26 @@ script: |
 after_success:
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then travis-cargo --only stable doc-upload;
   fi
-- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then  travis-cargo coverage --no-sudo --verify;
-  fi
-- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then bash <(curl -s https://codecov.io/bash);
+# - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then travis-cargo coverage --no-sudo --verify;
+#   fi
+# - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then bash <(curl -s https://codecov.io/bash);
+#   fi
+- |
+  if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+    wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz &&
+    tar xzf master.tar.gz &&
+    cd kcov-master &&
+    mkdir build &&
+    cd build &&
+    cmake .. &&
+    make &&
+    sudo make install &&
+    cd ../.. &&
+    rm -rf kcov-master &&
+    for file in target/debug/an-editor-*; do mkdir -p "target/cov/$(basename $file)"; kcov --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file"; done &&
+    for file in an-rope/target/debug/an-rope-*; do mkdir -p "an-rope/target/cov/$(basename $file)"; kcov --exclude-pattern=/.cargo,/usr/lib --verify "an-rope/target/cov/$(basename $file)" "$file"; done &&
+    bash <(curl -s https://codecov.io/bash) &&
+    echo "Uploaded code coverage";
   fi
 notifications:
   slack:
