@@ -530,6 +530,43 @@ fn rope_lines_iter_split_on_node() {
     assert_eq!(r.lines().collect::<Vec<_>>(), s.lines().collect::<Vec<_>>());
 }
 
+#[test]
+fn rope_split_whitespace_iter() {
+    let s = "word a word b word c\nword d";
+    let r = Rope::from(s);
+    assert_eq!( r.split_whitespace().collect::<Vec<_>>()
+              , s.split_whitespace().collect::<Vec<_>>());
+    let r = Rope::from("word a" ) +
+            Rope::from("word b ") +
+            Rope::from("word c\n") +
+            Rope::from("word d");
+    assert_eq!( r.split_whitespace().collect::<Vec<_>>()
+              , s.split_whitespace().collect::<Vec<_>>());
+}
+
+#[test]
+fn rope_split_whitespace_iter_split_on_node() {
+    use super::internals::Node;
+    use super::internals::Node::Leaf;
+    let s = "word a word b\nword c";
+    let r = Rope {
+        root: Node::new_branch(
+                Node::new_branch( Leaf("word".to_string())
+                                , Leaf(" a\n".to_string())
+                                )
+              , Node::new_branch( Leaf("word b ".to_string())
+                                , Node::new_branch( Leaf("wo".to_string())
+                                                  , Leaf("rd c\n".to_string())
+                                                  )
+                                )
+              )
+    };
+    assert_eq!( r.split_whitespace().collect::<Vec<_>>()
+              , s.split_whitespace().collect::<Vec<_>>());
+}
+
+
+
 
 #[test]
 fn rope_char_indices() {
