@@ -52,6 +52,13 @@ It is recommended that contributors read the linked documentation for the Angula
 
 + Include lines exceeding 100 characters
 
+#### Commit messages MAY
+
++ Include the text `[skip ci]` if changing non-Rustdoc documentation.
+    + This will cause Travis CI to skip building that commit.
+    + Commits which change RustDoc documentation in `.rs` source code files should still be built on CI -- `[skip ci]` should only be used for commits which change external documentation files such as `README.md`
+    + Commits which change configuration files for tools not used by Travis may also skip the CI build, at the disgression of the committer.
+
 
 Code Style
 ==========
