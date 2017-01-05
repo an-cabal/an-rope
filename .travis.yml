@@ -34,7 +34,7 @@ script: |
     travis-cargo test &&
     cd an-rope &&
       travis-cargo test &&
-    cd ..
+    cd .. &&
     travis-cargo --only stable doc
   else
     cargo build &&

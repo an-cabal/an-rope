@@ -26,7 +26,6 @@ use super::internals::Node;
 ///
 /// A RopeSlice represents an immutable borrowed slice of some or all the
 /// characters in a `Rope`.
-#[derive(Debug)]
 pub struct RopeSlice<'a> { node: &'a Node
                          , offset: usize
                          , len: usize
@@ -36,6 +35,14 @@ impl<'a> fmt::Display for RopeSlice<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // TODO: don't create an intermediate string?
         write!(f, "{}", self.chars().collect::<String>())
+    }
+}
+
+impl<'a> fmt::Debug for RopeSlice<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // TODO: don't create an intermediate string?
+        write!( f, "RopeSlice {{ offset: {}, len {} }} [{:?}]"
+              , self.offset, self.len, self.chars().collect::<String>())
     }
 }
 
@@ -183,60 +190,23 @@ impl<'a> RopeSliceMut<'a>  {
          .skip_while(|&s| s == ""))
     }
 
-    #[cfg(feature = "unstable")]
-    pub fn chars(&'a self) -> impl Iterator<Item=char> +'a  {
-        self.slice_char_iter(self.node.chars())
-    }
-
-    #[cfg(feature = "unstable")]
-    pub fn bytes(&'a self) -> impl Iterator<Item=u8> + 'a  {
-        self.slice_char_iter(self.node.bytes())
-    }
-
-    #[cfg(feature = "unstable")]
-    #[inline]
-    pub fn split_whitespace(&'a self) -> impl Iterator<Item=&'a str> {
-        self.slice_strings_iter(self.node.split_whitespace())
-    }
-
-    #[cfg(feature = "unstable")]
-    #[inline]
-    pub fn lines(&'a self) -> impl Iterator<Item=&'a str> {
-        self.slice_strings_iter(self.node.lines())
-    }
-
-    #[cfg(feature = "unstable")]
-    #[inline]
-    pub fn char_indices(&'a self) -> impl Iterator<Item=(usize, char)> + 'a {
-        self.chars().enumerate()
-    }
-
-    #[cfg(not(feature = "unstable"))]
-    pub fn chars(&'a self) -> Box<Iterator<Item=char> + 'a>  {
-        Box::new(self.slice_char_iter(self.node.chars()))
-    }
-
-    #[cfg(not(feature = "unstable"))]
-    pub fn bytes(&'a self) -> Box<Iterator<Item=u8> + 'a> {
-        Box::new(self.slice_char_iter(self.node.bytes()))
-    }
-
-    #[cfg(not(feature = "unstable"))]
-    #[inline]
-    pub fn split_whitespace(&'a self) -> Box<Iterator<Item=&'a str> + 'a> {
-        Box::new(self.slice_strings_iter(self.node.split_whitespace()))
-    }
-
-    #[cfg(not(feature = "unstable"))]
-    #[inline]
-    pub fn lines(&'a self) -> Box<Iterator<Item=&'a str> + 'a>  {
-        Box::new(self.slice_strings_iter(self.node.lines()))
-    }
-
-    #[cfg(not(feature = "unstable"))]
-    #[inline]
-    pub fn char_indices(&'a self) -> Box<Iterator<Item=(usize, char)> + 'a>  {
-        Box::new(self.chars().enumerate())
+    unstable_iters! {
+        #[inline]
+        pub fn chars(&'a self) -> impl Iterator<Item=char> + 'a  {
+            self.slice_char_iter(self.node.chars())
+        }
+        #[inline]
+        pub fn char_indices(&'a self) -> impl Iterator<Item=(usize, char)> + 'a {
+            self.chars().enumerate()
+        }
+        #[inline]
+        pub fn bytes(&'a self) -> impl Iterator<Item=u8> + 'a  {
+            self.slice_char_iter(self.node.bytes())
+        }
+        #[inline]
+        pub fn split_whitespace(&'a self) -> impl Iterator<Item=&'a str> + 'a  {
+            self.slice_strings_iter(self.node.split_whitespace())
+        }
     }
 
     /// Returns true if the bytes in `self` equal the bytes in `other`
@@ -296,12 +266,14 @@ impl<'a> RopeSliceMut<'a>  {
     /// # }
     /// ```
     pub fn insert_rope(&mut self, index: usize, rope: Rope) {
+        use metric::Grapheme;
         assert!( index <= self.len()
                , "RopeSliceMut::insert_rope: index {} was > length {}"
                , index, self.len());
         if rope.len() > 0 {
             // split the rope at the given index
-            let (left, right) = self.take_node().split(self.offset + index);
+            let (left, right) = self.take_node()
+                                    .split(Grapheme::from(self.offset + index));
 
             // construct the new root node with `Rope` inserted
             *self.node = (left + rope.root + right).rebalance();
@@ -399,6 +371,26 @@ impl<'a> RopeSliceMut<'a>  {
 }
 
 impl<'a> RopeSlice<'a> {
+    unstable_iters! {
+        #[inline]
+        pub fn chars(&'a self) -> impl Iterator<Item=char> + 'a  {
+            self.slice_char_iter(self.node.chars())
+        }
+        #[inline]
+        pub fn char_indices(&'a self) -> impl Iterator<Item=(usize, char)> + 'a {
+            self.chars().enumerate()
+        }
+        #[inline]
+        pub fn bytes(&'a self) -> impl Iterator<Item=u8> + 'a  {
+            self.slice_char_iter(self.node.bytes())
+        }
+        #[inline]
+        pub fn split_whitespace(&'a self) -> impl Iterator<Item=&'a str> + 'a  {
+            self.slice_strings_iter(self.node.split_whitespace())
+        }
+    }
+
+
     #[cfg(feature = "unstable")]
     pub fn new<R>(node: &'a Node, range: R) -> Self
     where R: RangeArgument<usize> {
@@ -527,62 +519,6 @@ impl<'a> RopeSlice<'a> {
          .skip_while(|&s| s == ""))
     }
 
-    #[cfg(feature = "unstable")]
-    pub fn chars(&'a self) -> impl Iterator<Item=char> +'a  {
-        self.slice_char_iter(self.node.chars())
-    }
-
-    #[cfg(feature = "unstable")]
-    pub fn bytes(&'a self) -> impl Iterator<Item=u8> + 'a  {
-        self.slice_char_iter(self.node.bytes())
-    }
-
-    #[cfg(feature = "unstable")]
-    #[inline]
-    pub fn split_whitespace(&'a self) -> impl Iterator<Item=&'a str> {
-        self.slice_strings_iter(self.node.split_whitespace())
-    }
-
-    #[cfg(feature = "unstable")]
-    #[inline]
-    pub fn lines(&'a self) -> impl Iterator<Item=&'a str> {
-        self.slice_strings_iter(self.node.lines())
-    }
-
-    #[cfg(feature = "unstable")]
-    #[inline]
-    pub fn char_indices(&'a self) -> impl Iterator<Item=(usize, char)> + 'a {
-        self.chars().enumerate()
-    }
-
-    #[cfg(not(feature = "unstable"))]
-    pub fn chars(&'a self) -> Box<Iterator<Item=char> + 'a>  {
-        Box::new(self.slice_char_iter(self.node.chars()))
-    }
-
-    #[cfg(not(feature = "unstable"))]
-    pub fn bytes(&'a self) -> Box<Iterator<Item=u8> + 'a> {
-        Box::new(self.slice_char_iter(self.node.bytes()))
-    }
-
-    #[cfg(not(feature = "unstable"))]
-    #[inline]
-    pub fn split_whitespace(&'a self) -> Box<Iterator<Item=&'a str> + 'a>  {
-        Box::new(self.slice_strings_iter(self.node.split_whitespace()))
-    }
-
-    #[cfg(not(feature = "unstable"))]
-    #[inline]
-    pub fn lines(&'a self) -> Box<Iterator<Item=&'a str> + 'a>  {
-        Box::new(self.slice_strings_iter(self.node.lines()))
-    }
-
-    #[cfg(not(feature = "unstable"))]
-    #[inline]
-    pub fn char_indices(&'a self) -> Box<Iterator<Item=(usize, char)> + 'a> {
-        Box::new(self.chars().enumerate())
-    }
-
     /// Returns true if the bytes in `self` equal the bytes in `other`
     #[inline]
     fn bytes_eq<I>(&self, other: I) -> bool
@@ -621,6 +557,18 @@ impl<'a> cmp::PartialEq<str> for RopeSlice<'a> {
     }
 }
 
+
+impl<'a> cmp::PartialEq<&'a str> for RopeSlice<'a>  {
+    /// A rope equals another rope if all the bytes in both are equal.
+    #[inline]
+    fn eq(&self, other: &&'a str) -> bool {
+        if self.len() == other.len() {
+            self.bytes_eq((*other).bytes())
+        } else {
+            false
+        }
+    }
+}
 
 impl<'a> cmp::Eq for RopeSliceMut<'a> {}
 impl<'a> cmp::PartialEq for RopeSliceMut<'a> {

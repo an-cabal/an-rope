@@ -1,5 +1,14 @@
+use unicode_segmentation::UnicodeSegmentation;
+use unicode_segmentation::{ GraphemeIndices as StrGraphemeIndices
+                          , UWordBoundIndices as StrUWordBoundIndices
+                          };
+use metric::{Grapheme, Line, Metric, Measured};
+use unicode::GraphemeIndex;
+
+use ::RopeSlice;
 use std::ops;
 use std::fmt;
+use std::convert;
 #[cfg(feature = "tendril")]
 use tendril;
 
@@ -24,7 +33,6 @@ pub enum Node {
     Branch(BranchNode)
 }
 
-
 impl fmt::Display for Node {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.strings()
@@ -45,8 +53,14 @@ impl fmt::Display for Node {
 pub struct BranchNode {
     /// The length of this node
     len: usize
+  , /// The length of this node in graphemes
+    grapheme_len: Grapheme
   , /// The weight of a node is the summed weight of its left subtree
     weight: usize
+  , /// The number of started lines of this node
+    nlines: Line
+  , /// The number of started lines in the node's left subtree
+    wlines: Line
   , /// The left branch node
     pub left: Box<Node>
   , /// The right branch node
@@ -71,6 +85,188 @@ impl Default for Node {
     fn default() -> Self { Node::empty() }
 }
 
+impl Metric for Grapheme {
+
+    #[inline] fn is_splittable() -> bool { false }
+
+    /// Returns true if index `i` in `node` is a boundary along this `Metric`
+    fn is_boundary<M: Measured<Self>>(node: &M, i: usize) -> bool {
+        unimplemented!()
+    }
+}
+
+impl Measured<Grapheme> for str {
+    /// Convert the `Metric` into a byte index into the given `Node`
+    ///
+    /// # Returns
+    /// - `Some` with the byte index of the beginning of the `n`th  element
+    ///    in `node` measured by this `Metric`, if there is an `n`th element
+    /// - `None` if there is no `n`th element in `node`
+    fn to_byte_index(&self, index: Grapheme) -> Option<usize>  {
+        let i: usize = index.into();
+        // TODO: CACHE THIS YOU ASSHOLE
+        if self.graphemes(true).count() == i {
+            Some(self.len())
+        } else {
+            self.grapheme_indices(true)
+                .position(|(offset, _)| offset == i)
+        }
+    }
+
+
+    #[inline]
+    fn measure(&self) -> Grapheme {
+        Grapheme::from(self.graphemes(true).count())
+    }
+
+    #[inline]
+    fn measure_weight(&self) -> Grapheme {
+        Grapheme::from(self.graphemes(true).count())
+    }
+}
+
+impl Measured<Grapheme> for String {
+    fn to_byte_index(&self, index: Grapheme) -> Option<usize>  {
+        let i: usize = index.into();
+        // TODO: CACHE THIS YOU ASSHOLE
+        if self.graphemes(true).count() == i {
+            Some(self.len())
+        } else {
+            self.grapheme_indices(true)
+                .position(|(offset, _)| offset == i)
+                // .map(|(offset, _)| offset)
+        }
+    }
+
+    #[inline]
+    fn measure(&self) -> Grapheme {
+        Grapheme::from(self.graphemes(true).count())
+    }
+
+    #[inline]
+    fn measure_weight(&self) -> Grapheme {
+        Grapheme::from(self.graphemes(true).count())
+    }
+}
+
+impl Measured<Grapheme> for BranchNode {
+
+    fn to_byte_index(&self, index: Grapheme) -> Option<usize>  {
+        unimplemented!()
+    }
+
+    #[inline] fn measure(&self) -> Grapheme {
+        self.grapheme_len
+    }
+
+    #[inline] fn measure_weight(&self) -> Grapheme { self.left.measure() }
+}
+
+impl Measured<Grapheme> for Node {
+    fn to_byte_index(&self, index: Grapheme) -> Option<usize>  {
+        unimplemented!()
+    }
+
+    #[inline] fn measure(&self) -> Grapheme {
+        match *self { Leaf(ref s) => s.measure(), Branch(ref n) => n.measure() }
+    }
+
+    #[inline] fn measure_weight(&self) -> Grapheme {
+        match *self { Leaf(ref s) => s.measure_weight()
+                    , Branch(ref n) => n.measure_weight() }
+    }
+
+}
+
+
+impl Metric for Line {
+
+    #[inline] fn is_splittable() -> bool { true }
+
+    /// Returns true if index `i` in `node` is a boundary along this `Metric`
+    fn is_boundary<M: Measured<Self>>(node: &M, i: usize) -> bool {
+        unimplemented!()
+    }
+}
+
+impl Measured<Line> for str {
+    // This can only handle line endings at the end of a string.
+    fn to_byte_index(&self, index: Line) -> Option<usize>  {
+        match index.into() {
+            0 => Some(self.len())
+          , _ => None
+        }
+    }
+
+    #[inline]
+    fn measure(&self) -> Line {
+        Line::from(
+            if self.chars().last().unwrap_or('\0').is_line_ending() { 1
+            } else { 0 })
+    }
+
+    #[inline]
+    fn measure_weight(&self) -> Line {
+        Line::from(
+            if self.chars().last().unwrap_or('\0').is_line_ending() { 1
+            } else { 0 })
+    }
+}
+
+impl Measured<Line> for String {
+    // This can only handle line endings at the end of a string.
+    fn to_byte_index(&self, index: Line) -> Option<usize>  {
+        match index.into() {
+            0 => Some(self.len())
+          , _ => None
+        }
+    }
+
+    #[inline]
+    fn measure(&self) -> Line {
+        Line::from(
+            if self.chars().last().unwrap_or('\0').is_line_ending() { 1
+            } else { 0 })
+    }
+
+    #[inline]
+    fn measure_weight(&self) -> Line {
+        Line::from(
+            if self.chars().last().unwrap_or('\0').is_line_ending() { 1
+            } else { 0 })
+    }
+}
+
+impl Measured<Line> for BranchNode {
+    fn to_byte_index(&self, index: Line) -> Option<usize>  {
+        unimplemented!()
+    }
+
+    #[inline] fn measure(&self) -> Line {
+        self.nlines
+    }
+
+    #[inline] fn measure_weight(&self) -> Line {
+        self.wlines
+    }
+}
+
+impl Measured<Line> for Node {
+    fn to_byte_index(&self, index: Line) -> Option<usize>  {
+        unimplemented!()
+    }
+
+    #[inline] fn measure(&self) -> Line {
+        match *self { Leaf(ref s) => s.measure(), Branch(ref n) => n.measure() }
+    }
+
+    #[inline] fn measure_weight(&self) -> Line {
+        match *self { Leaf(ref s) => s.measure_weight()
+                    , Branch(ref n) => n.measure_weight() }
+    }
+
+}
+
 
 #[cfg(feature = "rebalance")]
 const FIB_LOOKUP: [usize; 93] = [
@@ -85,16 +281,28 @@ fn fibonacci(n: usize) -> usize {
     else { fibonacci(n - 1) + fibonacci(n - 2) }
 }
 
+macro_rules! or_zero {
+    ($a: expr, $b: expr) => { if $a > $b { $a - $b } else { 0 } }
+}
+
 impl BranchNode {
 
     #[inline]
     fn new(left: Node, right: Node) -> Self {
+        let grapheme_left : Grapheme = left.measure();
+        let grapheme_right : Grapheme = right.measure();
+        let line_left : Line = left.measure();
+        let line_right : Line = right.measure();
         BranchNode { len: left.len() + right.len()
+                   , grapheme_len: grapheme_left + grapheme_right
                    , weight: left.subtree_weight()
+                   , nlines: line_left + line_right
+                   , wlines: left.measure()
                    , left: Box::new(left)
                    , right: Box::new(right)
                    }
     }
+
 
     /// Split this branch node on the specified `index`.
     ///
@@ -109,8 +317,13 @@ impl BranchNode {
     ///
     /// # Time complexity
     /// O(log _n_)
-    fn split(self, index: usize) -> (Node, Node) {
-        let weight = (&self).weight;
+    fn split<M: Metric>(self, index: M) -> (Node, Node)
+    where Node: Measured<M>
+        , BranchNode: Measured<M>
+        , String: Measured<M>
+        , M: convert::Into<usize>
+        , M: Copy {
+        let weight = (&self).measure_weight();
         // to determine which side of this node we are splitting on, we compare
         // the index to split to this node's weight.
         if index < weight {
@@ -120,7 +333,7 @@ impl BranchNode {
             let (left, left_right) = self.left.split(index);
             // the left side of the split left child will become the left side
             // of the split pair.
-            let right = if (&left_right).len() == 0 {
+            let right = if left_right.len() == 0 {
                 // if the right side of the split is empty, then the right
                 // side of the returned pair is just this node's right child
                 *self.right
@@ -140,7 +353,7 @@ impl BranchNode {
             // the right side of the split right child will become the right
             // side of the split
 
-            let left = if (&right_left).len() == 0 {
+            let left = if right_left.len() == 0 {
                 // if the left side of the split right child is empty, then the
                 // left side of the returned pair is just this node's left child
                 *self.left
@@ -156,10 +369,16 @@ impl BranchNode {
 
 }
 
-macro_rules! or_zero {
-    ($a: expr, $b: expr) => { if $a > $b { $a - $b } else { 0 } }
-}
 impl Node {
+
+    #[inline] pub fn grapheme_len(&self) -> Grapheme {
+        // todo: refactor
+        use unicode::Unicode;
+        match *self {
+            Branch(BranchNode { grapheme_len, ..}) => grapheme_len
+          , Leaf(ref s) => Grapheme::from(s.grapheme_len())
+        }
+    }
 
     pub fn spanning(&self, i: usize, span_len: usize) -> (&Node, usize) {
         assert!(self.len() >= span_len);
@@ -168,15 +387,14 @@ impl Node {
                 // if this function has walked as far as a leaf node,
                 // then that leaf must be the spanning node. return it.
                 (self, i)
-          , Branch(BranchNode { ref right, weight, .. }) if weight < i => {
-                assert!(or_zero!(right.len(), i) >= span_len);
+          , Branch(BranchNode { ref right, ref left, weight, .. })
+            if weight < i => {
                 // if this node is a branch, and the weight is less than the
                 // index, where the span begins, then the first index of the
                 // span is on the right side
-
-                right.spanning(or_zero!(i, weight)
-                    // avoid integer overflow
-                  , span_len)
+                let span_i = or_zero!(i, left.len());
+                assert!(or_zero!(right.len(), span_i) >= span_len);
+                right.spanning(span_i, span_len)
             }
           , Branch(BranchNode { ref left, .. })
             // if the left child is long enough to contain the entire span,
@@ -185,7 +403,6 @@ impl Node {
           , // otherwise, if the span is longer than the left child, then this
             // node must be the minimum spanning node
             Branch(_) => (self, i)
-
         }
     }
 
@@ -197,15 +414,14 @@ impl Node {
                 // if this function has walked as far as a leaf node,
                 // then that leaf must be the spanning node. return it.
                 (self, i)
-          , Branch(BranchNode { ref mut right, weight, .. }) if weight < i => {
-                assert!(or_zero!(right.len(), i) >= span_len);
+          , Branch(BranchNode { ref mut right, ref left, weight, .. })
+            if weight < i => {
                 // if this node is a branch, and the weight is less than the
                 // index, where the span begins, then the first index of the
                 // span is on the right side
-
-                right.spanning_mut(or_zero!(i, weight)
-                    // avoid integer overflow
-                  , span_len)
+                let span_i = or_zero!(i, left.len());
+                assert!(or_zero!(right.len(), span_i) >= span_len);
+                right.spanning_mut(span_i, span_len)
             }
           , Branch(BranchNode { ref mut left, .. })
             // if the left child is long enough to contain the entire span,
@@ -233,17 +449,26 @@ impl Node {
     ///
     /// # Time complexity
     /// O(log _n_)
-    pub fn split(self, index: usize) -> (Node, Node) {
+    pub fn split<M: Metric>(self, index: M) -> (Node, Node)
+    where Self: Measured<M>
+        , BranchNode: Measured<M>
+        , String: Measured<M>
+        , M: convert::Into<usize>
+        , M: Copy {
         match self {
             Leaf(ref s) if s.len() == 0 =>
                 // splitting an empty leaf node returns two empty leaf nodes
                 (Node::empty(), Node::empty())
-          , Leaf(ref s) if s.len() == 1 =>
+          , Leaf(ref s) if s.measure().into() == 1 =>
                 (Leaf(s.clone()), Node::empty())
           , Leaf(s) => {
                 // splitting a leaf node with length >= 2 returns two new Leaf
                 // nodes, one with the left half of the string, and one with
                 // the right
+                // TODO: make this properly respect metric index boundaries
+                let index = s.to_byte_index(index)
+                                 .expect(&format!( "invalid index! {} in {:?}"
+                                                  , index.into(), s));
                 let left = Leaf(s[..index].into());
                 let right = Leaf(s[index..].into());
                 (left, right)
@@ -408,17 +633,24 @@ impl Node {
         IntoLeaves(vec![self])
     }
 
+    unstable_iters! {
+        #[doc=
+            "Returns an iterator over all the strings in this `Node`s subrope."]
+        #[inline]
+        pub fn strings<'a>(&'a self) -> impl Iterator<Item=&'a str> + 'a {
+            self.leaves().map(|n| match n {
+                &Leaf(ref s) => s.as_ref()
+              , _ => unreachable!("Node.leaves() iterator contained something \
+                                   that wasn't a leaf. Barring _force majeure_, \
+                                   this should be impossible. Something's broken.")
+            })
+        }
 
-    /// Returns an iterator over all the strings in this `Node`s subrope'
-    #[cfg(feature = "unstable")]
-    #[inline]
-    pub fn strings<'a>(&'a self) -> impl Iterator<Item=&'a str> {
-        self.leaves().map(|n| match n {
-            &Leaf(ref s) => s.as_ref()
-          , _ => unreachable!("Node.leaves() iterator contained something \
-                               that wasn't a leaf. Barring _force majeure_, \
-                               this should be impossible. Something's broken.")
-        })
+        #[inline]
+        pub fn char_indices<'a>(&'a self)
+                               -> impl Iterator<Item=(usize, char)> + 'a {
+             self.chars().enumerate()
+        }
     }
 
     /// Returns a move iterator over all the strings in this `Node`s subrope'
@@ -452,18 +684,6 @@ impl Node {
                                  majeure_, this should be impossible. \
                                  Something's broken.")
         })
-    }
-
-    /// Returns an iterator over all the strings in this `Node`s subrope'
-    #[cfg(not(feature = "unstable"))]
-    #[inline]
-    pub fn strings<'a>(&'a self) -> Box<Iterator<Item=&'a str> + 'a> {
-        Box::new(self.leaves().map(|n| match n {
-            &Leaf(ref s) => s.as_ref()
-          , _ => unreachable!("Node.leaves() iterator contained something \
-                               that wasn't a leaf. Barring _force majeure_, \
-                               this should be impossible. Something's broken.")
-        }))
     }
 
     /// Returns a move iterator over all the strings in this `Node`s subrope'
@@ -528,8 +748,8 @@ impl Node {
         // impl char_indices<(usize, char)> for Node {}
         #[inline]
         impl split_whitespace<&'a str> for Node {}
-        #[inline]
-        impl lines<&'a str> for Node {}
+        // #[inline]
+        // impl lines<&'a str> for Node {}
     }
 
     // /// Returns n iterator over the bytes of this `Node`'s subrope
@@ -540,38 +760,95 @@ impl Node {
     //     self.strings().flat_map(str::bytes)
     // }
 
-    #[cfg(feature = "unstable")]
-    #[inline]
-    pub fn char_indices<'a>(&'a self)
-                       -> impl Iterator<Item=(usize, char)> + 'a {
-         self.chars().enumerate()
+    unicode_seg_iters! {
+        #[doc=
+            "Returns an iterator over the [grapheme clusters][graphemes] of \
+             `self`.\n\
+
+             [graphemes]: \
+             http://www.unicode.org/reports/tr29/#Grapheme_Cluster_Boundaries\
+             \n\
+             The iterator is over the  *extended grapheme clusters*; as \
+             [UAX#29]\
+             (http://www.unicode.org/reports/tr29/#Grapheme_Cluster_Boundaries)\
+             recommends extended grapheme cluster boundaries for general \
+             processing."]
+        #[inline]
+        impl graphemes for Node { extend }
+    }
+    unicode_seg_iters! {
+        #[doc=
+            "Returns an iterator over the words of `self`, separated on \
+            [UAX#29 word boundaries]\
+            (http://www.unicode.org/reports/tr29/#Word_Boundaries).\n\n\
+
+            Here, \"words\" are just those substrings which, after splitting on\
+            UAX#29 word boundaries, contain any alphanumeric characters. That \
+            is, the substring must contain at least one character with the \
+            [Alphabetic](http://unicode.org/reports/tr44/#Alphabetic) \
+            property, or with [General_Category=Number]\
+            (http://unicode.org/reports/tr44/#General_Category_Values)."]
+        #[inline]
+        impl unicode_words for Node {}
+        #[doc=
+            "Returns an iterator over substrings of `self` separated on \
+            [UAX#29 word boundaries]\
+            (http://www.unicode.org/reports/tr29/#Word_Boundaries). \n\n\
+            The concatenation of the substrings returned by this function is \
+            just the original string."]
+        #[inline]
+        impl split_word_bounds for Node {}
     }
 
-    #[cfg(not(feature = "unstable"))]
-    #[inline]
-    pub fn char_indices<'a>(&'a self) -> Box<Iterator<Item=(usize, char)> + 'a>
-    {
-         Box::new(self.chars().enumerate())
+    pub fn grapheme_indices<'a>(&'a self)  -> GraphemeIndices<'a> {
+        let mut strings = self.strings();
+        let first_string = strings.next()
+            .expect("grapheme_indices called on empty rope!");
+        GraphemeIndices { strings: Box::new(strings)
+                        , graphemes: first_string.grapheme_indices(true)
+                        , char_length_so_far: 0
+                        , curr_length: first_string.len() }
     }
 
-    /// Returns an iterator over the grapheme clusters of this `Node`'s subrope'
-    ///
-    /// This is the iterator returned by `Node::into_iter`.
-    #[cfg(feature = "unstable")]
-    #[inline]
-    pub fn graphemes<'a>(&'a self) -> impl Iterator<Item=&'a str> {
-        // the compiler won't let me mark this as unimplemented using the
-        // unimplemented!() macro, due to Reasons (i suspect relating to
-        // returning `impl Trait`)
-        //  - eliza, 12/18/2016
-        panic!("Unimplemented!");
-        self.strings()
+    pub fn split_word_bound_indices<'a>(&'a self)  -> UWordBoundIndices<'a> {
+        let mut strings = self.strings();
+        let first_string = strings.next()
+            .expect("split_word_bound_indices called on empty rope!");
+        UWordBoundIndices { strings: Box::new(strings)
+                          , bounds: first_string.split_word_bound_indices()
+                          , char_length_so_far: 0
+                          , curr_length: first_string.len() }
     }
-    #[cfg(not(feature = "unstable"))]
-    #[inline]
-    pub fn graphemes<'a>(&'a self) -> Box<Iterator<Item=&'a str>> {
-        unimplemented!()
-    }
+
+    // #[cfg(not(feature = "unstable"))]
+    // #[inline]
+    // pub fn grapheme_indices<'a>(&'a self)
+    //                         -> Box<Iterator<Item=(usize, &'a str)> + 'a> {
+    //     let strings = self.strings();
+    //     let first_graphemes = strings.next()
+    //                                  .unwrap_or_else(Iterator::empty());
+    //     Box::new(GraphemeIndices { strings: strings
+    //                              , graphemes: first_graphemes
+    //                              , char_length_so_far: 0})
+    // }
+    //
+    // #[cfg(feature = "unstable")]
+    // #[inline]
+    // pub fn split_word_bound_indices<'a>(&'a self)
+    //                        -> impl Iterator<Item=(usize, &'a str)> + 'a {
+    //     let s: String = self.strings().collect();
+    //     // TODO: rewrite this to not collect into a  string
+    //     s.split_word_bound_indices()
+    // }
+    //
+    // #[cfg(not(feature = "unstable"))]
+    // #[inline]
+    // pub fn split_word_bound_indices<'a>(&'a self)
+    //                         -> Box<Iterator<Item=(usize, &'a str)> + 'a> {
+    //     let s: String = self.strings().collect();
+    //     // TODO: rewrite this to not collect into a  string
+    //     Box::new(s.split_word_bound_indices())
+    // }
 
 }
 
@@ -634,6 +911,51 @@ impl Iterator for IntoLeaves {
     }
 }
 
+pub struct GraphemeIndices<'a> {
+    strings: Box<Iterator<Item = &'a str> + 'a >
+  , graphemes: StrGraphemeIndices<'a>
+  , char_length_so_far: usize
+  , curr_length: usize
+}
+
+impl<'a> Iterator for GraphemeIndices<'a> {
+    type Item = (usize, &'a str);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.graphemes.next()
+            .map(|(i, s)| (i + self.char_length_so_far, s))
+            .or_else(|| {
+                self.strings.next()
+                    .and_then(|s| { self.char_length_so_far += self.curr_length;
+                                    self.curr_length = s.len();
+                                    self.graphemes = s.grapheme_indices(true);
+                                    self.next() })
+            })
+    }
+}
+
+pub struct UWordBoundIndices<'a> {
+    strings: Box<Iterator<Item = &'a str> + 'a >
+  , bounds: StrUWordBoundIndices<'a>
+  , char_length_so_far: usize
+  , curr_length: usize
+}
+
+impl<'a> Iterator for UWordBoundIndices<'a> {
+    type Item = (usize, &'a str);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.bounds.next()
+            .map(|(i, s)| (i + self.char_length_so_far, s))
+            .or_else(|| {
+                self.strings.next()
+                    .and_then(|s| { self.char_length_so_far += self.curr_length;
+                                    self.curr_length = s.len();
+                                    self.bounds = s.split_word_bound_indices();
+                                    self.next() })
+            })
+    }
+}
 
 impl ops::Add for Node {
     type Output = Self;
@@ -656,14 +978,31 @@ impl ops::Index<usize> for Node {
     type Output = str;
 
     fn index(&self, i: usize) -> &str {
-        let len = self.len();
+        let grapheme_len : Grapheme = self.measure();
+        let len = grapheme_len.into();
         assert!( i < len
                , "Node::index: index {} out of bounds (length {})", i, len);
         match *self {
-            Leaf(ref vec) => { &vec[i..i+1] }
+            Leaf(ref string) => {
+                let index: usize =
+                    GraphemeIndex::from(i).to_char_index(string).into();
+                string.graphemes(true).nth(index - 1).expect("oob!") }
           , Branch(BranchNode { ref right, .. }) if len < i =>
                 &right[i - len]
           , Branch(BranchNode { ref left, .. }) => &left[i]
+        }
+    }
+}
+
+
+pub trait IsLineEnding { fn is_line_ending(&self) -> bool; }
+
+impl IsLineEnding for char {
+    #[inline]
+    fn is_line_ending(self: &char) -> bool {
+        match *self {
+            '\u{000A}' => true,
+            _ => false
         }
     }
 }
