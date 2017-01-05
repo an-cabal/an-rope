@@ -566,8 +566,6 @@ fn rope_split_whitespace_iter_split_on_node() {
 }
 
 
-
-
 #[test]
 fn rope_char_indices() {
     let rope = Rope::from("aaaaa")
@@ -687,6 +685,19 @@ mod properties {
             TestResult::from_bool(rope == string)
         }
         quickcheck(prop as fn(String, String, usize) -> TestResult);
+    }
+
+    #[test]
+    fn rope_split_whitespace_is_string_split_whitespace() {
+        fn prop(s: String) -> TestResult {
+            let rope = Rope::from(s.clone());
+            let string = s;
+            let result = rope.split_whitespace()
+                             .zip(string.split_whitespace())
+                             .all(|(a, b)| a == b);
+            TestResult::from_bool(result)
+        }
+        quickcheck(prop as fn(String) -> TestResult);
     }
 
 }
