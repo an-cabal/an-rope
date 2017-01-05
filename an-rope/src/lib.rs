@@ -24,6 +24,9 @@ extern crate collections;
 #[cfg(feature = "unstable")]
 use collections::range::RangeArgument;
 
+extern crate unicode_segmentation;
+
+
 use std::borrow::Borrow;
 use std::cmp;
 use std::ops;
@@ -39,8 +42,8 @@ use std::iter;
 #[cfg(test)] mod test;
 #[cfg(all( test, feature = "unstable"))] mod bench;
 
-mod slice;
-
+mod unicode;
+mod metric;
 
 use self::internals::Node;
 pub use self::slice::{RopeSlice, RopeSliceMut};
@@ -69,40 +72,117 @@ impl fmt::Debug for Rope {
         write!(f, "Rope[\"{}\"] {:?}", self.root, self.root)
     }
 }
+ #[cfg(feature = "unstable")]
+macro_rules! unstable_iters {
+    ( $($(#[$attr:meta])*
+     pub fn $name:ident$(<$lf:tt>)*(&'a $sel:ident) -> $ty:ty {
+         $body:expr
+     })+ ) => { $(
+         $(#[$attr])*
+         pub fn $name$(<$lf>)*(&'a $sel) -> $ty {
+             $body
+         }
+    )+ };
+    ( $($(#[$attr:meta])*
+    pub fn $name:ident$(<$lf:tt>)*(&'a mut $sel:ident) -> $ty:ty {
+         $body:expr
+     })+ ) => { $(
+         $(#[$attr])*
+         #[cfg(feature = "unstable")]
+         pub fn $name$(<$lf>)*(&'a mut $sel) -> $ty {
+             $body
+         }
+    )+ };
+}
 
-
+#[cfg(not(feature = "unstable"))]
+macro_rules! unstable_iters {
+    ( $($(#[$attr:meta])*
+    pub fn $name:ident$(<$lf:tt>)*(&'a $sel:ident) -> impl Iterator<Item=$ty:ty> + 'a {
+         $body:expr
+     })+ ) => ($(
+         $(#[$attr])*
+         #[cfg(not(feature = "unstable"))]
+         pub fn $name$(<$lf>)*(&'a $sel) -> Box<Iterator<Item=$ty> + 'a> {
+             Box::new($body)
+         }
+     )+);
+    ( $( $(#[$attr:meta])*
+    pub fn $name:ident$(<$lf:tt>)*(&'a mut $sel:ident) - impl Iterator<Item=$ty:ty> + 'a {
+         $body:expr
+     })+ ) => { $({
+         $(#[$attr])*
+         #[cfg(not(feature = "unstable"))]
+         pub fn $name$(<$lf>)*(&'a mut $sel) -> Box<Iterator<Item=$ty> + 'a> {
+             Box::new($body)
+         }
+     })+
+    };
+}
 macro_rules! str_iters {
     ( $($(#[$attr:meta])* impl $name: ident<$ty: ty> for Node {})+ ) => { $(
-        $(#[$attr])*
-        #[cfg(feature = "unstable")]
-        pub fn $name<'a>(&'a self) -> impl Iterator<Item=$ty> + 'a {
-            self.strings().flat_map(str::$name)
-        }
-        $(#[$attr])*
-        #[cfg(not(feature = "unstable"))]
-        pub fn $name<'a>(&'a self) -> Box<Iterator<Item=$ty> + 'a> {
-            Box::new(self.strings().flat_map(str::$name))
+        unstable_iters! {
+            $(#[$attr])*
+            pub fn $name<'a>(&'a self) -> impl Iterator<Item=$ty> + 'a{
+                self.strings().flat_map(str::$name)
+            }
         }
     )+ };
 
     ( $($(#[$attr:meta])* impl $name: ident<$ty: ty> for Rope {})+ )=> { $(
-        $(#[$attr])*
-        #[cfg(feature = "unstable")]
-        pub fn $name<'a>(&'a self) -> impl Iterator<Item=$ty> + 'a {
-            self.root.$name()
+        unstable_iters! {
+            $(#[$attr])*
+            pub fn $name<'a>(&'a self) -> impl Iterator<Item=$ty>  + 'a{
+                self.root.$name()
+            }
         }
-        $(#[$attr])*
-        #[cfg(not(feature = "unstable"))]
-        pub fn $name<'a>(&'a self) -> Box<Iterator<Item=$ty> + 'a>{
-            self.root.$name()
+    )+ }
+
+}
+
+
+macro_rules! unicode_seg_iters {
+    ( $($(#[$attr:meta])* impl $name: ident for Node { extend })+ ) => { $(
+
+        unstable_iters! {
+            $(#[$attr])*
+            pub fn $name<'a>(&'a self) -> impl Iterator<Item=&'a str> + 'a {
+                { // this block is required so that the macro will bind the
+                  // `use` statement
+                    use unicode_segmentation::UnicodeSegmentation;
+                    self.strings()
+                        .flat_map(|s| UnicodeSegmentation::$name(s, true))
+                }
+            }
+        }
+    )+ };
+    ( $($(#[$attr:meta])* impl $name: ident for Node {} )+ ) => { $(
+        unstable_iters!{
+            $(#[$attr])*
+            pub fn $name<'a>(&'a self) -> impl Iterator<Item=&'a str> + 'a {
+                { // this block is required so that the macro will bind the
+                  // `use` statement
+                    use unicode_segmentation::UnicodeSegmentation;
+                    self.strings().flat_map(UnicodeSegmentation::$name)
+                }
+            }
+        }
+    )+ };
+    ( $($(#[$attr:meta])* impl $name: ident<$ty: ty> for Rope {})+ )=> { $(
+        unstable_iters! {
+            $(#[$attr])*
+            pub fn $name<'a>(&'a self) -> impl Iterator<Item=$ty> + 'a {
+                self.root.$name()
+            }
         }
     )+ }
 
 }
 
 mod internals;
+mod slice;
 
-
+use self::metric::{Measured, Grapheme};
 
 impl Rope {
 
@@ -289,6 +369,8 @@ impl Rope {
         self.insert_rope(index, Rope::from(s))
     }
 
+
+
     /// Delete the range `range` from this `Rope`,
     ///
     /// # Panics
@@ -312,8 +394,13 @@ impl Rope {
     #[cfg(feature = "unstable")]
     pub fn delete<R>(&mut self, range: R)
     where R: RangeArgument<usize> {
-        let start = *range.start().unwrap_or(&0);
-        let end = *range.end().unwrap_or(&self.len());
+        let start = range.start().map(|s| Grapheme::from(*s))
+                         .unwrap_or_else(|| { Grapheme::from(0) });
+        let end = range.end().map(|e| Grapheme::from(*e))
+                        .unwrap_or_else(|| { self.root.grapheme_len() });
+
+        assert!( start <= end
+               , "invalid index! start {:?} > end {:?}", end, start);
         let (l, r) = self.take_root().split(start);
         let (_, r) = r.split(end - start);
         self.root = Node::new_branch(l, r);
@@ -321,8 +408,8 @@ impl Rope {
     #[inline]
     #[cfg(not(feature = "unstable"))]
     pub fn delete(&mut self, range: ops::Range<usize>) {
-        let (l, r) = self.take_root().split(range.start);
-        let (_, r) = r.split(range.end - range.start);
+        let (l, r) = self.take_root().split(Grapheme::from(range.start));
+        let (_, r) = r.split(Grapheme::from(range.end - range.start));
         self.root = Node::new_branch(l, r);
     }
 
@@ -419,6 +506,7 @@ impl Rope {
     /// assert_eq!(an_rope, Rope::from("abcd"));
     /// ```
     pub fn insert_rope(&mut self, index: usize, rope: Rope) {
+        use self::metric::Grapheme;
         if rope.len() > 0 {
             let len = self.len();
             if index == 0 {
@@ -429,7 +517,8 @@ impl Rope {
                 self.append(rope)
             } else {
                 // split the rope at the given index
-                let (left, right) = self.take_root().split(index);
+                let (left, right) = self.take_root()
+                                        .split(Grapheme::from(index));
 
                 // construct the new root node with `Rope` inserted
                 self.root = left + rope.root + right;
@@ -712,8 +801,9 @@ impl Rope {
     /// assert_eq!(cd, Rope::from(String::from("cd")));
     /// ```
     pub fn split(self, index: usize) -> (Rope, Rope) {
+        use self::metric::Grapheme;
         assert!(index <= self.len());
-        let (l, r) = self.root.split(index);
+        let (l, r) = self.root.split(Grapheme::from(index));
         (Rope { root: l }, Rope { root: r })
     }
 
@@ -737,24 +827,34 @@ impl Rope {
         self.root.is_balanced()
     }
 
-    /// Returns an iterator over all the strings in this `Rope`
-    #[cfg(feature = "unstable")]
-    #[inline]
-    pub fn strings<'a>(&'a self) -> impl Iterator<Item=&'a str> {
-        // TODO: since all the iterator methods on `Rope` just call the
-        //       methods on `Node`, do we wanna just make `Node` pub
-        //       and add a deref conversion from a `Rope` handle to its'
-        //       root `Node`?
-        //          - eliza, 12/18/2016
-        self.root.strings()
+    unstable_iters! {
+        #[doc="Returns an iterator over all the strings in this `Rope`"]
+        #[inline]
+        pub fn strings<'a>(&'a self) -> impl Iterator<Item=&'a str> + 'a {
+            self.root.strings()
+        }
+
+        #[doc="Returns an iterator over all the lines of text in this `Rope`."]
+        pub fn lines<'a>(&'a self) -> impl Iterator<Item=RopeSlice<'a>> +'a  {
+            {   // create a new block here so the macro will bind the `use` stmt
+                use internals::IsLineEnding;
+                let last_idx = self.len() - 1;
+                Box::new(self.char_indices()
+                             .filter_map(move |(i, c)|
+                                if c.is_line_ending() { Some(i) }
+                                // special case: slice to the end of the rope
+                                // even if it doesn't end in a newline character
+                                else if i == last_idx { Some(i + 1) }
+                                else { None })
+                              .scan(0, move |mut l, i|  {
+                                    let last = *l;
+                                    *l = i + 1;
+                                    Some(self.slice(last..i))
+                                }))
+            }
+        }
     }
 
-    /// Returns an iterator over all the strings in this `Rope`
-    #[cfg(not(feature = "unstable"))]
-    #[inline]
-    pub fn strings<'a>(&'a self) -> Box<Iterator<Item=&'a str> + 'a> {
-        self.root.strings()
-    }
 
     /// Returns a move iterator over all the strings in this `Rope`
     ///
@@ -794,24 +894,93 @@ impl Rope {
         impl char_indices<(usize, char)> for Rope {}
         #[inline]
         impl split_whitespace<&'a str> for Rope {}
+        // #[inline]
+        // impl lines<&'a str> for Rope {}
+    }
+
+    unicode_seg_iters! {
+        #[doc=
+            "Returns an iterator over the [grapheme clusters][graphemes] of \
+             `self`.\n\
+
+             [graphemes]: \
+             http://www.unicode.org/reports/tr29/#Grapheme_Cluster_Boundaries\
+             \n\
+             The iterator is over the  *extended grapheme clusters*; as \
+             [UAX#29]\
+             (http://www.unicode.org/reports/tr29/#Grapheme_Cluster_Boundaries)\
+             recommends extended grapheme cluster boundaries for general \
+             processing."]
         #[inline]
-        impl lines<&'a str> for Rope {}
+        impl graphemes<&'a str> for Rope {}
+        #[doc=
+            "Returns an iterator over the words of `self`, separated on \
+            [UAX#29 word boundaries]\
+            (http://www.unicode.org/reports/tr29/#Word_Boundaries).\n\n\
+
+            Here, \"words\" are just those substrings which, after splitting on\
+            UAX#29 word boundaries, contain any alphanumeric characters. That \
+            is, the substring must contain at least one character with the \
+            [Alphabetic](http://unicode.org/reports/tr44/#Alphabetic) \
+            property, or with [General_Category=Number]\
+            (http://unicode.org/reports/tr44/#General_Category_Values)."]
+        #[inline]
+        impl unicode_words<&'a str> for Rope {}
+        #[doc=
+            "Returns an iterator over substrings of `self` separated on \
+            [UAX#29 word boundaries]\
+            (http://www.unicode.org/reports/tr29/#Word_Boundaries). \n\n\
+            The concatenation of the substrings returned by this function is \
+            just the original string."]
+        #[inline]
+        impl split_word_bounds<&'a str> for Rope {}
+        // #[inline]
+        // impl grapheme_indices<(usize, &'a str)> for Rope {}
+        // #[inline]
+        // impl split_word_bound_indices<(usize, &'a str)> for Rope {}
     }
 
-    /// Returns an iterator over the grapheme clusters of this `Rope`
+    /// Returns an iterator over the grapheme clusters of `self` and their
+    /// byte offsets. See `graphemes()` for more information.
     ///
-    /// This is the iterator returned by `Node::into_iter`.
+    /// # Examples
+    ///
+    /// ```
+    /// # use an_rope::Rope;
+    /// let rope = Rope::from("a̐éö̲\r\n");
+    /// let gr_inds = rope.grapheme_indices()
+    ///                   .collect::<Vec<(usize, &str)>>();
+    /// let b: &[_] = &[(0, "a̐"), (3, "é"), (6, "ö̲"), (11, "\r\n")];
+    ///
+    /// assert_eq!(&gr_inds[..], b);
+    /// ```
     #[inline]
-    #[cfg(feature = "unstable")]
-    pub fn graphemes<'a>(&'a self) -> impl Iterator<Item=&'a str> {
-        self.root.graphemes()
-    }
-    #[inline]
-    #[cfg(not(feature = "unstable"))]
-    pub fn graphemes<'a>(&'a self) -> Box<Iterator<Item=&'a str>> {
-        self.root.graphemes()
+    pub fn grapheme_indices<'a>(&'a self)  -> internals::GraphemeIndices<'a> {
+        self.root.grapheme_indices()
     }
 
+    /// Returns an iterator over substrings of `self`, split on UAX#29 word
+    /// boundaries, and their offsets. See `split_word_bounds()` for more
+    /// information.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use an_rope::Rope;
+    /// let rope = Rope::from("Brr, it's 29.3°F!");
+    /// let swi1 = rope.split_word_bound_indices()
+    ///                .collect::<Vec<(usize, &str)>>();
+    /// let b: &[_] = &[ (0, "Brr"), (3, ","), (4, " "), (5, "it's")
+    ///                , (9, " "), (10, "29.3"),  (14, "°"), (16, "F")
+    ///                , (17, "!")];
+    ///
+    /// assert_eq!(&swi1[..], b);
+    /// ```
+    #[inline]
+    pub fn split_word_bound_indices<'a>(&'a self)
+                                       -> internals::UWordBoundIndices<'a> {
+        self.root.split_word_bound_indices()
+    }
 
     /// Returns true if the bytes in `self` equal the bytes in `other`
     #[inline]
@@ -903,7 +1072,6 @@ impl Rope {
         RopeSliceMut::new(&mut self.root, range)
     }
 
-
 }
 
 impl convert::Into<Vec<u8>> for Rope {
@@ -913,10 +1081,18 @@ impl convert::Into<Vec<u8>> for Rope {
 
 }
 
+fn str_to_tree(string: String) -> Node {
+    assert!(string.len() > 0);
+    let mut strings = string.rsplit('\n');
+    let last: Node = Node::new_leaf(String::from(strings.next().unwrap()));
+    let leaves = strings.map(|s| Node::new_leaf(String::from(s) + "\n"));
+    leaves.fold(last, |r, l| Node::new_branch(l, r))
+}
+
 #[cfg(feature = "tendril")]
 impl convert::From<StrTendril> for Rope {
     fn from(tendril: StrTendril) -> Rope {
-        Rope { root: Node::new_leaf(tendril) }
+        Rope { root: str_to_tree(tendril) }
     }
 }
 
@@ -928,7 +1104,7 @@ impl convert::From<String> for Rope {
     fn from(string: String) -> Rope {
         Rope {
             root: if string.len() == 0 { Node::empty() }
-                  else { Node::new_leaf(StrTendril::from(string)) }
+                  else { str_to_tree(StrTendril::from(string)) }
         }
     }
 
@@ -938,7 +1114,7 @@ impl convert::From<String> for Rope {
     fn from(string: String) -> Rope {
         Rope {
             root: if string.len() == 0 { Node::empty() }
-                  else { Node::new_leaf(string) }
+                  else { str_to_tree(string) }
         }
     }
 }

@@ -1,5 +1,9 @@
 use super::Rope;
 use std::iter;
+use internals::Node;
+use internals::Node::Leaf;
+use metric::Line;
+use metric::Measured;
 
 use quickcheck::{Arbitrary, Gen};
 
@@ -15,6 +19,133 @@ impl Arbitrary for Rope {
     }
 
 }
+
+
+#[test]
+fn line_split_test_1() {
+    let l1 = Node::new_leaf("asdf".to_string());
+    let l2 = Node::new_leaf("qwer".to_string());
+    let b = Node::new_branch(l1, l2);
+    let (left, right) = b.split(Line::from(0));
+    assert_eq!(left.strings().collect::<String>(), "asdfqwer");
+    if let Leaf(s) = right {
+        assert_eq!(s, "");
+    } else { assert!(false) }
+}
+
+#[test]
+fn line_split_test_2() {
+    let l1 = Node::new_leaf("asdf".to_string());
+    let l2 = Node::new_leaf("qwer\n".to_string());
+    let b = Node::new_branch(l1, l2);
+    let (left, right) = b.split(Line::from(0));
+    assert_eq!(left.strings().collect::<String>(), "asdfqwer\n");
+    if let Leaf(s) = right {
+        assert_eq!(s, "");
+    } else { assert!(false) }
+}
+
+#[test]
+fn line_split_test_3() {
+    let l1 = Node::new_leaf("asdf\n".to_string());
+    let l2 = Node::new_leaf("qwer\n".to_string());
+    let b = Node::new_branch(l1, l2);
+    let (left, right) = b.split(Line::from(0));
+    if let Leaf(s) = left {
+        assert_eq!(s, "asdf\n");
+    } else { assert!(false) }
+    if let Leaf(s) = right {
+        assert_eq!(s, "qwer\n");
+    } else { assert!(false) }
+}
+
+#[test]
+#[should_panic(expected = "invalid index!")]
+fn line_split_test_4() {
+    let l1 = Node::new_leaf("asdf".to_string());
+    let l2 = Node::new_leaf("qwer".to_string());
+    let b = Node::new_branch(l1, l2);
+    let (left, right) = b.split(Line::from(1));
+}
+
+#[test]
+fn line_split_test_5() {
+    let l1 = Node::new_leaf("asdf".to_string());
+    let l2 = Node::new_leaf("qwer\n".to_string());
+    let b = Node::new_branch(l1, l2);
+    let (left, right) = b.split(Line::from(1));
+    assert_eq!(left.strings().collect::<String>(), "asdfqwer\n");
+    if let Leaf(s) = right {
+        assert_eq!(s, "");
+    } else { assert!(false) }
+}
+
+#[test]
+fn line_split_test_6() {
+    let l1 = Node::new_leaf("asdf\n".to_string());
+    let l2 = Node::new_leaf("qwer\n".to_string());
+    let b = Node::new_branch(l1, l2);
+    let (left, right) = b.split(Line::from(1));
+    assert_eq!(left.strings().collect::<String>(), "asdf\nqwer\n");
+    if let Leaf(s) = right {
+        assert_eq!(s, "");
+    } else { assert!(false) }
+}
+
+#[test]
+fn line_split_test_7() {
+    let l1 = Node::new_leaf("asdf\n".to_string());
+    let l2 = Node::new_leaf("qwer\n".to_string());
+    let b = Node::new_branch(l1, l2);
+    let (left, right) = b.split(Line::from(0));
+    if let Leaf(s) = left {
+        assert_eq!(s, "asdf\n");
+    } else { assert!(false) }
+    if let Leaf(s) = right {
+        assert_eq!(s, "qwer\n");
+    } else { assert!(false) }
+}
+
+#[test]
+fn line_split_test_8() {
+    let l1 = Node::new_leaf("".to_string());
+    let l2 = Node::new_leaf("qwer\n".to_string());
+    let b = Node::new_branch(l1, l2);
+    let (left, right) = b.split(Line::from(0));
+    assert_eq!(left.strings().collect::<String>(), "qwer\n");
+    if let Leaf(s) = right {
+        assert_eq!(s, "");
+    } else { assert!(false) }
+}
+
+#[test]
+fn line_split_test_9() {
+    let l1 = Node::new_leaf("asdf\n".to_string());
+    let l2 = Node::new_leaf("qwer".to_string());
+    let l3 = Node::new_leaf("yxcv\n".to_string());
+    let b1 = Node::new_branch(l1, l2);
+    let b2 = Node::new_branch(b1, l3);
+    let (left, right) = b2.split(Line::from(0));
+    if let Leaf(s) = left {
+        assert_eq!(s, "asdf\n");
+    } else { assert!(false) }
+    assert_eq!(right.strings().collect::<String>(), "qweryxcv\n");
+}
+
+#[test]
+fn line_split_test_10() {
+    let l1 = Node::new_leaf("asdf".to_string());
+    let l2 = Node::new_leaf("qwer\n".to_string());
+    let l3 = Node::new_leaf("yxcv\n".to_string());
+    let b1 = Node::new_branch(l2, l3);
+    let b2 = Node::new_branch(l1, b1);
+    let (left, right) = b2.split(Line::from(0));
+    assert_eq!(left.strings().collect::<String>(), "asdfqwer\n");
+    if let Leaf(s) = right {
+        assert_eq!(s, "yxcv\n");
+    } else { assert!(false) }
+}
+
 
 #[test]
 fn delete_test_1() {
@@ -60,14 +191,18 @@ fn delete_test_5() {
 // this range syntax only works on nightly rust
 #[cfg(feature = "unstable")]
 #[test]
-#[should_panic(expected = "do not lie on character boundary")]
+#[should_panic(expected = "invalid index! 42 in \"this is not fine\"")]
 fn delete_test_6() {
     let mut r = Rope::from("this is not fine".to_string());
     r.delete((..42));
 }
 
 #[test]
-#[should_panic(expected = "attempt to subtract with overflow")]
+// TODO: panic messages differ on nightly/stable, should fix this...
+#[cfg_attr(feature = "unstable", should_panic(expected = "invalid index!"))]
+#[cfg_attr( not(feature = "unstable")
+          , should_panic(expected = "attempt to subtract with overflow"))]
+#[should_panic]
 fn delete_test_7() {
     let mut r = Rope::from("this is not fine".to_string());
     r.delete((12..8)); // lol, fuck you
@@ -357,6 +492,45 @@ fn with_insert_str_test_1() {
     assert_eq!(&s_2, "aaaaabbbbbccccc");
 }
 
+
+#[test]
+fn rope_lines_iter() {
+    let s = "line a\n\
+             line b\n\
+             line c\n\
+             line d";
+    let r = Rope::from(s);
+    assert_eq!(r.lines().collect::<Vec<_>>(), s.lines().collect::<Vec<_>>());
+    let r = Rope::from("line a\n") +
+            Rope::from("line b\n") +
+            Rope::from("line c\n") +
+            Rope::from("line d\n");
+    assert_eq!(r.lines().collect::<Vec<_>>(), s.lines().collect::<Vec<_>>());
+}
+
+#[test]
+fn rope_lines_iter_split_on_node() {
+    use super::internals::Node;
+    use super::internals::Node::Leaf;
+    let s = "line a\n\
+             line b\n\
+             line c\n";
+    let r = Rope {
+        root: Node::new_branch(
+                Node::new_branch( Leaf("line".to_string())
+                                , Leaf(" a\n".to_string())
+                                )
+              , Node::new_branch( Leaf("line b\n".to_string())
+                                , Node::new_branch( Leaf("li".to_string())
+                                                  , Leaf("ne c\n".to_string())
+                                                  )
+                                )
+              )
+    };
+    assert_eq!(r.lines().collect::<Vec<_>>(), s.lines().collect::<Vec<_>>());
+}
+
+
 #[test]
 fn rope_char_indices() {
     let rope = Rope::from("aaaaa")
@@ -408,15 +582,75 @@ mod properties {
 
     }
 
-    // #[test]
-    // fn rope_indexing_is_string_indexing() {
-    //     fn prop(string: String, i: usize) -> TestResult {
-    //         if i > string.len() { return TestResult::discard() }
-    //         let rope = Rope::from(string.clone());
-    //         TestResult::from_bool(rope[i] == &string.as_ref()[i])
-    //     }
-    //     quickcheck(prop as fn(String, usize) -> TestResult);
-    // }
+    #[ignore]
+    fn rope_indexing_is_string_indexing() {
+        fn prop(string: String, i: usize) -> TestResult {
+            use ::unicode::Unicode;
+            if i >= string.grapheme_len() || !string.is_char_boundary(i)  ||
+                // ignore the Dread String Of 85 Nulls
+                string.matches("\u{0}").count() > 1
+            {
+                return TestResult::discard()
+            }
+            let rope = Rope::from(string.clone());
+            TestResult::from_bool(&rope[i] == &string[i..i+1])
+        }
+        quickcheck(prop as fn(String, usize) -> TestResult);
+    }
+
+    #[ignore]
+    fn rope_insert_char_is_string_insert_char() {
+        fn prop(a: String, ch: char, i: usize) -> TestResult {
+            use unicode::Unicode;
+            // if the index is greater than the string's length...
+            if i > a.grapheme_len()
+                    // ...or the index falls in the middle of a char...
+                || !a.is_char_boundary(i)
+                    // ...or QuickCheck made the Dread String of 85 Nulls...
+                || a.matches("\u{0}").count() > 1
+            {
+                // ..skip the test
+                return TestResult::discard()
+            }
+
+            let mut rope = Rope::from(a.clone());
+            rope.insert(i, ch);
+
+            let mut string = a;
+            string.insert(i, ch);
+
+            TestResult::from_bool(rope == string)
+        }
+        quickcheck(prop as fn(String, char, usize) -> TestResult);
+    }
+
+    #[cfg(feature = "unstable")]
+    #[test]
+    fn rope_insert_str_is_string_insert_str() {
+        fn prop(a: String, b: String, i: usize) -> TestResult {
+            use unicode::Unicode;
+            // if the index is greater than the string's length...
+            if i > a.grapheme_len()
+                || a.grapheme_len() > 1
+                    // ...or the index falls in the middle of a char...
+                || !a.is_char_boundary(i)
+                    // ...or QuickCheck made the Dread String of 85 Nulls...
+                || a.contains("\u{0}") || b.contains("\u{0}")
+            {
+                // ..skip the test
+                return TestResult::discard()
+            }
+
+            let mut rope = Rope::from(a.clone());
+            rope.insert_str(i, &b[..]);
+
+            let mut string = a;
+            string.insert_str(i, &b[..]);
+
+            TestResult::from_bool(rope == string)
+        }
+        quickcheck(prop as fn(String, String, usize) -> TestResult);
+    }
 
 }
 
