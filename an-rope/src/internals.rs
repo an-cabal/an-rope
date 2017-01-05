@@ -647,76 +647,83 @@ impl Node {
         }
 
         #[inline]
-        pub fn char_indices<'a>(&'a self)
-                               -> impl Iterator<Item=(usize, char)> + 'a {
-             self.chars().enumerate()
+         pub fn char_indices<'a>(&'a self)
+                                -> impl Iterator<Item=(usize, char)> + 'a {
+              self.chars().enumerate()
+         }
+    }
+
+    /// Returns a move iterator over all the strings in this `Node`s subrope'
+    ///
+    /// Consumes `self`.
+    #[inline]
+    #[cfg(all( feature = "unstable"
+             , not(feature = "tendril") ))]
+    pub fn into_strings(self) -> impl Iterator<Item=String> {
+        self.into_leaves().map(|n| match n {
+            Leaf(s) => s
+            , _ => unreachable!("Node.into_leaves() iterator contained \
+                                 something  that wasn't a leaf. Barring _force \
+                                 majeure_, this should be impossible. \
+                                 Something's broken.")
+        })
+    }
+
+
+    /// Returns a move iterator over all the strings in this `Node`s subrope'
+    ///
+    /// Consumes `self`.
+    #[inline]
+    #[cfg(all( feature = "unstable"
+             , feature = "tendril" ))]
+    pub fn into_strings(self) -> impl Iterator<Item=String> {
+        self.into_leaves().map(|n| match n {
+            Leaf(s) => s.into()
+            , _ => unreachable!("Node.into_leaves() iterator contained \
+                                 something  that wasn't a leaf. Barring _force \
+                                 majeure_, this should be impossible. \
+                                 Something's broken.")
+        })
+    }
+
+    /// Returns a move iterator over all the strings in this `Node`s subrope'
+    ///
+    /// Consumes `self`.
+    #[inline]
+    #[cfg(all( not(feature = "unstable")
+             , not(feature = "tendril") ))]
+    pub fn into_strings(self) -> Box<Iterator<Item=String>> {
+        Box::new(self.into_leaves().map(|n| match n {
+            Leaf(s) => s
+            , _ => unreachable!("Node.into_leaves() iterator contained \
+                                 something  that wasn't a leaf. Barring _force \
+                                 majeure_, this should be impossible. \
+                                 Something's broken.")
+        }))
+    }
+
+
+    /// Returns a move iterator over all the strings in this `Node`s subrope'
+    ///
+    /// Consumes `self`.
+    #[inline]
+    #[cfg(all( not(feature = "unstable")
+             , feature = "tendril" ))]
+    pub fn into_strings(self) -> Box<Iterator<Item=String>> {
+        Box::new(self.into_leaves().map(|n| match n {
+            Leaf(s) => s.into()
+            , _ => unreachable!("Node.into_leaves() iterator contained \
+                                 something  that wasn't a leaf. Barring _force \
+                                 majeure_, this should be impossible. \
+                                 Something's broken.")
+        }))
+    }
+
+    #[inline]
+    pub fn chars<'a>(&'a self) -> Chars<'a> {
+        Chars { len: self.len()
+              , iter: Box::new(self.strings().flat_map(str::chars))
         }
-    }
-
-    /// Returns a move iterator over all the strings in this `Node`s subrope'
-    ///
-    /// Consumes `self`.
-    #[inline]
-    #[cfg(all( feature = "unstable"
-             , not(feature = "tendril") ))]
-    pub fn into_strings(self) -> impl Iterator<Item=String> {
-        self.into_leaves().map(|n| match n {
-            Leaf(s) => s
-            , _ => unreachable!("Node.into_leaves() iterator contained \
-                                 something  that wasn't a leaf. Barring _force \
-                                 majeure_, this should be impossible. \
-                                 Something's broken.")
-        })
-    }
-
-
-    /// Returns a move iterator over all the strings in this `Node`s subrope'
-    ///
-    /// Consumes `self`.
-    #[inline]
-    #[cfg(all( feature = "unstable"
-             , feature = "tendril" ))]
-    pub fn into_strings(self) -> impl Iterator<Item=String> {
-        self.into_leaves().map(|n| match n {
-            Leaf(s) => s.into()
-            , _ => unreachable!("Node.into_leaves() iterator contained \
-                                 something  that wasn't a leaf. Barring _force \
-                                 majeure_, this should be impossible. \
-                                 Something's broken.")
-        })
-    }
-
-    /// Returns a move iterator over all the strings in this `Node`s subrope'
-    ///
-    /// Consumes `self`.
-    #[inline]
-    #[cfg(all( not(feature = "unstable")
-             , not(feature = "tendril") ))]
-    pub fn into_strings(self) -> Box<Iterator<Item=String>> {
-        Box::new(self.into_leaves().map(|n| match n {
-            Leaf(s) => s
-            , _ => unreachable!("Node.into_leaves() iterator contained \
-                                 something  that wasn't a leaf. Barring _force \
-                                 majeure_, this should be impossible. \
-                                 Something's broken.")
-        }))
-    }
-
-
-    /// Returns a move iterator over all the strings in this `Node`s subrope'
-    ///
-    /// Consumes `self`.
-    #[inline]
-    #[cfg(all( not(feature = "unstable")
-             , feature = "tendril" ))]
-    pub fn into_strings(self) -> Box<Iterator<Item=String>> {
-        Box::new(self.into_leaves().map(|n| match n {
-            Leaf(s) => s.into()
-            , _ => unreachable!("Node.into_leaves() iterator contained \
-                                 something  that wasn't a leaf. Barring _force \
-                                 majeure_, this should be impossible. \
-                                 Something's broken.")
-        }))
     }
 
     str_iters! {
@@ -737,8 +744,8 @@ impl Node {
                Scalar Value, and may not match your idea of what a \
                'character' is. Iteration over grapheme clusters may be what \
                you actually want."]
-        #[inline]
-        impl chars<char> for Node {}
+        // #[inline]
+        // impl chars<char> for Node {}
         // TODO: this is actually Wrong, the indices will wrap around once we
         //       iterate into the next leaf node. we'll need to write our own
         //       char_indices iterator that tracks the character's index in the
@@ -909,6 +916,29 @@ impl Iterator for IntoLeaves {
             }
         }
     }
+}
+
+use std::iter::ExactSizeIterator;
+
+pub struct Chars<'a> {
+    len: usize
+    // todo: bad hacky solution
+  , iter: Box<Iterator<Item = char> + 'a >
+}
+
+impl<'a> Iterator for Chars<'a> {
+    type Item = char;
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> { self.iter.next() }
+
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) { self.iter.size_hint() }
+}
+
+impl<'a> ExactSizeIterator for Chars<'a> {
+    // We already have the number of iterations, so we can use it directly.
+    #[inline] fn len(&self) -> usize { self.len }
 }
 
 pub struct GraphemeIndices<'a> {
