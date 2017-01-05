@@ -582,6 +582,49 @@ mod properties {
 
     }
 
+    #[test]
+    fn rope_bytes_iter_is_string_bytes_iter() {
+        fn prop(s: String) -> TestResult {
+            let rope = Rope::from(s.clone());
+            let string = s;
+            let result = rope.bytes()
+                             .zip(string.bytes())
+                             .all(|(a, b)| a == b);
+            TestResult::from_bool(result)
+        }
+        quickcheck(prop as fn(String) -> TestResult);
+    }
+
+    #[test]
+    fn rope_chars_iter_is_string_chars_iter() {
+        fn prop(s: String) -> TestResult {
+            let rope = Rope::from(s.clone());
+            let string = s;
+            let result = rope.chars()
+                             .zip(string.chars())
+                             .all(|(a, b)| a == b);
+            TestResult::from_bool(result)
+        }
+        quickcheck(prop as fn(String) -> TestResult);
+    }
+
+    #[test]
+    fn rope_char_indices_is_string_char_indices() {
+        fn prop(s: String) -> TestResult {
+            if s.matches("\u{0}").count() > 1 {
+                return TestResult::discard()
+            }
+            let rope = Rope::from(s.clone());
+            let string = s;
+            let r_chars = rope.char_indices().collect::<Vec<_>>();
+            let s_chars = string.char_indices().collect::<Vec<_>>();
+            assert_eq!(s_chars, r_chars);
+            let result = s_chars == r_chars;
+            TestResult::from_bool(result)
+        }
+        quickcheck(prop as fn(String) -> TestResult);
+    }
+
     #[ignore]
     fn rope_indexing_is_string_indexing() {
         fn prop(string: String, i: usize) -> TestResult {
