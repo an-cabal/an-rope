@@ -4,5 +4,16 @@
 repository = "https://github.com/hawkw/an-editor"
 # A constant release title
 subtitle = "an editor"
-
+# specify the style of commit links to generate, defaults to "github" if omitted
 link-style = "github"
+# The preferred way to set a constant changelog. This file will be read for old changelog
+# data, then prepended to for new changelog data. It's the equivilant to setting
+# both infile and outfile to the same file.
+#
+# Do not use with outfile or infile fields!
+#
+# Defaults to stdout when omitted
+changelog = "CHANGES.md"
+# If you use tags, you can set the following if you wish to only pick
+# up changes since your latest tag
+from-latest-tag = true
