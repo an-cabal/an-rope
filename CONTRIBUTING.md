@@ -3,8 +3,11 @@ Contributing to An Editor
 
 **Looking for a first issue?** You might want to start out by looking at [issues tagged "easy"](https://github.com/hawkw/an-editor/issues?q=is%3Aissue+is%3Aopen+label%3Aeasy). These are issues that, while important, will probably require less knowledge of Rust, less programming experience, and/or less knowledge of the `an-editor` codebase and might make good jumping-off points for potential contibutors.
 
-Merging Pull Requests
-=====================
+Git Conventions
+===============
+
+Pull requests
+-------------
 
 In order to be accepted and merged, a pull request must meet the following conditions.
 
@@ -20,6 +23,35 @@ In order to be accepted and merged, a pull request must meet the following condi
 + Include any failing tests
 + Decrease overall project test coverage
 + Have any outstanding changes requested by a reviewer.
+
+Commit messages
+---------------
+
+Commit messages should follow the [Angular.js Commit Message Conventions](https://github.com/conventional-changelog/conventional-changelog/blob/a5505865ff3dd710cf757f50530e73ef0ca641da/conventions/angular.md). We use [`clog`](https://github.com/clog-tool/clog-cli) for automatically generating changelogs, and commit messages must be in a format that `clog` can parse.
+
+It is recommended that contributors read the linked documentation for the Angular commit message convention in full –– it's not that long. For the impatient, here are some of the most important guidelines:
+
+#### Commit messages MUST
+
++ Be in present tense
++ Follow the form `<type>(<scope>): <subject>`
+    + where `<type>` is one of:
+        * **feat**: A new feature
+        * **fix**: A bug fix
+        * **docs**: Documentation only changes
+        * **style**: Changes that do not affect the meaning of the code (white-space, formatting, missing
+        semi-colons, etc)
+        * **refactor**: A code change that neither fixes a bug or adds a feature
+        * **perf**: A code change that improves performance
+        * **test**: Adding missing tests
+        * **chore**: Changes to the build process or auxiliary tools and libraries such as documentation
+        generation
+    + and `<scope>` (optionally) specifies the specific element or component of the project that was changed.
+
+#### Commit messages MUST NOT
+
++ Include lines exceeding 100 characters
+
 
 Code Style
 ==========
@@ -41,15 +73,15 @@ The following deviations from the style guidelines are _permitted_, but not requ
                  , c
                  ];
     ```
-    
+
     and
-    
+
     ```rust
     let a_list = [ a, b, c, d
                  , e, f, g, h
                  ];
     ```
-    
+
     are considered good style.
 + When wrapping `where` clauses, the `where` clause _may_ be placed at the same indentation level as the corresponding `fn` or `impl` statement. For example:
 
@@ -61,7 +93,7 @@ The following deviations from the style guidelines are _permitted_, but not requ
         ...
     }
     ```
-    
+
     is considered good style.
 
 ## Tools to Assist With Coding Style
