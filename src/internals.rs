@@ -383,11 +383,7 @@ impl Node {
     pub fn spanning(&self, i: usize, span_len: usize) -> (&Node, usize) {
         assert!(self.len() >= span_len);
         match *self {
-            Leaf(_) =>
-                // if this function has walked as far as a leaf node,
-                // then that leaf must be the spanning node. return it.
-                (self, i)
-          , Branch(BranchNode { ref right, ref left, weight, .. })
+            Branch(BranchNode { ref right, ref left, weight, .. })
             if weight < i => {
                 // if this node is a branch, and the weight is less than the
                 // index, where the span begins, then the first index of the
@@ -400,9 +396,14 @@ impl Node {
             // if the left child is long enough to contain the entire span,
             // walk to the left child
             if or_zero!(left.len(), i) >= span_len => left.spanning(i, span_len)
-          , // otherwise, if the span is longer than the left child, then this
-            // node must be the minimum spanning node
-            Branch(_) => (self, i)
+         ,  Leaf(_) | Branch (_)=>
+            // if this function has walked as far as a leaf node,
+            // then that leaf must be the spanning node. return it;
+            //
+            // otherwise, if the node is a branch node and the span is longer
+            // than the left child, then this node must be the minimum
+            // spanning node
+            (self, i)
         }
     }
 
@@ -410,11 +411,7 @@ impl Node {
                         -> (&mut Node, usize) {
         assert!(self.len() >= span_len);
         match *self {
-            Leaf(_) =>
-                // if this function has walked as far as a leaf node,
-                // then that leaf must be the spanning node. return it.
-                (self, i)
-          , Branch(BranchNode { ref mut right, ref left, weight, .. })
+            Branch(BranchNode { ref mut right, ref left, weight, .. })
             if weight < i => {
                 // if this node is a branch, and the weight is less than the
                 // index, where the span begins, then the first index of the
@@ -428,9 +425,14 @@ impl Node {
             // walk to the left child
             if or_zero!(left.len(), i) >= span_len =>
                 left.spanning_mut(i, span_len)
-          , // otherwise, if the span is longer than the left child, then this
-            // node must be the minimum spanning node
-            Branch(_) => (self, i)
+          , Leaf(_) | Branch (_)=>
+            // if this function has walked as far as a leaf node,
+            // then that leaf must be the spanning node. return it;
+            //
+            // otherwise, if the node is a branch node and the span is longer
+            // than the left child, then this node must be the minimum
+            // spanning node
+                (self, i)
         }
     }
 
