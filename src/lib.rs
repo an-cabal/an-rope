@@ -20,6 +20,7 @@
            , feature( test, insert_str) )]
 #![cfg_attr( feature = "clippy", feature(plugin) )]
 #![cfg_attr( feature = "clippy", plugin(clippy) )]
+#![cfg_attr( feature = "clippy", allow(unused_variables, dead_code))]
 
 #[cfg(feature = "unstable")]
 extern crate collections;
