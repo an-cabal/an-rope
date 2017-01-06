@@ -5,7 +5,6 @@ use unicode_segmentation::{ GraphemeIndices as StrGraphemeIndices
 use metric::{Grapheme, Line, Metric, Measured};
 use unicode::GraphemeIndex;
 
-use ::RopeSlice;
 use std::ops;
 use std::fmt;
 use std::convert;

@@ -189,7 +189,7 @@ macro_rules! unicode_seg_iters {
 mod internals;
 mod slice;
 
-use self::metric::{Measured, Grapheme};
+use self::metric::Grapheme;
 
 impl Rope {
 
