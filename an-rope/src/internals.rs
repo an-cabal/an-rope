@@ -633,24 +633,35 @@ impl Node {
         IntoLeaves(vec![self])
     }
 
-    unstable_iters! {
-        #[doc=
-            "Returns an iterator over all the strings in this `Node`s subrope."]
-        #[inline]
-        pub fn strings<'a>(&'a self) -> impl Iterator<Item=&'a str> + 'a {
-            self.leaves().map(|n| match n {
-                &Leaf(ref s) => s.as_ref()
-              , _ => unreachable!("Node.leaves() iterator contained something \
-                                   that wasn't a leaf. Barring _force majeure_, \
-                                   this should be impossible. Something's broken.")
-            })
-        }
+    #[doc=
+        "Returns an iterator over all the strings in this `Node`s subrope."]
+    #[inline]
+    #[cfg(feature = "unstable")]
+    pub fn strings<'a>(&'a self) -> impl ExactSizeIterator<Item=&'a str> + 'a {
+        self.leaves().map(|n| match n {
+            &Leaf(ref s) => s.as_ref()
+          , _ => unreachable!("Node.leaves() iterator contained something \
+                               that wasn't a leaf. Barring _force majeure_, \
+                               this should be impossible. Something's broken.")
+        })
+    }
 
-        #[inline]
-         pub fn char_indices<'a>(&'a self)
-                                -> impl Iterator<Item=(usize, char)> + 'a {
-              self.chars().enumerate()
-         }
+    #[doc=
+        "Returns an iterator over all the strings in this `Node`s subrope."]
+    #[inline]
+    #[cfg(not(feature = "unstable"))]
+    pub fn strings<'a>(&'a self) -> Box<ExactSizeIterator<Item=&'a str> + 'a> {
+        Box::new(self.leaves().map(|n| match n {
+            &Leaf(ref s) => s.as_ref()
+          , _ => unreachable!("Node.leaves() iterator contained something \
+                               that wasn't a leaf. Barring _force majeure_, \
+                               this should be impossible. Something's broken.")
+        }))
+    }
+
+    #[inline]
+    pub fn char_indices<'a>(&'a self) -> CharIndices<'a> {
+        CharIndices { front_offset: 0, iter: self.chars() }
     }
 
     /// Returns a move iterator over all the strings in this `Node`s subrope'
@@ -721,8 +732,7 @@ impl Node {
 
     #[inline]
     pub fn chars<'a>(&'a self) -> Chars<'a> {
-        Chars { len: self.len()
-              , iter: Box::new(self.strings().flat_map(str::chars))
+        Chars { iter: Box::new(self.strings().flat_map(str::chars))
         }
     }
 
@@ -877,7 +887,13 @@ impl<'a> Iterator for Nodes<'a> {
 
 /// An iterator over a series of leaf `Node`s
 // TODO: this _could_ be implemented as `nodes.filter(node.is_leaf)`
+#[derive(Clone, Debug)]
 struct Leaves<'a>(Vec<&'a Node>);
+
+impl<'a> ExactSizeIterator for Leaves<'a> {
+    // We already have the number of iterations, so we can use it directly.
+    #[inline] fn len(&self) -> usize { self.0.len() }
+}
 
 impl<'a> Iterator for Leaves<'a> {
     type Item = &'a Node;
@@ -898,6 +914,7 @@ impl<'a> Iterator for Leaves<'a> {
 }
 
 /// A move iterator over a series of leaf `Node`s
+#[derive(Clone, Debug)]
 struct IntoLeaves(Vec<Node>);
 
 impl Iterator for IntoLeaves {
@@ -917,29 +934,80 @@ impl Iterator for IntoLeaves {
         }
     }
 }
-
+#[cfg(feature = "unstable")] use std::iter::FusedIterator;
 use std::iter::ExactSizeIterator;
 
 pub struct Chars<'a> {
-    len: usize
-    // todo: bad hacky solution
-  , iter: Box<Iterator<Item = char> + 'a >
+    iter: Box<Iterator<Item = char> + 'a +  >
 }
 
 impl<'a> Iterator for Chars<'a> {
     type Item = char;
 
     #[inline]
-    fn next(&mut self) -> Option<Self::Item> { self.iter.next() }
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.next() }
 
     #[inline]
-    fn size_hint(&self) -> (usize, Option<usize>) { self.iter.size_hint() }
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let len = self.iter.size_hint().0;
+        // `(len + 3)` can't overflow, because we know that the `slice::Iter`
+        // belongs to a slice in memory which has a maximum length of
+        // `isize::MAX` (that's well below `usize::MAX`).
+        ((len + 3) / 4, Some(len))
+    }
 }
 
 impl<'a> ExactSizeIterator for Chars<'a> {
     // We already have the number of iterations, so we can use it directly.
-    #[inline] fn len(&self) -> usize { self.len }
+    #[inline] fn len(&self) -> usize { self.iter.size_hint().0 }
 }
+
+/// Iterator for a Rope's characters and their byte offsets.
+pub struct CharIndices<'a> {
+    front_offset: usize,
+    iter: Chars<'a>,
+}
+
+impl<'a> Iterator for CharIndices<'a> {
+    type Item = (usize, char);
+
+    #[inline]
+    fn next(&mut self) -> Option<(usize, char)> {
+        let pre_len = self.iter.len();
+        match self.iter.next() {
+            None => None,
+            Some(ch) => {
+                let index = self.front_offset;
+                let len = self.iter.len();
+                self.front_offset += pre_len - len;
+                Some((index, ch))
+            }
+        }
+    }
+
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.iter.size_hint()
+    }
+}
+
+// impl<'a> DoubleEndedIterator for CharIndices<'a> {
+//     #[inline]
+//     fn next_back(&mut self) -> Option<(usize, char)> {
+//         match self.iter.next_back() {
+//             None => None,
+//             Some(ch) => {
+//                 let index = self.front_offset + self.iter.iter.len();
+//                 Some((index, ch))
+//             }
+//         }
+//     }
+// }
+
+#[cfg(feature = "unstable")]
+impl<'a> FusedIterator for CharIndices<'a> {}
+
 
 pub struct GraphemeIndices<'a> {
     strings: Box<Iterator<Item = &'a str> + 'a >
