@@ -18,6 +18,8 @@
                     ))]
 #![cfg_attr( all( test, feature = "unstable")
            , feature( test, insert_str) )]
+#![cfg_attr( feature = "clippy", feature(plugin) )]
+#![cfg_attr( feature = "clippy", plugin(clippy) )]
 
 #[cfg(feature = "unstable")]
 extern crate collections;
