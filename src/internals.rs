@@ -542,20 +542,19 @@ impl Node {
     fn depth(&self) -> usize {
         use std::cmp::max;
 
-        match self {
-            &Node::Leaf(_) => 0
-          , &Node::Branch(BranchNode { ref left, ref right, .. }) =>
-                max(left.depth(), right.depth()) + 1
-            }
+        match *self { Leaf(_) => 0
+                    , Branch(BranchNode { ref left, ref right, .. }) =>
+                        max(left.depth(), right.depth()) + 1
+                    }
     }
 
 
     /// Returns the length of a node
     #[inline]
     pub fn len(&self) -> usize {
-        match self { &Leaf(ref s) => s.len()
-                   , &Branch(BranchNode { len, ..}) => len
-                   }
+        match *self { Leaf(ref s) => s.len()
+                    , Branch(BranchNode { len, ..}) => len
+                    }
     }
 
     #[inline] pub fn is_empty(&self) -> bool { self.len() == 0 }
@@ -563,8 +562,8 @@ impl Node {
     /// Calculates the weight of a node
     #[inline]
     fn subtree_weight (&self) -> usize {
-        match self { &Leaf(ref s) => s.len()
-                   , &Branch(BranchNode { ref left, .. }) => left.len()
+        match *self { Leaf(ref s) => s.len()
+                    , Branch(BranchNode { ref left, .. }) => left.len()
                     }
     }
 
