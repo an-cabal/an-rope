@@ -641,8 +641,8 @@ impl Node {
             "Returns an iterator over all the strings in this `Node`s subrope."]
         #[inline]
         pub fn strings<'a>(&'a self) -> impl Iterator<Item=&'a str> + 'a {
-            self.leaves().map(|n| match n {
-                &Leaf(ref s) => s.as_ref()
+            self.leaves().map(|n| match *n {
+                Leaf(ref s) => s.as_ref()
               , _ => unreachable!("Node.leaves() iterator contained something \
                                    that wasn't a leaf. Barring _force majeure_, \
                                    this should be impossible. Something's broken.")
