@@ -1,7 +1,6 @@
 use std::convert;
 use std::ops::{Add, Sub};
 use std::default::Default;
-use internals::{Node, BranchNode};
 
 
 /// The class of monoids
