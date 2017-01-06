@@ -114,12 +114,12 @@ impl Measured<Grapheme> for str {
 
     #[inline]
     fn measure(&self) -> Grapheme {
-        Grapheme::from(self.graphemes(true).count())
+        Grapheme(self.graphemes(true).count())
     }
 
     #[inline]
     fn measure_weight(&self) -> Grapheme {
-        Grapheme::from(self.graphemes(true).count())
+        Grapheme(self.graphemes(true).count())
     }
 }
 
@@ -138,12 +138,12 @@ impl Measured<Grapheme> for String {
 
     #[inline]
     fn measure(&self) -> Grapheme {
-        Grapheme::from(self.graphemes(true).count())
+        Grapheme(self.graphemes(true).count())
     }
 
     #[inline]
     fn measure_weight(&self) -> Grapheme {
-        Grapheme::from(self.graphemes(true).count())
+        Grapheme(self.graphemes(true).count())
     }
 }
 
@@ -198,14 +198,14 @@ impl Measured<Line> for str {
 
     #[inline]
     fn measure(&self) -> Line {
-        Line::from(
+        Line(
             if self.chars().last().unwrap_or('\0').is_line_ending() { 1
             } else { 0 })
     }
 
     #[inline]
     fn measure_weight(&self) -> Line {
-        Line::from(
+        Line(
             if self.chars().last().unwrap_or('\0').is_line_ending() { 1
             } else { 0 })
     }
@@ -222,14 +222,14 @@ impl Measured<Line> for String {
 
     #[inline]
     fn measure(&self) -> Line {
-        Line::from(
+        Line(
             if self.chars().last().unwrap_or('\0').is_line_ending() { 1
             } else { 0 })
     }
 
     #[inline]
     fn measure_weight(&self) -> Line {
-        Line::from(
+        Line(
             if self.chars().last().unwrap_or('\0').is_line_ending() { 1
             } else { 0 })
     }
@@ -443,7 +443,7 @@ impl Node {
         use unicode::Unicode;
         match *self {
             Branch(BranchNode { grapheme_len, ..}) => grapheme_len
-          , Leaf(ref s) => Grapheme::from(s.grapheme_len())
+          , Leaf(ref s) => Grapheme(s.grapheme_len())
         }
     }
 

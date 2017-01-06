@@ -79,7 +79,7 @@ pub trait Metric: Monoid + Eq + Add<usize, Output=Self>
 }
 
 #[derive(Clone, Copy, Debug, PartialOrd, Ord, PartialEq, Eq)]
-pub struct Grapheme(usize);
+pub struct Grapheme(pub usize);
 impl Default for Grapheme {
     #[inline] fn default() -> Self { Grapheme(0) }
 }
@@ -108,7 +108,7 @@ impl Sub<Grapheme> for Grapheme {
 }
 
 #[derive(Clone, Copy, Debug, PartialOrd, Ord, PartialEq, Eq)]
-pub struct Line(usize);
+pub struct Line(pub usize);
 impl Default for Line {
     #[inline] fn default() -> Self { Line(0) }
 }
