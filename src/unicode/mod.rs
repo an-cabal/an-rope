@@ -28,7 +28,7 @@ impl GraphemeIndex {
     /// # Panics
     /// - If the index is to a grapheme that would lie outside of the length of
     ///   `text`.
-    pub fn to_byte_index<'a>(&self, text: &'a str) -> ByteIndex {
+    pub fn to_byte_index(&self, text: &str) -> ByteIndex {
 
         if text.grapheme_len() == self.0 {
             ByteIndex(text.len())
@@ -52,7 +52,7 @@ impl GraphemeIndex {
     /// # Panics
     /// - If the index is to a grapheme that would lie outside of the length of
     ///   `text`.
-    pub fn to_char_index<'a>(&self, text: &'a str) -> CharIndex  {
+    pub fn to_char_index(&self, text: &str) -> CharIndex  {
 
         text.graphemes(true)
             .scan(0usize, |char_count, grapheme| {
@@ -67,12 +67,12 @@ impl GraphemeIndex {
 }
 
 impl CharIndex {
-    fn to_byte_index<'a>(&self, into: &'a str) -> ByteIndex  {
+    fn to_byte_index(&self, into: &str) -> ByteIndex  {
 
         unimplemented!()
     }
 
-    fn to_grapheme_index<'a>(&self, into: &'a str) -> GraphemeIndex {
+    fn to_grapheme_index(&self, into: &str) -> GraphemeIndex {
 
         unimplemented!()
     }
@@ -88,12 +88,12 @@ impl convert::From<usize> for GraphemeIndex {
 }
 
 impl ByteIndex {
-    fn to_char_index<'a>(&self, into: &'a str) -> CharIndex {
+    fn to_char_index(&self, into: &str) -> CharIndex {
 
         unimplemented!()
     }
 
-    fn to_grapheme_index<'a>(&self, into: &'a str) -> GraphemeIndex  {
+    fn to_grapheme_index(&self, into: &str) -> GraphemeIndex  {
 
         unimplemented!()
     }
