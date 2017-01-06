@@ -192,7 +192,7 @@ fn delete_test_5() {
 // this range syntax only works on nightly rust
 #[cfg(feature = "unstable")]
 #[test]
-#[should_panic(expected = "invalid index! 42 in \"this is not fine\"")]
+#[should_panic(expected = "byte index 42 is out of bounds")]
 fn delete_test_6() {
     let mut r = Rope::from("this is not fine".to_string());
     r.delete((..42));
