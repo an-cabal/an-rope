@@ -302,7 +302,7 @@ impl<'a> RopeSliceMut<'a>  {
         assert!( index <= self.len()
                , "RopeSliceMut::insert_rope: index {} was > length {}"
                , index, self.len());
-        if rope.len() > 0 {
+        if !rope.is_empty() {
             // split the rope at the given index
             let (left, right) = self.take_node()
                                     .split(Grapheme::from(self.offset + index));
