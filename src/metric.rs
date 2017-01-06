@@ -58,8 +58,6 @@ pub trait Metric: Monoid + Eq + Add<usize, Output=Self>
 
     fn is_splittable() -> bool;
 
-
-
     /// Returns the byte index of the next element of this metric in `Node`
     #[inline]
     fn next<M: Measured<Self> >(self, node: &M)-> Option<usize> {
@@ -132,4 +130,33 @@ impl Add<usize> for Line {
 impl Sub<usize> for Line {
     type Output = Self;
     #[inline] fn sub(self, rhs: usize) -> Self { Line(self.0 - rhs) }
+}
+
+#[derive(Clone, Copy, Debug, PartialOrd, Ord, PartialEq, Eq)]
+pub struct Char(usize);
+impl Default for Char {
+    #[inline] fn default() -> Self { Char(0) }
+}
+impl Add<Char> for Char {
+    type Output = Self;
+    #[inline] fn add(self, rhs: Self) -> Self { Char(self.0 + rhs.0) }
+}
+impl Sub<Char> for Char {
+    type Output = Self;
+    #[inline] fn sub(self, rhs: Self) -> Self { Char(self.0 - rhs.0) }
+}
+impl convert::From<usize> for Char {
+    #[inline] fn from(u: usize) -> Self { Char(u) }
+}
+impl convert::Into<usize> for Char {
+    #[inline] fn into(self) -> usize { self.0 }
+}
+impl Monoid for Char { }
+impl Add<usize> for Char {
+    type Output = Self;
+    #[inline] fn add(self, rhs: usize) -> Self { Char(self.0 + rhs) }
+}
+impl Sub<usize> for Char {
+    type Output = Self;
+    #[inline] fn sub(self, rhs: usize) -> Self { Char(self.0 - rhs) }
 }
