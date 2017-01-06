@@ -410,10 +410,16 @@ impl Rope {
     /// assert_eq!(an_rope, Rope::from("abcd"));
     /// ```
     #[inline]
-    pub fn insert(&mut self, index: usize, ch: char) {
-        assert!( index <= self.len()
-               , "Rope::insert: index {} was > length {}"
-               , index, self.len());
+    pub fn insert<M>(&mut self, index: M, ch: char)
+    where M: Metric
+        , Self: Measured<M>
+        , Node: Measured<M>
+        , BranchNode: Measured<M>
+        , String: Measured<M>
+        {
+        assert!( index <= self.measure()
+               , "Rope::insert: index {:?} was > length {:?}"
+               , index, self.measure());
         // TODO: this is gross...
         let mut s = String::new();
         s.push(ch);
@@ -513,10 +519,16 @@ impl Rope {
     /// assert_eq!(an_rope, Rope::from("acd"));
     /// ```
     #[inline]
-    pub fn with_insert(&self, index: usize, ch: char) -> Rope {
-        assert!( index <= self.len()
-               , "Rope::with_insert: index {} was > length {}"
-               , index, self.len());
+    pub fn with_insert<M>(&self, index: M, ch: char) -> Rope
+    where M: Metric
+        , Self: Measured<M>
+        , Node: Measured<M>
+        , BranchNode: Measured<M>
+        , String: Measured<M>
+        {
+        assert!( index <= self.measure()
+               , "Rope::with_insert: index {:?} was > length {:?}"
+               , index, self.measure());
        // TODO: this is gross...
        let mut s = String::new();
        s.push(ch);
@@ -562,12 +574,15 @@ impl Rope {
     /// assert_eq!(an_rope, Rope::from("abcd"));
     /// ```
     #[inline]
-    pub fn insert_rope<M: Metric>(&mut self, index: M, rope: Rope)
-    where Node: Measured<M>
-        , internals::BranchNode: Measured<M>
-        , String: Measured<M> {
+    pub fn insert_rope<M>(&mut self, index: M, rope: Rope)
+    where M: Metric
+        , Self: Measured<M>
+        , Node: Measured<M>
+        , BranchNode: Measured<M>
+        , String: Measured<M>
+        {
         if !rope.is_empty() {
-            let len = self.root.measure();
+            let len = self.measure();
             if index.into() == 0 {
                 // if the rope is being inserted at index 0, just prepend it
                 self.prepend(rope)
@@ -631,10 +646,16 @@ impl Rope {
     /// assert_eq!(new_rope, Rope::from("abcd"));
     /// assert_eq!(an_rope, Rope::from("ad"))
     /// ```
-    pub fn with_insert_rope(&self, index: usize, rope: Rope) -> Rope {
-        assert!( index <= self.len()
-               , "Rope::with_:insert_rope: index {} was > length {}"
-               , index, self.len());
+    pub fn with_insert_rope<M>(&self, index: M, rope: Rope) -> Rope
+    where M: Metric
+        , Self: Measured<M>
+        , Node: Measured<M>
+        , BranchNode: Measured<M>
+        , String: Measured<M>
+        {
+        assert!( index <= self.measure()
+               , "Rope::with_:insert_rope: index {:?} was > length {:?}"
+               , index, self.measure());
         let mut new_rope = self.clone();
         new_rope.insert_rope(index, rope);
         new_rope
@@ -677,10 +698,16 @@ impl Rope {
     /// assert_eq!(an_rope, Rope::from("abcd"));
     /// ```
     #[inline]
-    pub fn insert_str(&mut self, index: usize, s: &str) {
-        assert!( index <= self.len()
-               , "Rope::insert_str: index {} was > length {}"
-               , index, self.len());
+    pub fn insert_str<M>(&mut self, index: M, s: &str)
+    where M: Metric
+        , Self: Measured<M>
+        , Node: Measured<M>
+        , BranchNode: Measured<M>
+        , String: Measured<M>
+        {
+        assert!( index <= self.measure()
+               , "Rope::insert_str: index {:?} was > length {:?}"
+               , index, self.measure());
         self.insert_rope(index, s.into())
     }
 
@@ -726,10 +753,16 @@ impl Rope {
     /// assert_eq!(new_rope, Rope::from("abcd"));
     /// ```
     #[inline]
-    pub fn with_insert_str(&self, index: usize, s: &str) -> Rope {
-        assert!( index <= self.len()
-               , "Rope::with_insert_str: index {} was > length {}"
-               , index, self.len());
+    pub fn with_insert_str<M>(&self, index: M, s: &str) -> Rope
+    where M: Metric
+        , Self: Measured<M>
+        , Node: Measured<M>
+        , BranchNode: Measured<M>
+        , String: Measured<M>
+        {
+        assert!( index <= self.measure()
+               , "Rope::with_insert_str: index {:?} was > length {:?}"
+               , index, self.measure());
         self.with_insert_rope(index, s.into())
     }
 
@@ -745,7 +778,6 @@ impl Rope {
     /// an_rope.append(Rope::from(String::from("efgh")));
     /// assert_eq!(an_rope, Rope::from(String::from("abcdefgh")) );
     /// ```
-
     pub fn append(&mut self, other: Rope) {
         if !other.is_empty() {
             self.root += other.root;
@@ -859,11 +891,12 @@ impl Rope {
     /// assert_eq!(cd, Rope::from(String::from("cd")));
     /// ```
     pub fn split<M: Metric>(self, index: M) -> (Rope, Rope)
-    where Node: Measured<M>
+    where Self: Measured<M>
+        , Node: Measured<M>
         , internals::BranchNode: Measured<M>
         , String: Measured<M>
         {
-        assert!(index <= self.root.measure());
+        assert!(index <= self.measure());
         let (l, r) = self.root.split(index);
         (Rope { root: l }, Rope { root: r })
     }
