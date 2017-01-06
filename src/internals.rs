@@ -620,13 +620,13 @@ impl Node {
     /// Returns an iterator that performs an in-order traversal over all the
     /// `Nodes` in this `Node`'s subtree
     #[inline]
-    fn nodes<'a>(&'a self) -> Nodes<'a> {
+    fn nodes(&self) -> Nodes {
         Nodes(vec!(self))
     }
 
     /// Returns an iterator over all leaf nodes in this `Node`'s subrope
     #[inline]
-    fn leaves<'a>(&'a self) -> Leaves<'a> {
+    fn leaves(&self) -> Leaves {
         Leaves(vec![self])
     }
 
@@ -803,7 +803,7 @@ impl Node {
         impl split_word_bounds for Node {}
     }
 
-    pub fn grapheme_indices<'a>(&'a self)  -> GraphemeIndices<'a> {
+    pub fn grapheme_indices(&self) -> GraphemeIndices {
         let mut strings = self.strings();
         let first_string = strings.next()
             .expect("grapheme_indices called on empty rope!");
@@ -813,7 +813,7 @@ impl Node {
                         , curr_length: first_string.len() }
     }
 
-    pub fn split_word_bound_indices<'a>(&'a self)  -> UWordBoundIndices<'a> {
+    pub fn split_word_bound_indices(&self) -> UWordBoundIndices {
         let mut strings = self.strings();
         let first_string = strings.next()
             .expect("split_word_bound_indices called on empty rope!");
