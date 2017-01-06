@@ -536,7 +536,7 @@ impl Rope {
     /// ```
     pub fn insert_rope(&mut self, index: usize, rope: Rope) {
         use self::metric::Grapheme;
-        if rope.len() > 0 {
+        if !rope.is_empty() {
             let len = self.len();
             if index == 0 {
                 // if the rope is being inserted at index 0, just prepend it
@@ -718,7 +718,7 @@ impl Rope {
     /// ```
 
     pub fn append(&mut self, other: Rope) {
-        if other.len() > 0 {
+        if !other.is_empty() {
             self.root += other.root;
             self.rebalance();
         }
@@ -740,7 +740,7 @@ impl Rope {
     /// assert_eq!(&an_rope, "abcd");
     /// ```
     pub fn with_append(&self, other: Rope) -> Rope {
-        if other.len() == 0 {
+        if other.is_empty() {
             self.clone()
         } else {
             // let mut rope = Rope {
@@ -766,7 +766,7 @@ impl Rope {
     /// assert_eq!(&an_rope, "abcdefgh");
     /// ```
     pub fn prepend(&mut self, other: Rope) {
-        if other.len() > 0 {
+        if !other.is_empty() {
             self.root = other.root + self.take_root();
             self.rebalance();
         }
@@ -803,7 +803,7 @@ impl Rope {
     /// assert_eq!(&another_rope, "abcd");
     /// ```
     pub fn with_prepend(&self, other: Rope) -> Rope {
-        if other.len() == 0 {
+        if other.is_empty() {
             self.clone()
         } else {
             // let mut rope = Rope {
@@ -1111,7 +1111,7 @@ impl convert::Into<Vec<u8>> for Rope {
 }
 
 fn str_to_tree(string: String) -> Node {
-    assert!(string.len() > 0);
+    assert!(!string.is_empty());
     let mut strings = string.rsplit('\n');
     let last: Node = Node::new_leaf(String::from(strings.next().unwrap()));
     let leaves = strings.map(|s| Node::new_leaf(String::from(s) + "\n"));
@@ -1132,7 +1132,7 @@ impl convert::From<String> for Rope {
     #[inline]
     fn from(string: String) -> Rope {
         Rope {
-            root: if string.len() == 0 { Node::empty() }
+            root: if string.is_empty() { Node::empty() }
                   else { str_to_tree(StrTendril::from(string)) }
         }
     }
@@ -1142,7 +1142,7 @@ impl convert::From<String> for Rope {
     #[inline]
     fn from(string: String) -> Rope {
         Rope {
-            root: if string.len() == 0 { Node::empty() }
+            root: if string.is_empty() { Node::empty() }
                   else { str_to_tree(string) }
         }
     }
