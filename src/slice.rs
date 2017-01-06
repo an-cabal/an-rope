@@ -223,6 +223,38 @@ impl<'a> RopeSliceMut<'a>  {
     #[inline]
     pub fn len(&self) -> usize { self.len }
 
+    /// Returns `true` if this `RopeSliceMut` is empty.
+    ///
+    /// # Examples
+    ///
+    /// A `RopeSliceMut` into an empty rope should be empty:
+    ///
+    /// ```
+    /// use an_rope::Rope;
+    /// let mut an_empty_rope = Rope::new();
+    /// assert!(an_empty_rope.slice_mut(0..0).is_empty());
+    /// ```
+    ///
+    ///
+    /// A `RopeSliceMut` that contains no characters should be empty,
+    /// even fi the sliced `Rope` is not empty:
+    ///
+    /// ```
+    /// use an_rope::Rope;
+    /// let mut an_rope = Rope::from("a string that is not empty");
+    /// assert!(an_rope.slice_mut(0..0).is_empty());
+    /// ```
+    ///
+    /// A `RopeSliceMut` with characters should not be empty:
+    ///
+    /// ```
+    /// use an_rope::Rope;
+    /// let mut an_rope = Rope::from("a string");
+    /// assert!(!an_rope.slice_mut(0..5).is_empty());
+    /// ```
+    #[inline] pub fn is_empty(&self) -> bool { self.len() == 0 }
+
+
     #[inline]
     fn take_node(&mut self) -> Node {
         use std::mem::replace;
@@ -301,7 +333,7 @@ impl<'a> RopeSliceMut<'a>  {
     /// ##[cfg(feature = "unstable")]
     /// extern crate collections;
     /// extern crate an_rope;
-        /// ##[cfg(feature = "unstable")]
+    /// ##[cfg(feature = "unstable")]
     /// # fn main() {
     ///
     /// use collections::range::RangeArgument;
@@ -529,6 +561,38 @@ impl<'a> RopeSlice<'a> {
 
     #[inline]
     pub fn len(&self) -> usize { self.len }
+
+
+    /// Returns `true` if this `RopeSlice` is empty.
+    ///
+    /// # Examples
+    ///
+    /// A `RopeSlice` into an empty rope should be empty:
+    ///
+    /// ```
+    /// use an_rope::Rope;
+    /// let an_empty_rope = Rope::new();
+    /// assert!(an_empty_rope.slice(0..0).is_empty());
+    /// ```
+    ///
+    ///
+    /// A `RopeSlice` that contains no characters should be empty,
+    /// even fi the sliced `Rope` is not empty:
+    ///
+    /// ```
+    /// use an_rope::Rope;
+    /// let an_rope = Rope::from("a string that is not empty");
+    /// assert!(an_rope.slice(0..0).is_empty());
+    /// ```
+    ///
+    /// A `RopeSlice` with characters should not be empty:
+    ///
+    /// ```
+    /// use an_rope::Rope;
+    /// let an_rope = Rope::from("a string");
+    /// assert!(!an_rope.slice(0..5).is_empty());
+    /// ```
+    #[inline] pub fn is_empty(&self) -> bool { self.len() == 0 }
 }
 
 //-- comparisons ----------------------------------------------------
