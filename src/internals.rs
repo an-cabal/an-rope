@@ -2,12 +2,11 @@ use unicode_segmentation::UnicodeSegmentation;
 use unicode_segmentation::{ GraphemeIndices as StrGraphemeIndices
                           , UWordBoundIndices as StrUWordBoundIndices
                           };
-use metric::{Char, Grapheme, Line, Metric, Measured};
+use metric::{Grapheme, Line, Metric, Measured};
 use unicode::GraphemeIndex;
 
 use std::ops;
 use std::fmt;
-use std::convert;
 #[cfg(feature = "tendril")]
 use tendril;
 

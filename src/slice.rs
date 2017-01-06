@@ -21,7 +21,7 @@ use std::ops::Range;
 use super::Rope;
 use super::internals::{Node, BranchNode};
 
-use super::metric::{Char, Grapheme, Line, Metric, Measured};
+use super::metric::{Metric, Measured};
 
 /// An immutable borrowed slice of a `Rope`.
 ///

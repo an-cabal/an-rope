@@ -48,7 +48,7 @@ use std::iter;
 mod unicode;
 pub mod metric;
 
-use metric::{Char, Measured, Metric};
+use metric::{Measured, Metric};
 
 use self::internals::Node;
 pub use self::slice::{RopeSlice, RopeSliceMut};
@@ -190,8 +190,6 @@ macro_rules! unicode_seg_iters {
 
 mod internals;
 mod slice;
-
-use self::metric::Grapheme;
 
 impl Rope {
 
