@@ -989,7 +989,7 @@ impl Rope {
     /// assert_eq!(&gr_inds[..], b);
     /// ```
     #[inline]
-    pub fn grapheme_indices<'a>(&'a self)  -> internals::GraphemeIndices<'a> {
+    pub fn grapheme_indices(&self) -> internals::GraphemeIndices {
         self.root.grapheme_indices()
     }
 
@@ -1011,8 +1011,7 @@ impl Rope {
     /// assert_eq!(&swi1[..], b);
     /// ```
     #[inline]
-    pub fn split_word_bound_indices<'a>(&'a self)
-                                       -> internals::UWordBoundIndices<'a> {
+    pub fn split_word_bound_indices(&self) -> internals::UWordBoundIndices {
         self.root.split_word_bound_indices()
     }
 
@@ -1054,12 +1053,12 @@ impl Rope {
     /// ```
     #[inline]
     #[cfg(feature = "unstable")]
-    pub fn slice<'a, R>(&'a self, range: R) -> RopeSlice<'a>
+    pub fn slice<R>(&self, range: R) -> RopeSlice
     where R: RangeArgument<usize> {
         RopeSlice::new(&self.root, range)
     }
     #[cfg(not(feature = "unstable"))]
-    pub fn slice<'a>(&'a self, range: ops::Range<usize>) -> RopeSlice<'a> {
+    pub fn slice(&self, range: ops::Range<usize>) -> RopeSlice {
         RopeSlice::new(&self.root, range)
     }
 
@@ -1096,13 +1095,12 @@ impl Rope {
     /// ```
     #[inline]
     #[cfg(feature = "unstable")]
-    pub fn slice_mut<'a, R>(&'a mut self, range: R) -> RopeSliceMut<'a>
+    pub fn slice_mut<R>(&mut self, range: R) -> RopeSliceMut
     where R: RangeArgument<usize> {
         RopeSliceMut::new(&mut self.root, range)
     }
     #[cfg(not(feature = "unstable"))]
-    pub fn slice_mut<'a>(&'a mut self, range: ops::Range<usize>)
-                        -> RopeSliceMut<'a> {
+    pub fn slice_mut(&mut self, range: ops::Range<usize>) -> RopeSliceMut {
         RopeSliceMut::new(&mut self.root, range)
     }
 
