@@ -1,4 +1,0 @@
-//! An editor
-fn main() {
-    
-}
