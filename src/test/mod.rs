@@ -165,8 +165,9 @@ fn delete_test_2() {
 #[cfg(feature = "unstable")]
 #[test]
 fn delete_test_3() {
+    use std::ops::RangeFull;
     let mut r = Rope::from("this is not fine".to_string());
-    r.delete((..));
+    r.delete::<RangeFull, usize>((..));
     assert_eq!(&r, "");
 }
 

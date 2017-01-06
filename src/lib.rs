@@ -449,12 +449,18 @@ impl Rope {
     /// ```
     #[inline]
     #[cfg(feature = "unstable")]
-    pub fn delete<R>(&mut self, range: R)
-    where R: RangeArgument<usize> {
-        let start = range.start().map(|s| Grapheme::from(*s))
-                         .unwrap_or_else(|| { Grapheme::from(0) });
-        let end = range.end().map(|e| Grapheme::from(*e))
-                        .unwrap_or_else(|| { self.root.grapheme_len() });
+    pub fn delete<R, M>(&mut self, range: R)
+    where R: RangeArgument<M>
+        , M: Metric
+        , Rope: Measured<M>
+        , Node: Measured<M>
+        , BranchNode: Measured<M>
+        , String: Measured<M>
+        {
+        let start = range.start().map(|s| *s)
+                         .unwrap_or_else(|| { M::default() });
+        let end = range.end().map(|e| *e)
+                       .unwrap_or_else(|| { self.measure() });
 
         assert!( start <= end
                , "invalid index! start {:?} > end {:?}", end, start);
