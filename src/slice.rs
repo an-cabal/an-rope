@@ -19,8 +19,9 @@ use collections::range::RangeArgument;
 use std::ops::Range;
 
 use super::Rope;
-use super::internals::Node;
+use super::internals::{Node, BranchNode};
 
+use super::metric::{Char, Grapheme, Line, Metric, Measured};
 
 /// An immutable borrowed slice of a `Rope`.
 ///
@@ -297,15 +298,23 @@ impl<'a> RopeSliceMut<'a>  {
     /// assert_eq!(&rope, "this is an example string");
     /// # }
     /// ```
+    #[inline]
     pub fn insert_rope(&mut self, index: usize, rope: Rope) {
-        use metric::Grapheme;
         assert!( index <= self.len()
                , "RopeSliceMut::insert_rope: index {} was > length {}"
                , index, self.len());
+        self.insert_rope_on(Char::from(index), rope)
+    }
+
+    pub fn insert_rope_on<M: Metric>(&mut self, index: M, rope: Rope)
+    where Node: Measured<M>
+        , BranchNode: Measured<M>
+        , String: Measured<M> {
+        // TODO: validate
         if !rope.is_empty() {
             // split the rope at the given index
             let (left, right) = self.take_node()
-                                    .split(Grapheme::from(self.offset + index));
+                                    .split_on(index + self.offset);
 
             // construct the new root node with `Rope` inserted
             *self.node = (left + rope.root + right).rebalance();

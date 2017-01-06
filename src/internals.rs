@@ -2,7 +2,7 @@ use unicode_segmentation::UnicodeSegmentation;
 use unicode_segmentation::{ GraphemeIndices as StrGraphemeIndices
                           , UWordBoundIndices as StrUWordBoundIndices
                           };
-use metric::{Grapheme, Line, Metric, Measured};
+use metric::{Char, Grapheme, Line, Metric, Measured};
 use unicode::GraphemeIndex;
 
 use std::ops;
@@ -161,21 +161,21 @@ impl Measured<Grapheme> for BranchNode {
     #[inline] fn measure_weight(&self) -> Grapheme { self.left.measure() }
 }
 
-impl Measured<Grapheme> for Node {
-    fn to_byte_index(&self, index: Grapheme) -> Option<usize>  {
-        unimplemented!()
-    }
-
-    #[inline] fn measure(&self) -> Grapheme {
-        match *self { Leaf(ref s) => s.measure(), Branch(ref n) => n.measure() }
-    }
-
-    #[inline] fn measure_weight(&self) -> Grapheme {
-        match *self { Leaf(ref s) => s.measure_weight()
-                    , Branch(ref n) => n.measure_weight() }
-    }
-
-}
+// impl Measured<Grapheme> for Node {
+//     fn to_byte_index(&self, index: Grapheme) -> Option<usize>  {
+//         unimplemented!()
+//     }
+//
+//     #[inline] fn measure(&self) -> Grapheme {
+//         match *self { Leaf(ref s) => s.measure(), Branch(ref n) => n.measure() }
+//     }
+//
+//     #[inline] fn measure_weight(&self) -> Grapheme {
+//         match *self { Leaf(ref s) => s.measure_weight()
+//                     , Branch(ref n) => n.measure_weight() }
+//     }
+//
+// }
 
 
 impl Metric for Line {
@@ -250,16 +250,84 @@ impl Measured<Line> for BranchNode {
     }
 }
 
-impl Measured<Line> for Node {
-    fn to_byte_index(&self, index: Line) -> Option<usize>  {
+// impl Measured<Line> for Node {
+//     fn to_byte_index(&self, index: Line) -> Option<usize>  {
+//         unimplemented!()
+//     }
+//
+//     #[inline] fn measure(&self) -> Line {
+//         match *self { Leaf(ref s) => s.measure(), Branch(ref n) => n.measure() }
+//     }
+//
+//     #[inline] fn measure_weight(&self) -> Line {
+//         match *self { Leaf(ref s) => s.measure_weight()
+//                     , Branch(ref n) => n.measure_weight() }
+//     }
+//
+// }
+
+impl Metric for Char {
+
+    #[inline] fn is_splittable() -> bool { true }
+
+    /// Returns true if index `i` in `node` is a boundary along this `Metric`
+    #[inline] fn is_boundary<M: Measured<Self>>(node: &M, i: usize) -> bool {
+        true
+    }
+}
+
+impl Measured<Char> for str {
+
+    #[inline] fn to_byte_index(&self, index: Char) -> Option<usize>  {
+        Some(index.into())
+    }
+
+    #[inline]
+    fn measure(&self) -> Char { Char::from(self.len()) }
+
+    #[inline]
+    fn measure_weight(&self) -> Char { Char::from(self.len()) }
+}
+
+impl Measured<Char> for String {
+    #[inline] fn to_byte_index(&self, index: Char) -> Option<usize>  {
+        Some(index.into())
+    }
+
+    #[inline]
+    fn measure(&self) -> Char { Char::from(self.len()) }
+
+    #[inline]
+    fn measure_weight(&self) -> Char { Char::from(self.len()) }
+}
+
+impl Measured<Char> for BranchNode {
+    #[inline] fn to_byte_index(&self, index: Char) -> Option<usize>  {
+        Some(index.into())
+    }
+
+    #[inline]
+    fn measure(&self) -> Char { Char::from(self.len) }
+
+    #[inline]
+    fn measure_weight(&self) -> Char { Char::from(self.weight) }
+}
+
+impl<M> Measured<M> for Node
+where M: Metric
+    , BranchNode: Measured<M>
+    , String: Measured<M>
+    {
+
+    fn to_byte_index(&self, index: M) -> Option<usize>  {
         unimplemented!()
     }
 
-    #[inline] fn measure(&self) -> Line {
+    #[inline] fn measure(&self) -> M {
         match *self { Leaf(ref s) => s.measure(), Branch(ref n) => n.measure() }
     }
 
-    #[inline] fn measure_weight(&self) -> Line {
+    #[inline] fn measure_weight(&self) -> M {
         match *self { Leaf(ref s) => s.measure_weight()
                     , Branch(ref n) => n.measure_weight() }
     }
@@ -316,12 +384,16 @@ impl BranchNode {
     ///
     /// # Time complexity
     /// O(log _n_)
-    fn split<M: Metric>(self, index: M) -> (Node, Node)
+    #[inline] fn split(self, index: usize) -> (Node, Node) {
+        use metric::Char;
+        self.split_on(Char::from(index))
+    }
+
+    fn split_on<M: Metric>(self, index: M) -> (Node, Node)
     where Node: Measured<M>
         , BranchNode: Measured<M>
         , String: Measured<M>
-        , M: convert::Into<usize>
-        , M: Copy {
+        {
         let weight = (&self).measure_weight();
         // to determine which side of this node we are splitting on, we compare
         // the index to split to this node's weight.
@@ -329,7 +401,7 @@ impl BranchNode {
             // if the index is less than this node's weight, then it's in the
             // left subtree. calling `split` on the left child will walk
             // the left subtree to that index
-            let (left, left_right) = self.left.split(index);
+            let (left, left_right) = self.left.split_on(index);
             // the left side of the split left child will become the left side
             // of the split pair.
             let right = if left_right.is_empty() {
@@ -348,7 +420,7 @@ impl BranchNode {
             // somewhere in the right subtree. walk the right subtree,
             // subtracting this node's weight, (the length of it's left subtree)
             // to find the new index in the right subtree.
-            let (right_left, right) = self.right.split(index - weight);
+            let (right_left, right) = self.right.split_on(index - weight);
             // the right side of the split right child will become the right
             // side of the split
 
@@ -434,6 +506,25 @@ impl Node {
                 (self, i)
         }
     }
+    /// Split this `Node`'s subtree on the specified `index`.
+    ///
+    /// Consumes `self`.
+    ///
+    /// This function walks the tree from this node until it reaches the index
+    /// to split on, and then it splits the leaf node containing that index.
+    ///
+    /// # Returns
+    /// A tuple containing the left and right sides of the split node. These are
+    /// returned as a tuple rather than as a new branch, since the expected use
+    /// case for this function is splitting a node so that new text can be
+    /// inserted between the two split halves.
+    ///
+    /// # Time complexity
+    /// O(log _n_)
+    #[inline]
+    pub fn split(self, index: usize) -> (Node, Node) {
+        self.split_on(Char::from(index))
+    }
 
     /// Split this `Node`'s subtree on the specified `index`.
     ///
@@ -450,12 +541,10 @@ impl Node {
     ///
     /// # Time complexity
     /// O(log _n_)
-    pub fn split<M: Metric>(self, index: M) -> (Node, Node)
+    pub fn split_on<M: Metric>(self, index: M) -> (Node, Node)
     where Self: Measured<M>
         , BranchNode: Measured<M>
-        , String: Measured<M>
-        , M: convert::Into<usize>
-        , M: Copy {
+        , String: Measured<M> {
         match self {
             Leaf(ref s) if s.is_empty() =>
                 // splitting an empty leaf node returns two empty leaf nodes
@@ -476,7 +565,7 @@ impl Node {
             }
           , Branch(node) =>
                 // otherwise, just delegate out to `BranchNode::split()`
-                node.split(index)
+                node.split_on(index)
         }
     }
 

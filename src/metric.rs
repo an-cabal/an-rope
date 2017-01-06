@@ -54,7 +54,9 @@ pub trait Metric: Monoid + Eq + Add<usize, Output=Self>
                          + Sub<usize, Output=Self>
                          + Sub<Self, Output=Self>
                          + Eq + Ord
-                         + Sized {
+                         + Sized
+                         + convert::Into<usize>
+                         + Copy{
 
     fn is_splittable() -> bool;
 

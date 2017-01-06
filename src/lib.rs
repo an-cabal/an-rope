@@ -46,7 +46,9 @@ use std::iter;
 #[cfg(all( test, feature = "unstable"))] mod bench;
 
 mod unicode;
-mod metric;
+pub mod metric;
+
+use metric::{Char, Measured, Metric};
 
 use self::internals::Node;
 pub use self::slice::{RopeSlice, RopeSliceMut};
@@ -439,11 +441,21 @@ impl Rope {
         let (_, r) = r.split(end - start);
         self.root = Node::new_branch(l, r);
     }
+
     #[inline]
     #[cfg(not(feature = "unstable"))]
     pub fn delete(&mut self, range: ops::Range<usize>) {
-        let (l, r) = self.take_root().split(Grapheme::from(range.start));
-        let (_, r) = r.split(Grapheme::from(range.end - range.start));
+        self.delete_on(Char::from(range.start)..Char::from(range.end))
+    }
+
+    #[inline]
+    #[cfg(not(feature = "unstable"))]
+    pub fn delete_on<M: Metric>(&mut self, range: ops::Range<M>)
+    where Node: Measured<M>
+        , internals::BranchNode: Measured<M>
+        , String: Measured<M> {
+        let (l, r) = self.take_root().split_on(range.start);
+        let (_, r) = r.split_on(range.end - range.start);
         self.root = Node::new_branch(l, r);
     }
 
@@ -539,11 +551,18 @@ impl Rope {
     /// an_rope.insert_rope(1, Rope::from("bc"));
     /// assert_eq!(an_rope, Rope::from("abcd"));
     /// ```
+    #[inline]
     pub fn insert_rope(&mut self, index: usize, rope: Rope) {
-        use self::metric::Grapheme;
+        self.insert_rope_on(Char::from(index), rope)
+    }
+
+    pub fn insert_rope_on<M: Metric>(&mut self, index: M, rope: Rope)
+    where Node: Measured<M>
+        , internals::BranchNode: Measured<M>
+        , String: Measured<M> {
         if !rope.is_empty() {
-            let len = self.len();
-            if index == 0 {
+            let len = self.root.measure();
+            if index.into() == 0 {
                 // if the rope is being inserted at index 0, just prepend it
                 self.prepend(rope)
             } else if index == len {
@@ -551,8 +570,7 @@ impl Rope {
                 self.append(rope)
             } else {
                 // split the rope at the given index
-                let (left, right) = self.take_root()
-                                        .split(Grapheme::from(index));
+                let (left, right) = self.take_root().split_on(index);
 
                 // construct the new root node with `Rope` inserted
                 self.root = left + rope.root + right;
@@ -835,9 +853,18 @@ impl Rope {
     /// assert_eq!(cd, Rope::from(String::from("cd")));
     /// ```
     pub fn split(self, index: usize) -> (Rope, Rope) {
-        use self::metric::Grapheme;
         assert!(index <= self.len());
-        let (l, r) = self.root.split(Grapheme::from(index));
+        let (l, r) = self.root.split(index);
+        (Rope { root: l }, Rope { root: r })
+    }
+
+    pub fn split_on<M: Metric>(self, index: M) -> (Rope, Rope)
+    where Node: Measured<M>
+        , internals::BranchNode: Measured<M>
+        , String: Measured<M>
+        {
+        assert!(index <= self.root.measure());
+        let (l, r) = self.root.split_on(index);
         (Rope { root: l }, Rope { root: r })
     }
 
