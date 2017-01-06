@@ -162,3 +162,5 @@ impl Sub<usize> for Char {
     type Output = Self;
     #[inline] fn sub(self, rhs: usize) -> Self { Char(self.0 - rhs) }
 }
+
+impl Monoid for usize { }
