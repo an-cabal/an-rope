@@ -81,6 +81,7 @@ macro_rules! unstable_iters {
          $body:expr
      })+ ) => { $(
          $(#[$attr])*
+         #[cfg_attr(feature = "clippy", allow(needless_lifetimes))]
          pub fn $name$(<$lf>)*(&'a $sel) -> $ty {
              $body
          }
@@ -91,6 +92,7 @@ macro_rules! unstable_iters {
      })+ ) => { $(
          $(#[$attr])*
          #[cfg(feature = "unstable")]
+         #[cfg_attr(feature = "clippy", allow(needless_lifetimes))]
          pub fn $name$(<$lf>)*(&'a mut $sel) -> $ty {
              $body
          }
@@ -105,6 +107,7 @@ macro_rules! unstable_iters {
      })+ ) => ($(
          $(#[$attr])*
          #[cfg(not(feature = "unstable"))]
+         #[cfg_attr(feature = "clippy", allow(needless_lifetimes))]
          pub fn $name$(<$lf>)*(&'a $sel) -> Box<Iterator<Item=$ty> + 'a> {
              Box::new($body)
          }
@@ -115,6 +118,7 @@ macro_rules! unstable_iters {
      })+ ) => { $({
          $(#[$attr])*
          #[cfg(not(feature = "unstable"))]
+         #[cfg_attr(feature = "clippy", allow(needless_lifetimes))]
          pub fn $name$(<$lf>)*(&'a mut $sel) -> Box<Iterator<Item=$ty> + 'a> {
              Box::new($body)
          }
