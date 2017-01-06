@@ -62,7 +62,7 @@ pub use self::slice::{RopeSlice, RopeSliceMut};
 /// non-destructive, persistant API. The persistant API's methods have names
 /// prefixed with `with_`, such as `with_push()` and `with_append()`.
 ///
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Rope {
     // can we get away with having these be of &str or will they need
     // to be string?
