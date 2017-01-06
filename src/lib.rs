@@ -324,6 +324,33 @@ impl Rope {
     /// ```
     pub fn len(&self) -> usize { self.root.len() }
 
+    /// Returns `true` if this `Rope` is empty.
+    ///
+    /// # Examples
+    ///
+    /// A `Rope` with no characters should be empty:
+    ///
+    /// ```
+    /// use an_rope::Rope;
+    /// let an_empty_rope = Rope::new();
+    /// assert!(an_empty_rope.is_empty());
+    /// ```
+    ///
+    /// ```
+    /// use an_rope::Rope;
+    /// let an_empty_rope = Rope::from(String::from(""));
+    /// assert!(an_empty_rope.is_empty());
+    /// ```
+    ///
+    /// A `Rope` with characters should not be empty:
+    ///
+    /// ```
+    /// use an_rope::Rope;
+    /// let an_rope = Rope::from("a string");
+    /// assert!(!an_rope.is_empty());
+    /// ```
+    #[inline] pub fn is_empty(&self) -> bool { self.len() == 0 }
+
     /// Insert `char` into `index` in this `Rope`,
     ///
     /// # Panics
