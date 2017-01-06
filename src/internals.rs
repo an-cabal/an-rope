@@ -333,7 +333,7 @@ impl BranchNode {
             let (left, left_right) = self.left.split(index);
             // the left side of the split left child will become the left side
             // of the split pair.
-            let right = if left_right.len() == 0 {
+            let right = if left_right.is_empty() {
                 // if the right side of the split is empty, then the right
                 // side of the returned pair is just this node's right child
                 *self.right
@@ -353,7 +353,7 @@ impl BranchNode {
             // the right side of the split right child will become the right
             // side of the split
 
-            let left = if right_left.len() == 0 {
+            let left = if right_left.is_empty() {
                 // if the left side of the split right child is empty, then the
                 // left side of the returned pair is just this node's left child
                 *self.left
@@ -458,7 +458,7 @@ impl Node {
         , M: convert::Into<usize>
         , M: Copy {
         match self {
-            Leaf(ref s) if s.len() == 0 =>
+            Leaf(ref s) if s.is_empty() =>
                 // splitting an empty leaf node returns two empty leaf nodes
                 (Node::empty(), Node::empty())
           , Leaf(ref s) if s.measure().into() == 1 =>
@@ -557,6 +557,8 @@ impl Node {
                    , &Branch(BranchNode { len, ..}) => len
                    }
     }
+
+    #[inline] pub fn is_empty(&self) -> bool { self.len() == 0 }
 
     /// Calculates the weight of a node
     #[inline]
@@ -881,7 +883,7 @@ impl<'a> Iterator for Leaves<'a> {
         loop {
             match self.0.pop() {
                 None => return None
-              , Some(&Leaf(ref s)) if s.len() == 0 => {}
+              , Some(&Leaf(ref s)) if s.is_empty() => {}
               , leaf @ Some(&Leaf(_))=> return leaf
               , Some(&Branch(BranchNode { ref left, ref right, .. })) => {
                     self.0.push(right);
@@ -902,7 +904,7 @@ impl Iterator for IntoLeaves {
         loop {
             match self.0.pop() {
                 None => return None
-              , Some(Leaf(ref s)) if s.len() == 0 => {}
+              , Some(Leaf(ref s)) if s.is_empty() => {}
               , leaf @ Some(Leaf(_))=> return leaf
               , Some(Branch(BranchNode { left, right, .. })) => {
                     self.0.push(*right);
