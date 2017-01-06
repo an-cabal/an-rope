@@ -1,6 +1,7 @@
 use std::convert;
 use std::ops::{Add, Sub};
 use std::default::Default;
+use std::fmt;
 
 
 /// The class of monoids
@@ -56,7 +57,8 @@ pub trait Metric: Monoid + Eq + Add<usize, Output=Self>
                          + Eq + Ord
                          + Sized
                          + convert::Into<usize>
-                         + Copy{
+                         + Copy
+                         + fmt::Debug {
 
     fn is_splittable() -> bool;
 
