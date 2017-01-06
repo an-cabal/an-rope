@@ -24,7 +24,7 @@ use super::internals::Node;
 
 /// An immutable borrowed slice of a `Rope`.
 ///
-/// A RopeSlice represents an immutable borrowed slice of some or all the
+/// A `RopeSlice` represents an immutable borrowed slice of some or all the
 /// characters in a `Rope`.
 pub struct RopeSlice<'a> { node: &'a Node
                          , offset: usize
