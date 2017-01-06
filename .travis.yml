@@ -32,42 +32,19 @@ script: |
   if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
     travis-cargo build &&
     travis-cargo test &&
-    cd an-rope &&
-      travis-cargo test &&
-    cd .. &&
     travis-cargo --only stable doc
   else
     cargo build &&
-    cargo test &&
-    cd an-rope &&
-      cargo build &&
-      cargo test &&
-    cd ..
+    cargo test
   fi
 after_success:
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then travis-cargo --only stable doc-upload;
   fi
-# - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then travis-cargo coverage --no-sudo --verify;
-#   fi
-# - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then bash <(curl -s https://codecov.io/bash);
-#   fi
-- |
-  if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-    wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz &&
-    tar xzf master.tar.gz &&
-    cd kcov-master &&
-    mkdir build &&
-    cd build &&
-    cmake .. &&
-    make &&
-    sudo make install &&
-    cd ../.. &&
-    rm -rf kcov-master &&
-    for file in target/debug/an-editor-*; do mkdir -p "target/cov/$(basename $file)"; kcov --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file"; done &&
-    for file in an-rope/target/debug/an-rope-*; do mkdir -p "an-rope/target/cov/$(basename $file)"; kcov --exclude-pattern=/.cargo,/usr/lib --verify "an-rope/target/cov/$(basename $file)" "$file"; done &&
-    bash <(curl -s https://codecov.io/bash) &&
-    echo "Uploaded code coverage";
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then travis-cargo coverage --no-sudo --verify;
   fi
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then bash <(curl -s https://codecov.io/bash);
+  fi
+
 notifications:
   slack:
     rooms:
@@ -80,7 +57,6 @@ env:
   - secure: IbE0k22bDuVaGUjrj6rmErEoiHVf0DDkswgvI8X1hk42O/vJLzxOnk9LleZLbN3wXrqO1wDxaaCAget+VM0ZPPYfuO/5aSDPah/OgmVgcnUDX3nvI1C8A2FEvMo8MngDeJspFYO9CtZLoHmPLMJUkcV6xnvxDy9/z4zjhlM/nbpXf03P2NkhePguQpWUnK2RQnYKfZQ1jsBz9HTyYQMNHih39RBDLwn1dPVf7bnyjAmqvzsQxB5hW1EZlAnfk3OGn8sii1r3GJYQZlfWgB3xxqliDzCiOAz9P8Us4995SRLD6hdbOnX9nxdmq2zUKMCbgixXTgngZNtHEPs814om2Cm3ua0KTwlTi+beKTYgD7VsA5ZCNBQyqLaSpvTd2m41HekKNoF1FYFtO4eI1lXkM2YCu99IvcI8W6YpgUKI05sJMEJafha12q31/LL1z7g0V50uWNsGSsCXho+zco9RzIsGwvW+S2h4+5lY5kLE93Td5edXP8LpBH4X20lLueKRc4zLcQW83wq2XXYKzz1iDAOpX/bDB9z7+FP+bkX9kfD6EUcvHe4Cc9cKRT33EwL4DPyUtIoMaCHp5HT+MJWHQ4kb3ZwuE5NYDWIUpiOZvm6m5joWgtg4iSHG/NuOeRireOBYSatpbDrADgmqjWkMRI4o7XAAlVKYvqEtoOc2PQg=
 before_deploy: |
   if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-    cd an-rope &&
     cargo build --release &&
     cargo package &&
     cargo publish --token $CRATES_TOKEN
@@ -93,6 +69,6 @@ deploy:
   skip_cleanup: true
   on:
     tags: true
-    repo: hawkw/an-editor
+    repo: an-cabal/an-rope
     rust: stable
 after_deploy:
