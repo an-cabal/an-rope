@@ -50,7 +50,7 @@ pub mod metric;
 
 use metric::{Measured, Metric};
 
-use self::internals::Node;
+use self::internals::{Node, BranchNode};
 pub use self::slice::{RopeSlice, RopeSliceMut};
 
 /// A Rope
@@ -70,6 +70,23 @@ pub struct Rope {
     // can we get away with having these be of &str or will they need
     // to be string?
     root: Node
+}
+
+impl<M> Measured<M> for Rope
+where M: Metric
+    , Node: Measured<M>
+    , BranchNode: Measured<M>
+    , String: Measured<M>
+    {
+
+    #[inline] fn to_byte_index(&self, index: M) -> Option<usize> {
+        self.root.to_byte_index(index)
+    }
+
+    #[inline] fn measure(&self) -> M { self.root.measure() }
+
+    #[inline] fn measure_weight(&self) -> M { self.root.measure_weight() }
+
 }
 
 impl fmt::Debug for Rope {
