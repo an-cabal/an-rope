@@ -74,7 +74,7 @@ impl<'a> RopeSliceMut<'a>  {
         let start = *range.start().unwrap_or(&0);
         // similarly, if there's no defined end, then the end index
         // is the last index in the Rope.
-        let end = *range.end().unwrap_or(&node.len());
+        let end = *range.end().unwrap_or(&len);
 
         let slice_len = end - start;
 
