@@ -10,16 +10,19 @@ addons:
     - gcc
 rust:
 - nightly
-- beta
+# - beta
 - stable
 os:
 - linux
 - osx
 matrix:
   allow_failures:
-  - rust: beta
+  # - rust: beta
   - rust: nightly
   fast_finish: true
+  exclude:
+  - rust: nightly
+    os: osx
 before_install:
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update; fi
 cache: cargo
