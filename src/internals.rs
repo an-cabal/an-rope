@@ -100,16 +100,10 @@ impl Measured<Grapheme> for str {
     ///    in `node` measured by this `Metric`, if there is an `n`th element
     /// - `None` if there is no `n`th element in `node`
     fn to_byte_index(&self, index: Grapheme) -> Option<usize>  {
-        let i: usize = index.into();
-        // TODO: CACHE THIS YOU ASSHOLE
-        if self.graphemes(true).count() == i {
-            Some(self.len())
-        } else {
-            self.grapheme_indices(true)
-                .position(|(offset, _)| offset == i)
-        }
+        self.grapheme_indices(true)
+            .map(|(offset, _)| offset)
+            .nth(index.into())
     }
-
 
     #[inline]
     fn measure(&self) -> Grapheme {
@@ -124,15 +118,9 @@ impl Measured<Grapheme> for str {
 
 impl Measured<Grapheme> for String {
     fn to_byte_index(&self, index: Grapheme) -> Option<usize>  {
-        let i: usize = index.into();
-        // TODO: CACHE THIS YOU ASSHOLE
-        if self.graphemes(true).count() == i {
-            Some(self.len())
-        } else {
-            self.grapheme_indices(true)
-                .position(|(offset, _)| offset == i)
-                // .map(|(offset, _)| offset)
-        }
+        self.grapheme_indices(true)
+            .map(|(offset, _)| offset)
+            .nth(index.into())
     }
 
     #[inline]
@@ -1055,7 +1043,7 @@ impl ops::Index<usize> for Node {
         // match *self {
         //     Leaf(ref string) => {
         //         let index: usize =
-        //             GraphemeIndex::from(i).to_char_index(string).into();
+        //             GraphemeIndex::from(i).to_byte_index(string).into();
         //         string.graphemes(true).nth(index - 1).expect("oob!") }
         //   , Branch(BranchNode { ref right, .. }) if len < i =>
         //         &right[i - len]
