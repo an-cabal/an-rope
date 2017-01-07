@@ -1,16 +1,49 @@
+//! # Rope metrics
+//!
+//! A [`Metric`] represents a measurement with which indices into a [`Rope`]
+//! may be calculated.
+//!
+//! All [`Rope`] methods are optionally parameterised with [`Metric`]s. This
+//! means that you can [`split`], [`insert`], or [`delete`] Ropes on character,
+//! line, or grapheme indices, without necessitating the addition of a whole
+//! bunch of new, wordy method names like `split_on_grapheme_index` and so on.
+//!
+//! # Examples
+//!
+//! If I wanted to delete characters 10 to 15 from rope _r_, I could say:
+//!
+//! ```
+//! # use an_rope::Rope;
+//! let mut r = Rope::from("this is a long rope");
+//! r.delete(10..15);
+//! assert_eq!(&r, "this is a rope");
+//! ```
+//!
+//! Suppose my Rope contained some strange Unicode characters, and I realised
+//! that I actually wanted to delete _graphemes_ 10 to 12. In that case, I
+//! could say:
+//!
+//! ```
+//! # use an_rope::Rope;
+//! use an_rope::metric::Grapheme;
+//! let mut r = Rope::from("this is a 🆒🆕 rope, 🆗!");
+//! r.delete(Grapheme(10)..Grapheme(12));
+//! assert_eq!(&r, "this is a rope, 🆗!");
+//! ```
+//!
+
 use std::convert;
 use std::ops::{Add, Sub};
 use std::default::Default;
 use std::fmt;
 
-
-/// The class of monoids
+/// # The class of monoids
 ///
-/// The class of monoids (types with an accumulative binary operation that has
+/// The class of [monoid]s (types with an accumulative binary operation that has
 /// an identity).
 ///
 /// Technically, `Add<Self, Output=Self>` is standing in for "semigroup" here,
-/// while `Default` is standing in for "identity".
+/// while [`Default`] is standing in for "identity"[^id].
 ///
 /// An instance _M_ should satisfy the following laws:
 ///
@@ -19,6 +52,15 @@ use std::fmt;
 ///  + _x_`.add(`_y_`.add(`_z_`))` = _z_`.add(`_x_`.add(`_y_`))`
 ///  + _M_`::accumulate(`_a_`)` = _a_`.fold(`_M_`::default,`_M_`::sum)`
 ///
+/// [^id]: A mathematician might point out that it might be more correct to
+///        represent the "identity" operation using the [`Zero`] trait rather
+///        than [`Default`], as the documentation for `Zero` notes that "[t]his
+///        trait is intended for use in conjunction with `Add`, as an identity".
+///        However, the `Zero` trait is marked as unstable, so it would only be
+///        useable on nightly Rust, and its use is deprecated. Thus, `Default`.
+/// [`Default`]: https://doc.rust-lang.org/std/default/trait.Default.html)
+/// [`Zero`]: https://doc.rust-lang.org/std/num/trait.Zero.html
+/// [monoid]: http://mathworld.wolfram.com/Monoid.html
 pub trait Monoid: Add<Self, Output=Self> + Default + Sized {
     #[inline]
     fn accumulate<F>(xs: F) -> Self
@@ -28,14 +70,20 @@ pub trait Monoid: Add<Self, Output=Self> + Default + Sized {
     }
 }
 
+/// Trait indicating that a type may be measured with [`Metric`] _M_.
+///
+///
+/// [`Metric`]: trait.Metric.html
 pub trait Measured<M: Metric> {
     /// Apply `Metric` to `Self`
     ///
     /// Although we aren't currently enforcing this, `measure`ing a `Node` with
     /// two children should produce the same result as `measure`ing both
     /// children and `Monoid::sum`ming the result. That is to say, `measure`
-    /// should be a [_monoid homomorphism_]
-    /// (https://en.wikipedia.org/wiki/Monoid#Monoid_homomorphisms).
+    /// should be a [_monoid homomorphism_].
+    ///
+    /// [_monoid homomorphism_]:
+    /// https://en.wikipedia.org/wiki/Monoid#Monoid_homomorphisms
     fn measure(&self) -> M;
 
     /// Measure the `weight` of `Node` by this `metric`.
@@ -50,7 +98,9 @@ pub trait Measured<M: Metric> {
     fn to_byte_index(&self, index: M) -> Option<usize>;
 }
 
-/// A monoid that can be applied to a `Node` as a measurement
+/// A [monoid] that can be applied to a type as a measurement.
+///
+/// [monoid]: trait.Monoid.html
 pub trait Metric: Monoid + Eq + Add<usize, Output=Self>
                          + Sub<usize, Output=Self>
                          + Sub<Self, Output=Self>
@@ -60,6 +110,7 @@ pub trait Metric: Monoid + Eq + Add<usize, Output=Self>
                          + Copy
                          + fmt::Debug {
 
+    /// Returns whether text may be split into new leaf nodes using this metric.
     fn is_splittable() -> bool;
 
     /// Returns the byte index of the next element of this metric in `Node`
