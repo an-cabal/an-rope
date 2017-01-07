@@ -163,6 +163,23 @@ fn line_delete_test_1() {
 }
 
 #[test]
+fn line_delete_test_2() {
+    use metric::Line;
+    let mut rope = Rope::from("this is\n\
+                               a\n\
+                               multi\n\
+                               line\n\
+                               rope");
+    rope.delete(Line(1)..Line(1));
+    assert_eq!( &rope
+              , "a\n\
+                 multi\n\
+                 line\n\
+                 rope"
+              )
+}
+
+#[test]
 fn delete_test_1() {
     let mut r = Rope::from("this is not fine".to_string());
     r.delete((8..12));
