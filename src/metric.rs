@@ -19,7 +19,7 @@
 //! assert_eq!(&r, "this is a rope");
 //! ```
 //!
-//! Suppose my Rope contained some strange Unicode characters, and I realised
+//! Suppose my `Rope` contained some strange Unicode characters, and I realised
 //! that I actually wanted to delete _graphemes_ 10 to 13. In that case, I
 //! could say:
 //!
@@ -31,6 +31,19 @@
 //! assert_eq!(&r, "this is a rope, 🆗!");
 //! ```
 //!
+//! Or, suppose my `Rope` spanned multiple lines:
+//!
+//! ```
+//! # use an_rope::Rope;
+//! use an_rope::metric::Line;
+//! let mut r = Rope::from("this is\n\
+//!                         a\n\
+//!                         multi\n\
+//!                         line\n\
+//!                         rope");
+//! r.delete(Line(2)..Line(3));
+//! assert_eq!(&r, "this is\na\nrope");
+//! ```
 
 use std::convert;
 use std::ops::{Add, Sub};
