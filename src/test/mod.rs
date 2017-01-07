@@ -170,7 +170,7 @@ fn line_delete_test_2() {
                                multi\n\
                                line\n\
                                rope");
-    rope.delete(Line(1)..Line(1));
+    rope.delete(Line(0)..Line(0));
     assert_eq!( &rope
               , "a\n\
                  multi\n\
