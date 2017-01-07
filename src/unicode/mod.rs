@@ -1,6 +1,4 @@
 use std::str;
-use std::convert;
-
 use unicode_segmentation::UnicodeSegmentation;
 
 #[cfg(test)]

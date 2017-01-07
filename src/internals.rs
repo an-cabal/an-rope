@@ -3,7 +3,6 @@ use unicode_segmentation::{ GraphemeIndices as StrGraphemeIndices
                           , UWordBoundIndices as StrUWordBoundIndices
                           };
 use metric::{Grapheme, Line, Metric, Measured};
-use unicode::GraphemeIndex;
 
 use std::ops;
 use std::fmt;
@@ -536,8 +535,9 @@ impl Node {
                 // the right
                 // TODO: make this properly respect metric index boundaries
                 let index = s.to_byte_index(index)
-                                 .expect(&format!( "invalid index! {} in {:?}"
-                                                  , index.into(), s));
+                             .expect(
+                                &format!( "split: invalid index! {:?} in {:?}"
+                                        , index, s));
                 let left = Leaf(s[..index].into());
                 let right = Leaf(s[index..].into());
                 (left, right)
@@ -1048,19 +1048,20 @@ impl ops::Index<usize> for Node {
     type Output = str;
 
     fn index(&self, i: usize) -> &str {
-        let grapheme_len : Grapheme = self.measure();
-        let len = grapheme_len.into();
-        assert!( i < len
-               , "Node::index: index {} out of bounds (length {})", i, len);
-        match *self {
-            Leaf(ref string) => {
-                let index: usize =
-                    GraphemeIndex::from(i).to_char_index(string).into();
-                string.graphemes(true).nth(index - 1).expect("oob!") }
-          , Branch(BranchNode { ref right, .. }) if len < i =>
-                &right[i - len]
-          , Branch(BranchNode { ref left, .. }) => &left[i]
-        }
+        // let grapheme_len : Grapheme = self.measure();
+        // let len = grapheme_len.into();
+        // assert!( i < len
+        //        , "Node::index: index {} out of bounds (length {})", i, len);
+        // match *self {
+        //     Leaf(ref string) => {
+        //         let index: usize =
+        //             GraphemeIndex::from(i).to_char_index(string).into();
+        //         string.graphemes(true).nth(index - 1).expect("oob!") }
+        //   , Branch(BranchNode { ref right, .. }) if len < i =>
+        //         &right[i - len]
+        //   , Branch(BranchNode { ref left, .. }) => &left[i]
+        // }
+        unimplemented!()
     }
 }
 
