@@ -146,6 +146,21 @@ fn line_split_test_10() {
     } else { assert!(false) }
 }
 
+#[test]
+fn line_delete_test_1() {
+    use metric::Line;
+    let mut rope = Rope::from("this is\n\
+                               a\n\
+                               multi\n\
+                               line\n\
+                               rope");
+    rope.delete(Line(2)..Line(3));
+    assert_eq!( &rope
+              , "this is\n\
+                 a\n\
+                 rope"
+              )
+}
 
 #[test]
 fn delete_test_1() {
