@@ -20,14 +20,14 @@
 //! ```
 //!
 //! Suppose my Rope contained some strange Unicode characters, and I realised
-//! that I actually wanted to delete _graphemes_ 10 to 12. In that case, I
+//! that I actually wanted to delete _graphemes_ 10 to 13. In that case, I
 //! could say:
 //!
 //! ```
 //! # use an_rope::Rope;
 //! use an_rope::metric::Grapheme;
 //! let mut r = Rope::from("this is a 🆒🆕 rope, 🆗!");
-//! r.delete(Grapheme(10)..Grapheme(12));
+//! r.delete(Grapheme(10)..Grapheme(13));
 //! assert_eq!(&r, "this is a rope, 🆗!");
 //! ```
 //!
