@@ -1032,24 +1032,28 @@ impl ops::AddAssign for Node {
 }
 
 
-impl ops::Index<usize> for Node {
+impl<M> ops::Index<M> for Node
+where M: Metric
+    , Node: Measured<M>
+    , BranchNode: Measured<M>
+    , String: Measured<M>
+    {
     type Output = str;
 
-    fn index(&self, i: usize) -> &str {
-        // let grapheme_len : Grapheme = self.measure();
-        // let len = grapheme_len.into();
-        // assert!( i < len
-        //        , "Node::index: index {} out of bounds (length {})", i, len);
-        // match *self {
-        //     Leaf(ref string) => {
-        //         let index: usize =
-        //             GraphemeIndex::from(i).to_byte_index(string).into();
-        //         string.graphemes(true).nth(index - 1).expect("oob!") }
-        //   , Branch(BranchNode { ref right, .. }) if len < i =>
-        //         &right[i - len]
-        //   , Branch(BranchNode { ref left, .. }) => &left[i]
-        // }
-        unimplemented!()
+    fn index(&self, i: M) -> &str {
+        let len = self.measure();
+        assert!( i < len
+               , "Node::index: index {:?} out of bounds (length {:?})", i, len);
+        match *self {
+            Leaf(ref string) => {
+                let idx = string.to_byte_index(i)
+                                .expect("index out of bounds!");
+                &string[idx..idx+1]
+            }
+          , Branch(BranchNode { ref right, .. }) if len < i =>
+                &right[i - len]
+          , Branch(BranchNode { ref left, .. }) => &left[i]
+        }
     }
 }
 
