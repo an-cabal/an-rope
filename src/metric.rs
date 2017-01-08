@@ -149,22 +149,29 @@ pub trait Metric: Monoid + Eq + Add<usize, Output=Self>
 
 macro_attr! {
     /// A metric for calculating indices in `Rope`s based on Unicode graphemes.
-    #[derive( Clone, Copy, Debug, PartialOrd, Ord, PartialEq, Eq
+    #[derive( Clone, Copy, PartialOrd, Ord, PartialEq, Eq
             , NewtypeFrom!
             , NewtypeAdd!(*), NewtypeAdd!(&self, usize), NewtypeAdd!(usize)
             , NewtypeSub!(*), NewtypeSub!(&self, usize), NewtypeSub!(usize)
             , NewtypeMul!(*), NewtypeMul!(&self, usize), NewtypeMul!(usize) )]
     pub struct Grapheme(pub usize);
-
 }
+
 impl Default for Grapheme {
     #[inline] fn default() -> Self { Grapheme(0) }
 }
+
 impl Monoid for Grapheme { }
+
+impl fmt::Debug for Grapheme {
+   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+       write!(f, "grapheme {}", self.0)
+   }
+}
 
 macro_attr! {
     /// A metric for calculating indices in `Rope`s based on line numbering.
-    #[derive( Clone, Copy, Debug, PartialOrd, Ord, PartialEq, Eq
+    #[derive( Clone, Copy, PartialOrd, Ord, PartialEq, Eq
             , NewtypeFrom!
             , NewtypeAdd!(*), NewtypeAdd!(&self, usize), NewtypeAdd!(usize)
             , NewtypeSub!(*), NewtypeSub!(&self, usize), NewtypeSub!(usize)
@@ -178,3 +185,9 @@ impl Default for Line {
 impl Monoid for Line { }
 
 impl Monoid for usize { }
+
+impl fmt::Debug for Line {
+   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+       write!(f, "line {}", self.0)
+   }
+}
