@@ -147,64 +147,34 @@ pub trait Metric: Monoid + Eq + Add<usize, Output=Self>
     fn is_boundary<M: Measured<Self>>(node: &M, i: usize) -> bool;
 }
 
-/// A metric for calculating indices in `Rope`s based on Unicode graphemes.
-#[derive(Clone, Copy, Debug, PartialOrd, Ord, PartialEq, Eq)]
-pub struct Grapheme(pub usize);
+macro_attr! {
+    /// A metric for calculating indices in `Rope`s based on Unicode graphemes.
+    #[derive( Clone, Copy, Debug, PartialOrd, Ord, PartialEq, Eq
+            , NewtypeFrom!
+            , NewtypeAdd!(*), NewtypeAdd!(&self, usize), NewtypeAdd!(usize)
+            , NewtypeSub!(*), NewtypeSub!(&self, usize), NewtypeSub!(usize)
+            , NewtypeMul!(*), NewtypeMul!(&self, usize), NewtypeMul!(usize) )]
+    pub struct Grapheme(pub usize);
+
+}
 impl Default for Grapheme {
     #[inline] fn default() -> Self { Grapheme(0) }
 }
-impl convert::From<usize> for Grapheme {
-    #[inline] fn from(u: usize) -> Self { Grapheme(u) }
-}
-impl convert::Into<usize> for Grapheme {
-    #[inline] fn into(self) -> usize { self.0 }
-}
-impl Add<usize> for Grapheme {
-    type Output = Self;
-    #[inline] fn add(self, rhs: usize) -> Self { Grapheme(self.0 + rhs) }
-}
-impl Add<Grapheme> for Grapheme {
-    type Output = Self;
-    #[inline] fn add(self, rhs: Self) -> Self { Grapheme(self.0 + rhs.0) }
-}
 impl Monoid for Grapheme { }
-impl Sub<usize> for Grapheme {
-    type Output = Self;
-    #[inline] fn sub(self, rhs: usize) -> Self { Grapheme(self.0 - rhs) }
-}
-impl Sub<Grapheme> for Grapheme {
-    type Output = Self;
-    #[inline] fn sub(self, rhs: Self) -> Self { Grapheme(self.0 - rhs.0) }
-}
 
-/// A metric for calculating indices in `Rope`s based on line numbering.
-#[derive(Clone, Copy, Debug, PartialOrd, Ord, PartialEq, Eq)]
-pub struct Line(pub usize);
+macro_attr! {
+    /// A metric for calculating indices in `Rope`s based on line numbering.
+    #[derive( Clone, Copy, Debug, PartialOrd, Ord, PartialEq, Eq
+            , NewtypeFrom!
+            , NewtypeAdd!(*), NewtypeAdd!(&self, usize), NewtypeAdd!(usize)
+            , NewtypeSub!(*), NewtypeSub!(&self, usize), NewtypeSub!(usize)
+            , NewtypeMul!(*), NewtypeMul!(&self, usize), NewtypeMul!(usize) )]
+    pub struct Line(pub usize);
+}
 impl Default for Line {
     #[inline] fn default() -> Self { Line(0) }
 }
-impl Add<Line> for Line {
-    type Output = Self;
-    #[inline] fn add(self, rhs: Self) -> Self { Line(self.0 + rhs.0) }
-}
-impl Sub<Line> for Line {
-    type Output = Self;
-    #[inline] fn sub(self, rhs: Self) -> Self { Line(self.0 - rhs.0) }
-}
-impl convert::From<usize> for Line {
-    #[inline] fn from(u: usize) -> Self { Line(u) }
-}
-impl convert::Into<usize> for Line {
-    #[inline] fn into(self) -> usize { self.0 }
-}
+
 impl Monoid for Line { }
-impl Add<usize> for Line {
-    type Output = Self;
-    #[inline] fn add(self, rhs: usize) -> Self { Line(self.0 + rhs) }
-}
-impl Sub<usize> for Line {
-    type Output = Self;
-    #[inline] fn sub(self, rhs: usize) -> Self { Line(self.0 - rhs) }
-}
 
 impl Monoid for usize { }

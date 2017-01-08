@@ -22,10 +22,11 @@
 #![cfg_attr( feature = "clippy", plugin(clippy) )]
 #![cfg_attr( feature = "clippy", allow(unused_variables, dead_code))]
 
-#[cfg(feature = "unstable")]
-extern crate collections;
-#[cfg(feature = "unstable")]
-use collections::range::RangeArgument;
+#[macro_use] extern crate macro_attr;
+#[macro_use] extern crate newtype_derive;
+
+#[cfg(feature = "unstable")] extern crate collections;
+#[cfg(feature = "unstable")] use collections::range::RangeArgument;
 
 extern crate unicode_segmentation;
 
