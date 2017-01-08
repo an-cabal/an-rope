@@ -1,4 +1,4 @@
-//! # Rope metrics
+//! Metrics for indexing `Rope`s.
 //!
 //! A [`Metric`] represents a measurement with which indices into a [`Rope`]
 //! may be calculated.
@@ -44,16 +44,22 @@
 //! r.delete(Line(2)..Line(3));
 //! assert_eq!(&r, "this is\na\nrope");
 //! ```
+//!
+//! [`Metric`]: trait.Metric.html
+//! [`Rope`]: ../struct.Rope.html
+//! [`split`]: ../struct.Rope.html#method.split
+//! [`insert`]: ../struct.Rope.html#method.insert
+//! [`delete`]: ../struct.Rope.html#method.delete
 
 use std::convert;
 use std::ops::{Add, Sub};
 use std::default::Default;
 use std::fmt;
 
-/// # The class of monoids
+/// The class of monoids
 ///
-/// The class of [monoid]s (types with an accumulative binary operation that has
-/// an identity).
+/// [Monoid]s are types with an accumulative binary operation that has
+/// an identity.
 ///
 /// Technically, `Add<Self, Output=Self>` is standing in for "semigroup" here,
 /// while [`Default`] is standing in for "identity"[^id].
@@ -73,7 +79,7 @@ use std::fmt;
 ///        useable on nightly Rust, and its use is deprecated. Thus, `Default`.
 /// [`Default`]: https://doc.rust-lang.org/std/default/trait.Default.html)
 /// [`Zero`]: https://doc.rust-lang.org/std/num/trait.Zero.html
-/// [monoid]: http://mathworld.wolfram.com/Monoid.html
+/// [Monoid]: http://mathworld.wolfram.com/Monoid.html
 pub trait Monoid: Add<Self, Output=Self> + Default + Sized {
     #[inline]
     fn accumulate<F>(xs: F) -> Self
@@ -84,7 +90,6 @@ pub trait Monoid: Add<Self, Output=Self> + Default + Sized {
 }
 
 /// Trait indicating that a type may be measured with [`Metric`] _M_.
-///
 ///
 /// [`Metric`]: trait.Metric.html
 pub trait Measured<M: Metric> {
@@ -142,6 +147,7 @@ pub trait Metric: Monoid + Eq + Add<usize, Output=Self>
     fn is_boundary<M: Measured<Self>>(node: &M, i: usize) -> bool;
 }
 
+/// A metric for calculating indices in `Rope`s based on Unicode graphemes.
 #[derive(Clone, Copy, Debug, PartialOrd, Ord, PartialEq, Eq)]
 pub struct Grapheme(pub usize);
 impl Default for Grapheme {
@@ -171,6 +177,7 @@ impl Sub<Grapheme> for Grapheme {
     #[inline] fn sub(self, rhs: Self) -> Self { Grapheme(self.0 - rhs.0) }
 }
 
+/// A metric for calculating indices in `Rope`s based on line numbering.
 #[derive(Clone, Copy, Debug, PartialOrd, Ord, PartialEq, Eq)]
 pub struct Line(pub usize);
 impl Default for Line {
