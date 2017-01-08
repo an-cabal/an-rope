@@ -463,7 +463,7 @@ impl Rope {
                        .unwrap_or_else(|| { self.measure() });
 
         assert!( start <= end
-               , "invalid index! start {:?} > end {:?}", end, start);
+               , "invalid index! start {:?} > end {:?}", start, end);
         let (l, r) = self.take_root().split(start);
         let (_, r) = r.split(end - start);
         self.root = Node::new_branch(l, r);
@@ -475,9 +475,24 @@ impl Rope {
     where Node: Measured<M>
         , internals::BranchNode: Measured<M>
         , String: Measured<M>
+        , Node: Measured<usize>
+        , internals::BranchNode: Measured<usize>
+        , String: Measured<usize>
         {
-        let (l, r) = self.take_root().split(range.start);
-        let (_, r) = r.split(range.end - range.start);
+            assert!( range.start <= range.end
+                   , "delete: invalid index! start {:?} > end {:?}"
+                   , range.start, range.end);
+        let start =
+            self.to_byte_index(range.start)
+                .expect(&format!( "delete: start index {:?} out of bounds!"
+                                , range.start));
+        let (l, r) = self.take_root()
+                         .split::<usize>(start);
+        let end =
+             r.to_byte_index(range.end - range.start)
+              .expect(&format!( "delete: end index {:?} out of bounds!"
+                              , range.end));
+        let (_, r) = r.split::<usize>(end);
         self.root = Node::new_branch(l, r);
     }
 

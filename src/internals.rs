@@ -224,7 +224,27 @@ impl Measured<Line> for String {
 
 impl Measured<Line> for BranchNode {
     fn to_byte_index(&self, index: Line) -> Option<usize>  {
-        unimplemented!()
+        let len: Line = self.measure_weight();
+        if index == Line(0) {
+            // special case because lines
+            Some(0)
+        } else if index > len {
+            self.right.to_byte_index(index - len)
+        } else {
+            self.left.to_byte_index(index)
+        }
+        // if index == Line(0) {
+        //
+        // } else {
+        //     let i: usize = index.into();
+        //     let left_len = self.left.len();
+        //     self.left.char_indices()
+        //              .chain(self.right.char_indices()
+        //                         .map(|(i, c)| (i + left_len, c) ))
+        //              .filter_map(|(offset, c)|
+        //                 if c.is_line_ending() { Some(offset) } else { None })
+        //              .nth(i - 1)
+        // }
     }
 
     #[inline] fn measure(&self) -> Line {
@@ -299,6 +319,28 @@ impl Measured<usize> for BranchNode {
     #[inline]
     fn measure_weight(&self) -> usize { self.weight }
 }
+// impl Measured<Line> for Node
+// where BranchNode: Measured<Line>
+//     , String: Measured<Line>
+//     {
+//
+//     fn to_byte_index(&self, index: Line) -> Option<usize>  {
+//         self.char_indices()
+//             .filter_map(|(offset, c)| if c.is_line_ending() { Some(offset) }
+//                                       else { None })
+//             .nth(index.into())
+//     }
+//
+//     #[inline] fn measure(&self) -> Line {
+//         match *self { Leaf(ref s) => s.measure(), Branch(ref n) => n.measure() }
+//     }
+//
+//     #[inline] fn measure_weight(&self) -> Line {
+//         match *self { Leaf(ref s) => s.measure_weight()
+//                     , Branch(ref n) => n.measure_weight() }
+//     }
+//
+// }
 
 impl<M> Measured<M> for Node
 where M: Metric
@@ -306,8 +348,9 @@ where M: Metric
     , String: Measured<M>
     {
 
-    fn to_byte_index(&self, index: M) -> Option<usize>  {
-        unimplemented!()
+    #[inline] fn to_byte_index(&self, index: M) -> Option<usize>  {
+        match *self { Leaf(ref s) => s.to_byte_index(index)
+                    , Branch(ref n) => n.to_byte_index(index) }
     }
 
     #[inline] fn measure(&self) -> M {
