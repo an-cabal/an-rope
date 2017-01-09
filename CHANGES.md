@@ -1,3 +1,30 @@
+<a name="0.1.0"></a>
+## 0.1.0 (2017-01-09)
+
+
+#### Bug Fixes
+
+* **rope internals:**  hacky fix for Node::index ([0a66f825](https://github.com/hawkw/an-editor/commit/0a66f8251ec417743c00a839e54ab3845ff649c5))
+* **rope metrics:**
+  *  fix incorrect grapheme to byte index calculation ([104c5d4f](https://github.com/hawkw/an-editor/commit/104c5d4f430c3d79ef8195c8dbc930595f8fc5e4))
+  *  fix nightly compatibility for parameteized metrics ([ac50697e](https://github.com/hawkw/an-editor/commit/ac50697e51355322325680517faa1582496e21b4))
+
+#### Features
+
+* **Rope:**
+  *  add char metric ([f2f368e2](https://github.com/hawkw/an-editor/commit/f2f368e2d0f0f2ba6a8eeff43b9debe4e6b4ff33))
+  *  add Rope.is_empty() function ([15ca3dc4](https://github.com/hawkw/an-editor/commit/15ca3dc420774ec8e3568c3a39bef1757485f3bd))
+  *  derive Default implementation ([ea2e319b](https://github.com/hawkw/an-editor/commit/ea2e319b144f3e187b622e298d62ed4265d9e137))
+* **RopeSlice:**  add RopeSlice.is_empty() / RopeSliceMut.is_empty() ([3f20c196](https://github.com/hawkw/an-editor/commit/3f20c1969e6727cdc6fcecff6d64ba1770105fcc))
+* **rope metrics:**
+  *  nicer fmt::Debug implementations for Metrics ([1c594c79](https://github.com/hawkw/an-editor/commit/1c594c79dbacc97fbfe659458a40ceff6aebc400))
+  *  all rope methods can be parameterized w/ metrics ([1267c4e1](https://github.com/hawkw/an-editor/commit/1267c4e16ebd2bf6069d54059b148ad580ca3d6b))
+  *  make metrics fmt::Debug ([3bffe54a](https://github.com/hawkw/an-editor/commit/3bffe54ad79b710863281b87e050b3d51cf386be))
+  *  make Ropes measured ([795d7b75](https://github.com/hawkw/an-editor/commit/795d7b75ef2e561fee71ed64046d595d8959e019))
+  *  parameterize existing methods with metrics! ([2e684259](https://github.com/hawkw/an-editor/commit/2e684259047ef2b6a9dbfdc96ace3bcadad26142))
+  *  make metrics user-selectable ([3b3dcd8d](https://github.com/hawkw/an-editor/commit/3b3dcd8d12634da92b20f2e24acbba7421aa24e4))
+
+
 <a name="0.0.3"></a>
 ### 0.0.3 (2017-01-05)
 
