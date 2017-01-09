@@ -1,3 +1,15 @@
+<a name="0.1.2"></a>
+### 0.1.2 (2017-01-09)
+
+
+#### Bug Fixes
+
+* **rope:**  depend on a static Clippy version to fix crates.io release ([78e3ced9](https://github.com/hawkw/an-editor/commit/78e3ced9201cdb8c989c8f447fc52eece15b6df5))
+
+
+
+
+
 <a name="0.1.1"></a>
 ### 0.1.1 (2017-01-09)
 
