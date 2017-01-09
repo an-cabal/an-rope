@@ -2,7 +2,7 @@
 [![Build Status](https://travis-ci.org/an-cabal/an-rope.svg?branch=master)](https://travis-ci.org/an-cabal/an-rope) 
 [![codecov](https://codecov.io/gh/an-cabal/an-rope/branch/master/graph/badge.svg)](https://codecov.io/gh/an-cabal/an-rope) 
 [![Dependency Status](https://dependencyci.com/github/an-cabal/an-rope/badge)](https://dependencyci.com/github/an-cabal/an-rope)
-[![Clippy Linting Result](http://clippy.bashy.io/github/an-cabal/an-rope/master/badge.svg)](https://clippy.bashy.io/github/an-cabal/an-rope/master/log) 
+[![Clippy Linting Result](https://img.shields.io/badge/clippy-linted-green.svg)](https://clippy.bashy.io/github/an-cabal/an-rope/master/log) 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/an-cabal/an-rope/blob/master/LICENSE) [![crates.io](https://img.shields.io/crates/v/an-rope.svg)](https://crates.io/crates/an-rope) 
 [![RustDoc documentation](https://docs.rs/an-rope/badge.svg)](https://docs.rs/an-rope)
 
