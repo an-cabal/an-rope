@@ -76,8 +76,8 @@ env:
 before_deploy:  |
   if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
     cargo build --release &&
-    cargo package &&
-    cargo publish --token $CRATES_TOKEN
+    cargo package --allow-dirty &&
+    cargo publish --allow-dirty --token $CRATES_TOKEN
   fi
 
 deploy:
