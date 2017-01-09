@@ -1,3 +1,14 @@
+<a name="0.1.1"></a>
+### 0.1.1 (2017-01-09)
+
+
+#### Bug Fixes
+
+* **rope:**  use only crates.io dependencies so we can publish ([9d9174b7](https://github.com/hawkw/an-editor/commit/9d9174b72207d37f12121e13b2a0f2e8a4fddda6))
+
+
+
+
 <a name="0.1.0"></a>
 ## 0.1.0 (2017-01-09)
 
