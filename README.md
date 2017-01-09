@@ -5,6 +5,7 @@
 [![Clippy Linting Result](https://img.shields.io/badge/clippy-linted-green.svg)](https://clippy.bashy.io/github/an-cabal/an-rope/master/log) 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/an-cabal/an-rope/blob/master/LICENSE) [![crates.io](https://img.shields.io/crates/v/an-rope.svg)](https://crates.io/crates/an-rope) 
 [![RustDoc documentation](https://docs.rs/an-rope/badge.svg)](https://docs.rs/an-rope)
+[![Master RustDoc](https://img.shields.io/badge/docs-master-blue.svg)](https://an-cabal.github.io/an-rope)
 
 An implementation of the Rope data structure for storing large text documents. This implementation is a component of the [`an-editor` project](https://github.com/an-cabal/an-editor).
 
