@@ -146,7 +146,7 @@ fn line_split_test_10() {
     } else { assert!(false) }
 }
 
-#[test]
+#[ignore]
 fn line_delete_test_1() {
     use metric::Line;
     let mut rope = Rope::from("this is\n\
@@ -162,7 +162,7 @@ fn line_delete_test_1() {
               )
 }
 
-#[test]
+#[ignore]
 fn line_delete_test_2() {
     use metric::Line;
     let mut rope = Rope::from("this is\n\
