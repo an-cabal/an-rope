@@ -26,7 +26,7 @@ fn line_split_test_1() {
     let l1 = Node::new_leaf("asdf".to_string());
     let l2 = Node::new_leaf("qwer".to_string());
     let b = Node::new_branch(l1, l2);
-    let (left, right) = b.split(Line::from(0));
+    let (left, right) = b.split(Line(0));
     assert_eq!(left.strings().collect::<String>(), "asdfqwer");
     if let Leaf(s) = right {
         assert_eq!(s, "");
@@ -38,7 +38,7 @@ fn line_split_test_2() {
     let l1 = Node::new_leaf("asdf".to_string());
     let l2 = Node::new_leaf("qwer\n".to_string());
     let b = Node::new_branch(l1, l2);
-    let (left, right) = b.split(Line::from(0));
+    let (left, right) = b.split(Line(0));
     assert_eq!(left.strings().collect::<String>(), "asdfqwer\n");
     if let Leaf(s) = right {
         assert_eq!(s, "");
@@ -50,7 +50,7 @@ fn line_split_test_3() {
     let l1 = Node::new_leaf("asdf\n".to_string());
     let l2 = Node::new_leaf("qwer\n".to_string());
     let b = Node::new_branch(l1, l2);
-    let (left, right) = b.split(Line::from(0));
+    let (left, right) = b.split(Line(0));
     if let Leaf(s) = left {
         assert_eq!(s, "asdf\n");
     } else { assert!(false) }
@@ -65,7 +65,7 @@ fn line_split_test_4() {
     let l1 = Node::new_leaf("asdf".to_string());
     let l2 = Node::new_leaf("qwer".to_string());
     let b = Node::new_branch(l1, l2);
-    let (left, right) = b.split(Line::from(1));
+    let (left, right) = b.split(Line(1));
 }
 
 #[test]
@@ -73,7 +73,7 @@ fn line_split_test_5() {
     let l1 = Node::new_leaf("asdf".to_string());
     let l2 = Node::new_leaf("qwer\n".to_string());
     let b = Node::new_branch(l1, l2);
-    let (left, right) = b.split(Line::from(1));
+    let (left, right) = b.split(Line(1));
     assert_eq!(left.strings().collect::<String>(), "asdfqwer\n");
     if let Leaf(s) = right {
         assert_eq!(s, "");
@@ -85,7 +85,7 @@ fn line_split_test_6() {
     let l1 = Node::new_leaf("asdf\n".to_string());
     let l2 = Node::new_leaf("qwer\n".to_string());
     let b = Node::new_branch(l1, l2);
-    let (left, right) = b.split(Line::from(1));
+    let (left, right) = b.split(Line(1));
     assert_eq!(left.strings().collect::<String>(), "asdf\nqwer\n");
     if let Leaf(s) = right {
         assert_eq!(s, "");
@@ -97,7 +97,7 @@ fn line_split_test_7() {
     let l1 = Node::new_leaf("asdf\n".to_string());
     let l2 = Node::new_leaf("qwer\n".to_string());
     let b = Node::new_branch(l1, l2);
-    let (left, right) = b.split(Line::from(0));
+    let (left, right) = b.split(Line(0));
     if let Leaf(s) = left {
         assert_eq!(s, "asdf\n");
     } else { assert!(false) }
@@ -111,7 +111,7 @@ fn line_split_test_8() {
     let l1 = Node::new_leaf("".to_string());
     let l2 = Node::new_leaf("qwer\n".to_string());
     let b = Node::new_branch(l1, l2);
-    let (left, right) = b.split(Line::from(0));
+    let (left, right) = b.split(Line(0));
     assert_eq!(left.strings().collect::<String>(), "qwer\n");
     if let Leaf(s) = right {
         assert_eq!(s, "");
@@ -125,7 +125,7 @@ fn line_split_test_9() {
     let l3 = Node::new_leaf("yxcv\n".to_string());
     let b1 = Node::new_branch(l1, l2);
     let b2 = Node::new_branch(b1, l3);
-    let (left, right) = b2.split(Line::from(0));
+    let (left, right) = b2.split(Line(0));
     if let Leaf(s) = left {
         assert_eq!(s, "asdf\n");
     } else { assert!(false) }
@@ -139,13 +139,45 @@ fn line_split_test_10() {
     let l3 = Node::new_leaf("yxcv\n".to_string());
     let b1 = Node::new_branch(l2, l3);
     let b2 = Node::new_branch(l1, b1);
-    let (left, right) = b2.split(Line::from(0));
+    let (left, right) = b2.split(Line(0));
     assert_eq!(left.strings().collect::<String>(), "asdfqwer\n");
     if let Leaf(s) = right {
         assert_eq!(s, "yxcv\n");
     } else { assert!(false) }
 }
 
+#[ignore]
+fn line_delete_test_1() {
+    use metric::Line;
+    let mut rope = Rope::from("this is\n\
+                               a\n\
+                               multi\n\
+                               line\n\
+                               rope");
+    rope.delete(Line(2)..Line(3));
+    assert_eq!( &rope
+              , "this is\n\
+                 a\n\
+                 rope"
+              )
+}
+
+#[ignore]
+fn line_delete_test_2() {
+    use metric::Line;
+    let mut rope = Rope::from("this is\n\
+                               a\n\
+                               multi\n\
+                               line\n\
+                               rope");
+    rope.delete(Line(0)..Line(0));
+    assert_eq!( &rope
+              , "a\n\
+                 multi\n\
+                 line\n\
+                 rope"
+              )
+}
 
 #[test]
 fn delete_test_1() {
@@ -165,8 +197,9 @@ fn delete_test_2() {
 #[cfg(feature = "unstable")]
 #[test]
 fn delete_test_3() {
+    use std::ops::RangeFull;
     let mut r = Rope::from("this is not fine".to_string());
-    r.delete((..));
+    r.delete::<RangeFull, usize>((..));
     assert_eq!(&r, "");
 }
 
@@ -191,7 +224,7 @@ fn delete_test_5() {
 // this range syntax only works on nightly rust
 #[cfg(feature = "unstable")]
 #[test]
-#[should_panic(expected = "invalid index! 42 in \"this is not fine\"")]
+#[should_panic(expected = "byte index 42 is out of bounds")]
 fn delete_test_6() {
     let mut r = Rope::from("this is not fine".to_string());
     r.delete((..42));

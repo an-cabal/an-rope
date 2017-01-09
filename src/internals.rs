@@ -3,11 +3,9 @@ use unicode_segmentation::{ GraphemeIndices as StrGraphemeIndices
                           , UWordBoundIndices as StrUWordBoundIndices
                           };
 use metric::{Grapheme, Line, Metric, Measured};
-use unicode::GraphemeIndex;
 
 use std::ops;
 use std::fmt;
-use std::convert;
 #[cfg(feature = "tendril")]
 use tendril;
 
@@ -102,49 +100,37 @@ impl Measured<Grapheme> for str {
     ///    in `node` measured by this `Metric`, if there is an `n`th element
     /// - `None` if there is no `n`th element in `node`
     fn to_byte_index(&self, index: Grapheme) -> Option<usize>  {
-        let i: usize = index.into();
-        // TODO: CACHE THIS YOU ASSHOLE
-        if self.graphemes(true).count() == i {
-            Some(self.len())
-        } else {
-            self.grapheme_indices(true)
-                .position(|(offset, _)| offset == i)
-        }
+        self.grapheme_indices(true)
+            .map(|(offset, _)| offset)
+            .nth(index.into())
     }
-
 
     #[inline]
     fn measure(&self) -> Grapheme {
-        Grapheme::from(self.graphemes(true).count())
+        Grapheme(self.graphemes(true).count())
     }
 
     #[inline]
     fn measure_weight(&self) -> Grapheme {
-        Grapheme::from(self.graphemes(true).count())
+        Grapheme(self.graphemes(true).count())
     }
 }
 
 impl Measured<Grapheme> for String {
     fn to_byte_index(&self, index: Grapheme) -> Option<usize>  {
-        let i: usize = index.into();
-        // TODO: CACHE THIS YOU ASSHOLE
-        if self.graphemes(true).count() == i {
-            Some(self.len())
-        } else {
-            self.grapheme_indices(true)
-                .position(|(offset, _)| offset == i)
-                // .map(|(offset, _)| offset)
-        }
+        self.grapheme_indices(true)
+            .map(|(offset, _)| offset)
+            .nth(index.into())
     }
 
     #[inline]
     fn measure(&self) -> Grapheme {
-        Grapheme::from(self.graphemes(true).count())
+        Grapheme(self.graphemes(true).count())
     }
 
     #[inline]
     fn measure_weight(&self) -> Grapheme {
-        Grapheme::from(self.graphemes(true).count())
+        Grapheme(self.graphemes(true).count())
     }
 }
 
@@ -161,21 +147,21 @@ impl Measured<Grapheme> for BranchNode {
     #[inline] fn measure_weight(&self) -> Grapheme { self.left.measure() }
 }
 
-impl Measured<Grapheme> for Node {
-    fn to_byte_index(&self, index: Grapheme) -> Option<usize>  {
-        unimplemented!()
-    }
-
-    #[inline] fn measure(&self) -> Grapheme {
-        match *self { Leaf(ref s) => s.measure(), Branch(ref n) => n.measure() }
-    }
-
-    #[inline] fn measure_weight(&self) -> Grapheme {
-        match *self { Leaf(ref s) => s.measure_weight()
-                    , Branch(ref n) => n.measure_weight() }
-    }
-
-}
+// impl Measured<Grapheme> for Node {
+//     fn to_byte_index(&self, index: Grapheme) -> Option<usize>  {
+//         unimplemented!()
+//     }
+//
+//     #[inline] fn measure(&self) -> Grapheme {
+//         match *self { Leaf(ref s) => s.measure(), Branch(ref n) => n.measure() }
+//     }
+//
+//     #[inline] fn measure_weight(&self) -> Grapheme {
+//         match *self { Leaf(ref s) => s.measure_weight()
+//                     , Branch(ref n) => n.measure_weight() }
+//     }
+//
+// }
 
 
 impl Metric for Line {
@@ -199,14 +185,14 @@ impl Measured<Line> for str {
 
     #[inline]
     fn measure(&self) -> Line {
-        Line::from(
+        Line(
             if self.chars().last().unwrap_or('\0').is_line_ending() { 1
             } else { 0 })
     }
 
     #[inline]
     fn measure_weight(&self) -> Line {
-        Line::from(
+        Line(
             if self.chars().last().unwrap_or('\0').is_line_ending() { 1
             } else { 0 })
     }
@@ -223,14 +209,14 @@ impl Measured<Line> for String {
 
     #[inline]
     fn measure(&self) -> Line {
-        Line::from(
+        Line(
             if self.chars().last().unwrap_or('\0').is_line_ending() { 1
             } else { 0 })
     }
 
     #[inline]
     fn measure_weight(&self) -> Line {
-        Line::from(
+        Line(
             if self.chars().last().unwrap_or('\0').is_line_ending() { 1
             } else { 0 })
     }
@@ -250,16 +236,85 @@ impl Measured<Line> for BranchNode {
     }
 }
 
-impl Measured<Line> for Node {
-    fn to_byte_index(&self, index: Line) -> Option<usize>  {
+// impl Measured<Line> for Node {
+//     fn to_byte_index(&self, index: Line) -> Option<usize>  {
+//         unimplemented!()
+//     }
+//
+//     #[inline] fn measure(&self) -> Line {
+//         match *self { Leaf(ref s) => s.measure(), Branch(ref n) => n.measure() }
+//     }
+//
+//     #[inline] fn measure_weight(&self) -> Line {
+//         match *self { Leaf(ref s) => s.measure_weight()
+//                     , Branch(ref n) => n.measure_weight() }
+//     }
+//
+// }
+
+/// usize is the "chars" metric
+impl Metric for usize {
+
+    #[inline] fn is_splittable() -> bool { true }
+
+    /// Returns true if index `i` in `node` is a boundary along this `Metric`
+    #[inline] fn is_boundary<M: Measured<Self>>(node: &M, i: usize) -> bool {
+        true
+    }
+}
+
+impl Measured<usize> for str {
+
+    #[inline] fn to_byte_index(&self, index: usize) -> Option<usize>  {
+        Some(index)
+    }
+
+    #[inline]
+    fn measure(&self) -> usize { self.len() }
+
+    #[inline]
+    fn measure_weight(&self) -> usize { self.len() }
+}
+
+impl Measured<usize> for String {
+    #[inline] fn to_byte_index(&self, index: usize) -> Option<usize>  {
+        Some(index)
+    }
+
+    #[inline]
+    fn measure(&self) -> usize { self.len() }
+
+    #[inline]
+    fn measure_weight(&self) -> usize { self.len() }
+}
+
+impl Measured<usize> for BranchNode {
+    #[inline] fn to_byte_index(&self, index: usize) -> Option<usize>  {
+        Some(index)
+    }
+
+    #[inline]
+    fn measure(&self) -> usize { self.len }
+
+    #[inline]
+    fn measure_weight(&self) -> usize { self.weight }
+}
+
+impl<M> Measured<M> for Node
+where M: Metric
+    , BranchNode: Measured<M>
+    , String: Measured<M>
+    {
+
+    fn to_byte_index(&self, index: M) -> Option<usize>  {
         unimplemented!()
     }
 
-    #[inline] fn measure(&self) -> Line {
+    #[inline] fn measure(&self) -> M {
         match *self { Leaf(ref s) => s.measure(), Branch(ref n) => n.measure() }
     }
 
-    #[inline] fn measure_weight(&self) -> Line {
+    #[inline] fn measure_weight(&self) -> M {
         match *self { Leaf(ref s) => s.measure_weight()
                     , Branch(ref n) => n.measure_weight() }
     }
@@ -316,12 +371,12 @@ impl BranchNode {
     ///
     /// # Time complexity
     /// O(log _n_)
-    fn split<M: Metric>(self, index: M) -> (Node, Node)
-    where Node: Measured<M>
+    #[inline] fn split<M>(self, index: M) -> (Node, Node)
+    where M: Metric
+        , Node: Measured<M>
         , BranchNode: Measured<M>
         , String: Measured<M>
-        , M: convert::Into<usize>
-        , M: Copy {
+        {
         let weight = (&self).measure_weight();
         // to determine which side of this node we are splitting on, we compare
         // the index to split to this node's weight.
@@ -375,7 +430,7 @@ impl Node {
         use unicode::Unicode;
         match *self {
             Branch(BranchNode { grapheme_len, ..}) => grapheme_len
-          , Leaf(ref s) => Grapheme::from(s.grapheme_len())
+          , Leaf(ref s) => Grapheme(s.grapheme_len())
         }
     }
 
@@ -434,7 +489,6 @@ impl Node {
                 (self, i)
         }
     }
-
     /// Split this `Node`'s subtree on the specified `index`.
     ///
     /// Consumes `self`.
@@ -450,12 +504,13 @@ impl Node {
     ///
     /// # Time complexity
     /// O(log _n_)
-    pub fn split<M: Metric>(self, index: M) -> (Node, Node)
-    where Self: Measured<M>
+    #[inline]
+    pub fn split<M>(self, index: M) -> (Node, Node)
+    where M: Metric
+        , Node: Measured<M>
         , BranchNode: Measured<M>
         , String: Measured<M>
-        , M: convert::Into<usize>
-        , M: Copy {
+        {
         match self {
             Leaf(ref s) if s.is_empty() =>
                 // splitting an empty leaf node returns two empty leaf nodes
@@ -468,8 +523,9 @@ impl Node {
                 // the right
                 // TODO: make this properly respect metric index boundaries
                 let index = s.to_byte_index(index)
-                                 .expect(&format!( "invalid index! {} in {:?}"
-                                                  , index.into(), s));
+                             .expect(
+                                &format!( "split: invalid index! {:?} in {:?}"
+                                        , index, s));
                 let left = Leaf(s[..index].into());
                 let right = Leaf(s[index..].into());
                 (left, right)
@@ -976,19 +1032,24 @@ impl ops::AddAssign for Node {
 }
 
 
-impl ops::Index<usize> for Node {
+impl<M> ops::Index<M> for Node
+where M: Metric
+    , Node: Measured<M>
+    , BranchNode: Measured<M>
+    , String: Measured<M>
+    {
     type Output = str;
 
-    fn index(&self, i: usize) -> &str {
-        let grapheme_len : Grapheme = self.measure();
-        let len = grapheme_len.into();
+    fn index(&self, i: M) -> &str {
+        let len = self.measure();
         assert!( i < len
-               , "Node::index: index {} out of bounds (length {})", i, len);
+               , "Node::index: index {:?} out of bounds (length {:?})", i, len);
         match *self {
             Leaf(ref string) => {
-                let index: usize =
-                    GraphemeIndex::from(i).to_char_index(string).into();
-                string.graphemes(true).nth(index - 1).expect("oob!") }
+                let idx = string.to_byte_index(i)
+                                .expect("index out of bounds!");
+                &string[idx..idx+1]
+            }
           , Branch(BranchNode { ref right, .. }) if len < i =>
                 &right[i - len]
           , Branch(BranchNode { ref left, .. }) => &left[i]

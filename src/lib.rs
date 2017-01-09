@@ -22,10 +22,11 @@
 #![cfg_attr( feature = "clippy", plugin(clippy) )]
 #![cfg_attr( feature = "clippy", allow(unused_variables, dead_code))]
 
-#[cfg(feature = "unstable")]
-extern crate collections;
-#[cfg(feature = "unstable")]
-use collections::range::RangeArgument;
+#[macro_use] extern crate macro_attr;
+#[macro_use] extern crate newtype_derive;
+
+#[cfg(feature = "unstable")] extern crate collections;
+#[cfg(feature = "unstable")] use collections::range::RangeArgument;
 
 extern crate unicode_segmentation;
 
@@ -46,9 +47,11 @@ use std::iter;
 #[cfg(all( test, feature = "unstable"))] mod bench;
 
 mod unicode;
-mod metric;
+pub mod metric;
 
-use self::internals::Node;
+use metric::{Measured, Metric};
+
+use self::internals::{Node, BranchNode};
 pub use self::slice::{RopeSlice, RopeSliceMut};
 
 /// A Rope
@@ -68,6 +71,23 @@ pub struct Rope {
     // can we get away with having these be of &str or will they need
     // to be string?
     root: Node
+}
+
+impl<M> Measured<M> for Rope
+where M: Metric
+    , Node: Measured<M>
+    , BranchNode: Measured<M>
+    , String: Measured<M>
+    {
+
+    #[inline] fn to_byte_index(&self, index: M) -> Option<usize> {
+        self.root.to_byte_index(index)
+    }
+
+    #[inline] fn measure(&self) -> M { self.root.measure() }
+
+    #[inline] fn measure_weight(&self) -> M { self.root.measure_weight() }
+
 }
 
 impl fmt::Debug for Rope {
@@ -188,8 +208,6 @@ macro_rules! unicode_seg_iters {
 
 mod internals;
 mod slice;
-
-use self::metric::Grapheme;
 
 impl Rope {
 
@@ -393,10 +411,16 @@ impl Rope {
     /// assert_eq!(an_rope, Rope::from("abcd"));
     /// ```
     #[inline]
-    pub fn insert(&mut self, index: usize, ch: char) {
-        assert!( index <= self.len()
-               , "Rope::insert: index {} was > length {}"
-               , index, self.len());
+    pub fn insert<M>(&mut self, index: M, ch: char)
+    where M: Metric
+        , Self: Measured<M>
+        , Node: Measured<M>
+        , BranchNode: Measured<M>
+        , String: Measured<M>
+        {
+        assert!( index <= self.measure()
+               , "Rope::insert: index {:?} was > length {:?}"
+               , index, self.measure());
         // TODO: this is gross...
         let mut s = String::new();
         s.push(ch);
@@ -426,12 +450,18 @@ impl Rope {
     /// ```
     #[inline]
     #[cfg(feature = "unstable")]
-    pub fn delete<R>(&mut self, range: R)
-    where R: RangeArgument<usize> {
-        let start = range.start().map(|s| Grapheme::from(*s))
-                         .unwrap_or_else(|| { Grapheme::from(0) });
-        let end = range.end().map(|e| Grapheme::from(*e))
-                        .unwrap_or_else(|| { self.root.grapheme_len() });
+    pub fn delete<R, M>(&mut self, range: R)
+    where R: RangeArgument<M>
+        , M: Metric
+        , Rope: Measured<M>
+        , Node: Measured<M>
+        , BranchNode: Measured<M>
+        , String: Measured<M>
+        {
+        let start = range.start().map(|s| *s)
+                         .unwrap_or_else(|| { M::default() });
+        let end = range.end().map(|e| *e)
+                       .unwrap_or_else(|| { self.measure() });
 
         assert!( start <= end
                , "invalid index! start {:?} > end {:?}", end, start);
@@ -439,11 +469,16 @@ impl Rope {
         let (_, r) = r.split(end - start);
         self.root = Node::new_branch(l, r);
     }
+
     #[inline]
     #[cfg(not(feature = "unstable"))]
-    pub fn delete(&mut self, range: ops::Range<usize>) {
-        let (l, r) = self.take_root().split(Grapheme::from(range.start));
-        let (_, r) = r.split(Grapheme::from(range.end - range.start));
+    pub fn delete<M: Metric>(&mut self, range: ops::Range<M>)
+    where Node: Measured<M>
+        , internals::BranchNode: Measured<M>
+        , String: Measured<M>
+        {
+        let (l, r) = self.take_root().split(range.start);
+        let (_, r) = r.split(range.end - range.start);
         self.root = Node::new_branch(l, r);
     }
 
@@ -491,10 +526,16 @@ impl Rope {
     /// assert_eq!(an_rope, Rope::from("acd"));
     /// ```
     #[inline]
-    pub fn with_insert(&self, index: usize, ch: char) -> Rope {
-        assert!( index <= self.len()
-               , "Rope::with_insert: index {} was > length {}"
-               , index, self.len());
+    pub fn with_insert<M>(&self, index: M, ch: char) -> Rope
+    where M: Metric
+        , Self: Measured<M>
+        , Node: Measured<M>
+        , BranchNode: Measured<M>
+        , String: Measured<M>
+        {
+        assert!( index <= self.measure()
+               , "Rope::with_insert: index {:?} was > length {:?}"
+               , index, self.measure());
        // TODO: this is gross...
        let mut s = String::new();
        s.push(ch);
@@ -539,11 +580,17 @@ impl Rope {
     /// an_rope.insert_rope(1, Rope::from("bc"));
     /// assert_eq!(an_rope, Rope::from("abcd"));
     /// ```
-    pub fn insert_rope(&mut self, index: usize, rope: Rope) {
-        use self::metric::Grapheme;
+    #[inline]
+    pub fn insert_rope<M>(&mut self, index: M, rope: Rope)
+    where M: Metric
+        , Self: Measured<M>
+        , Node: Measured<M>
+        , BranchNode: Measured<M>
+        , String: Measured<M>
+        {
         if !rope.is_empty() {
-            let len = self.len();
-            if index == 0 {
+            let len = self.measure();
+            if index.into() == 0 {
                 // if the rope is being inserted at index 0, just prepend it
                 self.prepend(rope)
             } else if index == len {
@@ -551,8 +598,7 @@ impl Rope {
                 self.append(rope)
             } else {
                 // split the rope at the given index
-                let (left, right) = self.take_root()
-                                        .split(Grapheme::from(index));
+                let (left, right) = self.take_root().split(index);
 
                 // construct the new root node with `Rope` inserted
                 self.root = left + rope.root + right;
@@ -607,10 +653,16 @@ impl Rope {
     /// assert_eq!(new_rope, Rope::from("abcd"));
     /// assert_eq!(an_rope, Rope::from("ad"))
     /// ```
-    pub fn with_insert_rope(&self, index: usize, rope: Rope) -> Rope {
-        assert!( index <= self.len()
-               , "Rope::with_:insert_rope: index {} was > length {}"
-               , index, self.len());
+    pub fn with_insert_rope<M>(&self, index: M, rope: Rope) -> Rope
+    where M: Metric
+        , Self: Measured<M>
+        , Node: Measured<M>
+        , BranchNode: Measured<M>
+        , String: Measured<M>
+        {
+        assert!( index <= self.measure()
+               , "Rope::with_:insert_rope: index {:?} was > length {:?}"
+               , index, self.measure());
         let mut new_rope = self.clone();
         new_rope.insert_rope(index, rope);
         new_rope
@@ -653,10 +705,16 @@ impl Rope {
     /// assert_eq!(an_rope, Rope::from("abcd"));
     /// ```
     #[inline]
-    pub fn insert_str(&mut self, index: usize, s: &str) {
-        assert!( index <= self.len()
-               , "Rope::insert_str: index {} was > length {}"
-               , index, self.len());
+    pub fn insert_str<M>(&mut self, index: M, s: &str)
+    where M: Metric
+        , Self: Measured<M>
+        , Node: Measured<M>
+        , BranchNode: Measured<M>
+        , String: Measured<M>
+        {
+        assert!( index <= self.measure()
+               , "Rope::insert_str: index {:?} was > length {:?}"
+               , index, self.measure());
         self.insert_rope(index, s.into())
     }
 
@@ -702,10 +760,16 @@ impl Rope {
     /// assert_eq!(new_rope, Rope::from("abcd"));
     /// ```
     #[inline]
-    pub fn with_insert_str(&self, index: usize, s: &str) -> Rope {
-        assert!( index <= self.len()
-               , "Rope::with_insert_str: index {} was > length {}"
-               , index, self.len());
+    pub fn with_insert_str<M>(&self, index: M, s: &str) -> Rope
+    where M: Metric
+        , Self: Measured<M>
+        , Node: Measured<M>
+        , BranchNode: Measured<M>
+        , String: Measured<M>
+        {
+        assert!( index <= self.measure()
+               , "Rope::with_insert_str: index {:?} was > length {:?}"
+               , index, self.measure());
         self.with_insert_rope(index, s.into())
     }
 
@@ -721,7 +785,6 @@ impl Rope {
     /// an_rope.append(Rope::from(String::from("efgh")));
     /// assert_eq!(an_rope, Rope::from(String::from("abcdefgh")) );
     /// ```
-
     pub fn append(&mut self, other: Rope) {
         if !other.is_empty() {
             self.root += other.root;
@@ -834,10 +897,14 @@ impl Rope {
     /// assert_eq!(ab, Rope::from(String::from("ab")));
     /// assert_eq!(cd, Rope::from(String::from("cd")));
     /// ```
-    pub fn split(self, index: usize) -> (Rope, Rope) {
-        use self::metric::Grapheme;
-        assert!(index <= self.len());
-        let (l, r) = self.root.split(Grapheme::from(index));
+    pub fn split<M: Metric>(self, index: M) -> (Rope, Rope)
+    where Self: Measured<M>
+        , Node: Measured<M>
+        , internals::BranchNode: Measured<M>
+        , String: Measured<M>
+        {
+        assert!(index <= self.measure());
+        let (l, r) = self.root.split(index);
         (Rope { root: l }, Rope { root: r })
     }
 
