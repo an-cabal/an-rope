@@ -256,11 +256,11 @@ impl<'a> RopeSliceMut<'a>  {
     #[inline] pub fn is_empty(&self) -> bool { self.len() == 0 }
 
 
-    #[inline]
-    fn take_node(&mut self) -> Node {
-        use std::mem::replace;
-        replace(self.node, Node::empty())
-    }
+    // #[inline]
+    // fn take_node(&mut self) -> Node {
+    //     use std::mem::replace;
+    //     replace(self.node, Node::empty())
+    // }
 
     /// Insert `rope` into `index` in this mutable `RopeSlice`.
     ///
@@ -299,7 +299,7 @@ impl<'a> RopeSliceMut<'a>  {
     /// # }
     /// ```
     #[inline]
-    pub fn insert_rope<M>(&mut self, index: M, rope: Rope)
+    pub fn insert_rope<M>(&self, index: M, rope: Rope) -> Rope
     where M: Metric
         , Node: Measured<M>
         , BranchNode: Measured<M>
@@ -309,11 +309,12 @@ impl<'a> RopeSliceMut<'a>  {
         //        , index, self.len());
         if !rope.is_empty() {
             // split the rope at the given index
-            let (left, right) = self.take_node()
-                                    .split(index + self.offset);
+            let (left, right) = self.split(index + self.offset);
 
             // construct the new root node with `Rope` inserted
-            *self.node = (left + rope.root + right).rebalance();
+            (left + rope.root + right).rebalance()
+        } else {
+            self.clone()
         }
     }
 
