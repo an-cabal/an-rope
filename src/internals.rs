@@ -6,16 +6,35 @@ use metric::{Grapheme, Line, Metric, Measured};
 
 use std::ops;
 use std::fmt;
-#[cfg(feature = "tendril")]
+
+#[cfg(all(features = "atomic", not(feature = "with_tendrils")))]
+use std::sync::Arc;
+
+#[cfg(any(not(features = "atomic"), feature = "with_tendrils"))]
+use std::rc::Rc;
+
+#[cfg(features = "with_tendrils")]
 use tendril;
 
 use self::Node::*;
 
-#[cfg(not(feature = "tendril"))]
+#[cfg(not(features = "with_tendrils"))]
 type LeafRepr = String;
 
-#[cfg(feature = "tendril")]
+#[cfg(all(features = "with_tendrils", not(features = "atomic") ))]
 type LeafRepr = tendril::StrTendril;
+
+#[cfg(all(features = "with_tendrils", features = "atomic"))]
+type LeafRepr = tendril::tendril::Tendril<tendril::tendril::Atomic, tendril::fmt::UTF8>;
+
+#[cfg(any(not(features = "atomic"), feature = "with_tendrils"))]
+#[derive(Clone)]
+pub struct NodeLink(Rc<Node>);
+
+
+#[cfg(all(features = "atomic", not(feature = "with_tendrils")))]
+#[derive(Clone)]
+pub struct NodeLink(Arc<Node>);
 
 /// A `Node` in the `Rope`'s tree.
 ///
@@ -37,6 +56,126 @@ impl fmt::Display for Node {
     }
 }
 
+
+impl NodeLink {
+    /// Split this `Node`'s subtree on the specified `index`.
+    ///
+    /// Consumes `self`.
+    ///
+    /// This function walks the tree from this node until it reaches the index
+    /// to split on, and then it splits the leaf node containing that index.
+    ///
+    /// # Returns
+    /// A tuple containing the left and right sides of the split node. These are
+    /// returned as a tuple rather than as a new branch, since the expected use
+    /// case for this function is splitting a node so that new text can be
+    /// inserted between the two split halves.
+    ///
+    /// # Time complexity
+    /// O(log _n_)
+    #[inline]
+    pub fn split<M>(&self, index: M) -> (NodeLink, NodeLink)
+    where M: Metric
+        , Node: Measured<M>
+        , BranchNode: Measured<M>
+        , String: Measured<M>
+        {
+        match *self.0 {
+            Leaf(ref s) if s.is_empty() =>
+                // splitting an empty leaf node returns two empty leaf nodes
+                (Node::empty(), Node::empty())
+          , Leaf(ref s) if s.measure().into() == 1 =>
+                (self.clone(), Node::empty())
+          , Leaf(ref s) => {
+                // splitting a leaf node with length >= 2 returns two new Leaf
+                // nodes, one with the left half of the string, and one with
+                // the right
+                // TODO: make this properly respect metric index boundaries
+                let index = s.to_byte_index(index)
+                             .expect(
+                                &format!( "split: invalid index! {:?} in {:?}"
+                                        , index, s));
+                let left = Leaf(s[..index].into());
+                let right = Leaf(s[index..].into());
+                (NodeLink::new(left), NodeLink::new(right))
+            }
+          , Branch(ref node) =>
+                // otherwise, just delegate out to `BranchNode::split()`
+                node.split(index)
+        }
+    }
+
+    #[cfg(any(not(features = "atomic"), feature = "with_tendrils"))]
+    pub fn new(node: Node) -> Self { NodeLink(Rc::new(node)) }
+
+    #[cfg(all(features = "atomic", not(feature = "with_tendrils")))]
+    pub fn new(node: Node) -> Self { NodeLink(Arc::new(node)) }
+
+    /// Rebalance the subrope starting at this `Node`, returning a new `Node`
+    ///
+    /// From "Ropes: An Alternative to Strings":
+    /// > "The rebalancing operation maintains an ordered sequence of (empty
+    /// > or) balanced ropes, one for each length interval [_Fn_, _Fn_+1), for
+    /// > _n_ >= 2. We traverse the rope from left to right, inserting each
+    /// > leaf into the appropriate sequence position, depending on its length.
+    ///
+    /// > The concatenation of the sequence of ropes in order of decreasing
+    /// > length is equivalent to the prefix of the rope we have traversed so
+    /// > far. Each new leaf _x_ is with_insert_ropeed into the appropriate entry of the
+    /// > sequence. Assume that _x_’s length is in the interval [_Fn_, _Fn_+1),
+    /// > and thus it should be put in slot _n_ (which also corresponds to
+    /// > maximum depth _n_ − 2). If all lower and equal numbered levels are
+    /// > empty, then this can be done directly. If not, then we concatenate
+    /// > ropes in slots 2, ... ,(_n_ − 1) (concatenating onto the left), and
+    /// > concatenate _x_ to the right of the result. We then continue to
+    /// > concatenate ropes from the sequence in increasing order to the left
+    /// > of this result, until the result fits into an empty slot in the
+    /// > sequence."
+    pub fn rebalance(self) -> Self {
+        // TODO: this is a huge mess, I based it on the IBM Java implementation
+        //       please refactor until it stops being ugly!
+        //        - eliza, 12/17/2016
+
+        if self.is_balanced() {
+            // the subrope is already balanced, do nothing
+            self
+        } else {
+            // let mut leaves: Vec<Option<Node>> =
+            //     self.into_leaves().map(Option::Some).collect();
+            // let len = leaves.len();
+            // fn _rebalance(l: &mut Vec<Option<Node>>, start: usize, end: usize)
+            //               -> Node {
+            //     match end - start {
+            //         1 => l[start].take().unwrap()
+            //       , 2 => l[start].take().unwrap() + l[start + 1].take().unwrap()
+            //       , n => {
+            //             let mid = start + (n / 2);
+            //             _rebalance(l, start, mid) + _rebalance(l, mid, end)
+            //
+            //         }
+            //     }
+            // };
+            // _rebalance(&mut leaves, 0, len)
+            self
+        }
+    }
+}
+
+impl ops::Deref for NodeLink {
+    type Target = Node;
+    fn deref(&self) -> &Node { self.0.as_ref() }
+}
+
+impl fmt::Debug for NodeLink {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self.0)
+    }
+}
+impl fmt::Display for NodeLink {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 // impl fmt::Display for Node {
 //     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 //         match *self {
@@ -59,9 +198,9 @@ pub struct BranchNode {
   , /// The number of started lines in the node's left subtree
     wlines: Line
   , /// The left branch node
-    pub left: Box<Node>
+    pub left: NodeLink
   , /// The right branch node
-    pub right: Box<Node>
+    pub right: NodeLink
 }
 
 
@@ -78,9 +217,9 @@ impl fmt::Display for BranchNode {
 }
 
 
-impl Default for Node {
-    fn default() -> Self { Node::empty() }
-}
+// impl Default for Node {
+//     fn default() -> Self { Node::empty() }
+// }
 
 impl Metric for Grapheme {
 
@@ -342,7 +481,7 @@ macro_rules! or_zero {
 impl BranchNode {
 
     #[inline]
-    fn new(left: Node, right: Node) -> Self {
+    fn new(left: NodeLink, right: NodeLink) -> Self {
         let grapheme_left : Grapheme = left.measure();
         let grapheme_right : Grapheme = right.measure();
         let line_left : Line = left.measure();
@@ -352,8 +491,8 @@ impl BranchNode {
                    , weight: left.subtree_weight()
                    , nlines: line_left + line_right
                    , wlines: left.measure()
-                   , left: Box::new(left)
-                   , right: Box::new(right)
+                   , left: left
+                   , right: right
                    }
     }
 
@@ -371,7 +510,7 @@ impl BranchNode {
     ///
     /// # Time complexity
     /// O(log _n_)
-    #[inline] fn split<M>(self, index: M) -> (Node, Node)
+    #[inline] fn split<M>(self, index: M) -> (NodeLink, NodeLink)
     where M: Metric
         , Node: Measured<M>
         , BranchNode: Measured<M>
@@ -390,12 +529,12 @@ impl BranchNode {
             let right = if left_right.is_empty() {
                 // if the right side of the split is empty, then the right
                 // side of the returned pair is just this node's right child
-                *self.right
+                self.right.clone()
             } else {
                 // otherwise, the right side of the returned pair is a branch
                 // containing the right side of the split node on the left,
                 // and this node's right child on the right
-                Node::new_branch(left_right, *self.right)
+                Node::new_branch(left_right, self.right.clone())
             };
             (left, right)
         } else {
@@ -410,12 +549,12 @@ impl BranchNode {
             let left = if right_left.is_empty() {
                 // if the left side of the split right child is empty, then the
                 // left side of the returned pair is just this node's left child
-                *self.left
+                self.left.clone()
             } else {
                 // otherwise, the left side of the returned pair is a branch
                 // containing the left side of the split node on the right,
                 // and this node's left child on the left
-                Node::new_branch(*self.left, right_left)
+                Node::new_branch(self.left.clone(), right_left)
             };
             (left, right)
         }
@@ -489,62 +628,24 @@ impl Node {
                 (self, i)
         }
     }
-    /// Split this `Node`'s subtree on the specified `index`.
-    ///
-    /// Consumes `self`.
-    ///
-    /// This function walks the tree from this node until it reaches the index
-    /// to split on, and then it splits the leaf node containing that index.
-    ///
-    /// # Returns
-    /// A tuple containing the left and right sides of the split node. These are
-    /// returned as a tuple rather than as a new branch, since the expected use
-    /// case for this function is splitting a node so that new text can be
-    /// inserted between the two split halves.
-    ///
-    /// # Time complexity
-    /// O(log _n_)
+
+
+    #[cfg(any(not(features = "atomic"), feature = "with_tendrils"))]
     #[inline]
-    pub fn split<M>(self, index: M) -> (Node, Node)
-    where M: Metric
-        , Node: Measured<M>
-        , BranchNode: Measured<M>
-        , String: Measured<M>
-        {
-        match self {
-            Leaf(ref s) if s.is_empty() =>
-                // splitting an empty leaf node returns two empty leaf nodes
-                (Node::empty(), Node::empty())
-          , Leaf(ref s) if s.measure().into() == 1 =>
-                (Leaf(s.clone()), Node::empty())
-          , Leaf(s) => {
-                // splitting a leaf node with length >= 2 returns two new Leaf
-                // nodes, one with the left half of the string, and one with
-                // the right
-                // TODO: make this properly respect metric index boundaries
-                let index = s.to_byte_index(index)
-                             .expect(
-                                &format!( "split: invalid index! {:?} in {:?}"
-                                        , index, s));
-                let left = Leaf(s[..index].into());
-                let right = Leaf(s[index..].into());
-                (left, right)
-            }
-          , Branch(node) =>
-                // otherwise, just delegate out to `BranchNode::split()`
-                node.split(index)
-        }
+    pub fn empty() -> NodeLink {
+        NodeLink(Rc::new(Leaf(LeafRepr::new())))
     }
 
+    #[cfg(all(features = "atomic", not(feature = "with_tendrils")))]
     #[inline]
-    pub fn empty() -> Self {
-        Leaf("".into())
+    pub fn empty() -> NodeLink {
+        NodeLink(Arc::new(Leaf(LeafRepr::new())))
     }
 
     /// Concatenate two `Node`s to return a new `Branch` node.
     #[inline]
-    pub fn new_branch(left: Self, right: Self) -> Self {
-        Branch(BranchNode::new(left, right))
+    pub fn new_branch(left: NodeLink, right: NodeLink) -> NodeLink {
+        NodeLink::new(Branch(BranchNode::new(left, right)))
     }
 
 
@@ -652,23 +753,24 @@ impl Node {
             // the subrope is already balanced, do nothing
             self
         } else {
-            let mut leaves: Vec<Option<Node>> =
-                self.into_leaves().map(Option::Some).collect();
-            let len = leaves.len();
-            #[inline]
-            fn _rebalance(l: &mut Vec<Option<Node>>, start: usize, end: usize)
-                          -> Node {
-                match end - start {
-                    1 => l[start].take().unwrap()
-                  , 2 => l[start].take().unwrap() + l[start + 1].take().unwrap()
-                  , n => {
-                        let mid = start + (n / 2);
-                        _rebalance(l, start, mid) + _rebalance(l, mid, end)
-
-                    }
-                }
-            };
-            _rebalance(&mut leaves, 0, len)
+            // let mut leaves: Vec<Option<Node>> =
+            //     self.into_leaves().map(Option::Some).collect();
+            // let len = leaves.len();
+            // #[inline]
+            // fn _rebalance(l: &mut Vec<Option<Node>>, start: usize, end: usize)
+            //               -> Node {
+            //     match end - start {
+            //         1 => l[start].take().unwrap()
+            //       , 2 => l[start].take().unwrap() + l[start + 1].take().unwrap()
+            //       , n => {
+            //             let mid = start + (n / 2);
+            //             _rebalance(l, start, mid) + _rebalance(l, mid, end)
+            //
+            //         }
+            //     }
+            // };
+            // _rebalance(&mut leaves, 0, len)
+            self
         }
     }
 
@@ -1015,22 +1117,22 @@ impl<'a> Iterator for UWordBoundIndices<'a> {
     }
 }
 
-impl ops::Add for Node {
+impl ops::Add for NodeLink {
     type Output = Self;
     /// Concatenate two `Node`s, returning a `Branch` node.
     fn add(self, right: Self) -> Self { Node::new_branch(self, right) }
 }
 
-
-impl ops::AddAssign for Node {
-    /// Concatenate two `Node`s
-    fn add_assign(&mut self, right: Self) {
-        use std::mem::replace;
-        *self = Node::new_branch(replace(self, Node::empty()), right)
-     }
-
-}
-
+//
+// impl ops::AddAssign for Node {
+//     /// Concatenate two `Node`s
+//     fn add_assign(&mut self, right: Self) {
+//         use std::mem::replace;
+//         *self = Node::new_branch(self, right)
+//      }
+//
+// }
+//
 
 impl<M> ops::Index<M> for Node
 where M: Metric

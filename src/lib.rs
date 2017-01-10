@@ -54,6 +54,7 @@ use metric::{Measured, Metric};
 use self::internals::{Node, BranchNode};
 pub use self::slice::{RopeSlice, RopeSliceMut};
 
+
 /// A Rope
 ///
 /// This Rope implementation aims to eventually function as a superset of
@@ -66,7 +67,7 @@ pub use self::slice::{RopeSlice, RopeSliceMut};
 /// non-destructive, persistant API. The persistant API's methods have names
 /// prefixed with `with_`, such as `with_push()` and `with_append()`.
 ///
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct Rope {
     // can we get away with having these be of &str or will they need
     // to be string?
