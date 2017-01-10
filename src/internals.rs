@@ -7,31 +7,31 @@ use metric::{Grapheme, Line, Metric, Measured};
 use std::ops;
 use std::fmt;
 
-#[cfg(all(features = "atomic", not(feature = "with_tendrils")))]
+#[cfg(all(feature = "atomic", not(feature = "with_tendrils")))]
 use std::sync::Arc;
 
-#[cfg(any(not(features = "atomic"), feature = "with_tendrils"))]
+#[cfg(any(not(feature = "atomic"), feature = "with_tendrils"))]
 use std::rc::Rc;
 
-#[cfg(features = "with_tendrils")]
+#[cfg(feature = "with_tendrils")]
 use tendril;
 
 use self::Node::*;
 
-#[cfg(not(features = "with_tendrils"))]
+#[cfg(not(feature = "with_tendrils"))]
 type LeafRepr = String;
 
-#[cfg(all(features = "with_tendrils", not(features = "atomic") ))]
+#[cfg(all(feature = "with_tendrils", not(feature = "atomic") ))]
 type LeafRepr = tendril::StrTendril;
 
-#[cfg(all(features = "with_tendrils", features = "atomic"))]
+#[cfg(all(feature = "with_tendrils", feature = "atomic"))]
 type LeafRepr = tendril::tendril::Tendril<tendril::tendril::Atomic, tendril::fmt::UTF8>;
 
-#[cfg(any(not(features = "atomic"), feature = "with_tendrils"))]
+#[cfg(any(not(feature = "atomic"), feature = "with_tendrils"))]
 #[derive(Clone)]
 pub struct NodeLink(Rc<Node>);
 
-#[cfg(all(features = "atomic", not(feature = "with_tendrils")))]
+#[cfg(all(feature = "atomic", not(feature = "with_tendrils")))]
 #[derive(Clone)]
 pub struct NodeLink(Arc<Node>);
 
@@ -104,10 +104,10 @@ impl NodeLink {
         }
     }
 
-    #[cfg(any(not(features = "atomic"), feature = "with_tendrils"))]
+    #[cfg(any(not(feature = "atomic"), feature = "with_tendrils"))]
     pub fn new(node: Node) -> Self { NodeLink(Rc::new(node)) }
 
-    #[cfg(all(features = "atomic", not(feature = "with_tendrils")))]
+    #[cfg(all(feature = "atomic", not(feature = "with_tendrils")))]
     pub fn new(node: Node) -> Self { NodeLink(Arc::new(node)) }
 
     /// Rebalance the subrope starting at this `Node`, returning a new `Node`
@@ -629,13 +629,13 @@ impl Node {
     // }
 
 
-    #[cfg(any(not(features = "atomic"), feature = "with_tendrils"))]
+    #[cfg(any(not(feature = "atomic"), feature = "with_tendrils"))]
     #[inline]
     pub fn empty() -> NodeLink {
         NodeLink(Rc::new(Leaf(LeafRepr::new())))
     }
 
-    #[cfg(all(features = "atomic", not(feature = "with_tendrils")))]
+    #[cfg(all(feature = "atomic", not(feature = "with_tendrils")))]
     #[inline]
     pub fn empty() -> NodeLink {
         NodeLink(Arc::new(Leaf(LeafRepr::new())))
