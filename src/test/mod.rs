@@ -5,8 +5,10 @@ use internals::Node::Leaf;
 use metric::Line;
 use metric::Measured;
 
+#[cfg(feature = "atomic")]
 use quickcheck::{Arbitrary, Gen};
 
+#[cfg(feature = "atomic")]
 impl Arbitrary for Rope {
     fn arbitrary<G: Gen>(g: &mut G) -> Rope {
         Rope::from(String::arbitrary(g))
@@ -581,12 +583,9 @@ fn rope_char_indices() {
 mod properties {
     use ::Rope;
     use quickcheck::{TestResult, quickcheck};
-    quickcheck! {
-        fn rope_concat_is_string_concat(a: String, b: String) -> bool {
-            let r_a = Rope::from(a.clone()); let r_b = Rope::from(b.clone());
-            &(r_a + r_b) == &(a + b.as_str())
-        }
 
+    #[cfg(feature = "atomic")]
+    quickcheck! {
         fn rope_with_append_prepend_is_symmetric(a: Rope, b: Rope) -> bool {
             a.with_append(b.clone()) == b.with_prepend(a.clone()) &&
             a.with_prepend(b.clone()) == b.with_append(a.clone())
@@ -595,6 +594,12 @@ mod properties {
         fn rope_append_prepend_is_symmetric(a: Rope, b: Rope) -> bool {
             a.clone().append(b.clone()) == b.clone().prepend(a.clone()) &&
             a.clone().prepend(b.clone()) == b.clone().append(a.clone())
+        }
+    }
+    quickcheck! {
+        fn rope_concat_is_string_concat(a: String, b: String) -> bool {
+            let r_a = Rope::from(a.clone()); let r_b = Rope::from(b.clone());
+            &(r_a + r_b) == &(a + b.as_str())
         }
 
         fn rope_append_is_string_push_str(a: String, b: String) -> bool {
