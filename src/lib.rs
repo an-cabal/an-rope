@@ -53,8 +53,12 @@ use metric::{Measured, Metric};
 use self::internals::{Node, NodeLink, BranchNode};
 
 // pub use self::slice::{RopeSlice, RopeSliceMut};
-
-
+impl<T> convert::From<T> for Rope
+where T: convert::Into<NodeLink> {
+    #[inline] fn from(that: T) -> Self {
+        Rope { root: that.into().rebalance() }
+    }
+}
 /// A Rope
 ///
 /// This Rope implementation aims to eventually function as a superset of
@@ -316,9 +320,7 @@ impl Rope {
     /// let mut an_rope = Rope::new();
     /// assert_eq!(an_rope.len(), 0);
     /// ```
-    pub fn new() -> Rope {
-        Rope { root: Node::empty() }
-    }
+    #[inline] pub fn new() -> Rope { Rope::from(Node::empty()) }
 
     /// Returns the length of this Rope
     ///
@@ -468,7 +470,7 @@ impl Rope {
                , "invalid index! start {:?} > end {:?}", end, start);
         let (l, r) = self.take_root().split(start);
         let (_, r) = r.split(end - start);
-        self.root = Node::new_branch(l, r);
+        Rope::from(Node::new_branch(l, r))
     }
 
     #[inline]
@@ -480,7 +482,7 @@ impl Rope {
         {
         let (l, r) = self.root.split(range.start);
         let (_, r) = r.split(range.end - range.start);
-        Rope { root: Node::new_branch(l, r) }
+        Rope::from(Node::new_branch(l, r))
     }
 
     /// Insert `ch` into `index` in this `Rope`, returning a new `Rope`.
@@ -603,7 +605,7 @@ impl Rope {
 
                 // construct the new root node with `Rope` inserted
                 // rebalance the new rope
-                Rope { root: (&left + &rope.root + right).rebalance() }
+                Rope::from(&left + &rope.root + right)
             }
         } else {
             self.clone()
@@ -790,7 +792,7 @@ impl Rope {
     /// ```
     pub fn append(&self, other: &Rope) -> Rope {
         if !other.is_empty() {
-            Rope { root: (&self.root + &other.root).rebalance() }
+            Rope::from(&self.root + &other.root)
         } else {
             self.clone()
         }
@@ -839,7 +841,7 @@ impl Rope {
     /// ```
     pub fn prepend(&self, other: &Rope) -> Rope {
         if !other.is_empty() {
-            Rope { root: (&other.root + &self.root).rebalance() }
+            Rope::from(&other.root + &self.root)
         } else {
             self.clone()
         }
@@ -911,7 +913,7 @@ impl Rope {
         {
         assert!(index <= self.measure());
         let (l, r) = self.root.split(index);
-        (Rope { root: l }, Rope { root: r })
+        (Rope::from(l), Rope::from(r))
     }
 
     /// Rebalances this entire `Rope`, returning a balanced `Rope`.
@@ -1197,7 +1199,7 @@ fn str_to_tree(string: String) -> NodeLink {
 #[cfg(feature = "tendril")]
 impl convert::From<StrTendril> for Rope {
     fn from(tendril: StrTendril) -> Rope {
-        Rope { root: str_to_tree(tendril) }
+        Rope::from(str_to_tree(tendril))
     }
 }
 
@@ -1207,20 +1209,16 @@ impl convert::From<String> for Rope {
     #[cfg(feature = "tendril")]
     #[inline]
     fn from(string: String) -> Rope {
-        Rope {
-            root: if string.is_empty() { Node::empty() }
-                  else { str_to_tree(StrTendril::from(string)) }
-        }
+        Rope::from(if string.is_empty() { Node::empty() }
+                   else { str_to_tree(StrTendril::from(string)) })
     }
 
 
     #[cfg(not(feature = "tendril"))]
     #[inline]
     fn from(string: String) -> Rope {
-        Rope {
-            root: if string.is_empty() { Node::empty() }
-                  else { str_to_tree(string) }
-        }
+        Rope::from(if string.is_empty() { Node::empty() }
+                  else { str_to_tree(string) })
     }
 }
 

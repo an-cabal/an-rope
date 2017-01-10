@@ -6,10 +6,10 @@ use metric::{Grapheme, Line, Metric, Measured};
 
 use std::ops;
 use std::fmt;
+use std::convert;
 
 #[cfg(all(feature = "atomic", not(feature = "with_tendrils")))]
 use std::sync::Arc;
-
 #[cfg(any(not(feature = "atomic"), feature = "with_tendrils"))]
 use std::rc::Rc;
 
@@ -55,6 +55,11 @@ impl fmt::Display for Node {
     }
 }
 
+impl convert::Into<NodeLink> for Node {
+    #[inline] fn into(self) -> NodeLink {
+        NodeLink::new(self)
+    }
+}
 
 impl NodeLink {
     /// Split this `Node`'s subtree on the specified `index`.
