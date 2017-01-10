@@ -648,8 +648,9 @@ impl Node {
 
     /// Concatenate two `Node`s to return a new `Branch` node.
     #[inline]
-    pub fn new_branch(left: NodeLink, right: NodeLink) -> NodeLink {
-        NodeLink::new(Branch(BranchNode::new(left, right)))
+    pub fn new_branch<I>(left: I, right: I) -> NodeLink
+    where I: convert::Into<NodeLink> {
+        NodeLink::new(Branch(BranchNode::new(left.into(), right.into())))
     }
 
 
