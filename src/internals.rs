@@ -78,14 +78,14 @@ impl convert::From<String> for NodeLink {
             NodeLink::default()
         } else {
             let mut strings = string.rsplit('\n');
-            let last: Node = Node::new_leaf(LeafRepr::from(strings.next()
+            let last = Node::new_leaf(LeafRepr::from_slice(strings.next()
                                                                   .unwrap()));
             let leaves = strings.map(|s| {
-                let mut r = LeafRepr::from(s);
+                let mut r = LeafRepr::from_slice(s);
                 r.push_char('\n');
                 Node::new_leaf(r)
             });
-            leaves.fold(NodeLink::new(last), |r, l| Node::new_branch(NodeLink::new(l), r))
+            leaves.fold(last, |r, l| Node::new_branch(l, r))
         }
     }
 }
@@ -96,12 +96,12 @@ impl convert::From<String> for NodeLink {
             NodeLink::default()
         } else {
             let mut strings = string.rsplit('\n');
-            let last: Node = Node::new_leaf(LeafRepr::from(strings.next()
+            let last = Node::new_leaf(LeafRepr::from(strings.next()
                                                                   .unwrap()));
             let leaves = strings.map(|s|
                 Node::new_leaf(LeafRepr::from(s)+ "\n")
             );
-            leaves.fold(NodeLink::new(last), |r, l| Node::new_branch(NodeLink::new(l), r))
+            leaves.fold(last, |r, l| Node::new_branch(l, r))
         }
     }
 }
@@ -124,14 +124,14 @@ impl convert::From<LeafRepr> for NodeLink {
             NodeLink::default()
         } else {
             let mut strings = string.rsplit('\n');
-            let last: Node = Node::new_leaf(LeafRepr::from(strings.next()
+            let last = Node::new_leaf(LeafRepr::from(strings.next()
                                                                    .unwrap()));
             let leaves = strings.map(|s| {
                 let mut r = LeafRepr::from(s);
                 r.push_char('\n');
                 Node::new_leaf(r)
             });
-            leaves.fold(NodeLink::new(last), |r, l| Node::new_branch(NodeLink::new(l), r))
+            leaves.fold(last, |r, l| Node::new_branch(l, r))
         }
     }
 }
@@ -762,9 +762,9 @@ impl Node {
 
     #[inline]
     // #[cfg(not(feature = "unstable"))]
-    pub fn new_leaf<T>(that: T) -> Self
+    pub fn new_leaf<T>(that: T) -> NodeLink
     where T: convert::Into<LeafRepr> {
-        Leaf(that.into())
+        NodeLink::new(Leaf(that.into()))
     }
 
     /// Returns true if this node is balanced
