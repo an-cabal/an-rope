@@ -25,126 +25,126 @@ impl Arbitrary for Rope {
 
 #[test]
 fn line_split_test_1() {
-    let l1 = Node::new_leaf("asdf".to_string());
-    let l2 = Node::new_leaf("qwer".to_string());
+    let l1 = Node::new_leaf("asdf");
+    let l2 = Node::new_leaf("qwer");
     let b = Node::new_branch(l1, l2);
     let (left, right) = b.split(Line(0));
     assert_eq!(left.strings().collect::<String>(), "asdfqwer");
     if let Leaf(ref s) = *right {
-        assert_eq!(s, "");
+        assert_eq!(s.as_ref(), "");
     } else { assert!(false) }
 }
 
 #[test]
 fn line_split_test_2() {
-    let l1 = Node::new_leaf("asdf".to_string());
-    let l2 = Node::new_leaf("qwer\n".to_string());
+    let l1 = Node::new_leaf("asdf");
+    let l2 = Node::new_leaf("qwer\n");
     let b = Node::new_branch(l1, l2);
     let (left, right) = b.split(Line(0));
     assert_eq!(left.strings().collect::<String>(), "asdfqwer\n");
     if let Leaf(ref s) = *right {
-        assert_eq!(s, "");
+        assert_eq!(s.as_ref(), "");
     } else { assert!(false) }
 }
 
 #[test]
 fn line_split_test_3() {
-    let l1 = Node::new_leaf("asdf\n".to_string());
-    let l2 = Node::new_leaf("qwer\n".to_string());
+    let l1 = Node::new_leaf("asdf\n");
+    let l2 = Node::new_leaf("qwer\n");
     let b = Node::new_branch(l1, l2);
     let (left, right) = b.split(Line(0));
     if let Leaf(ref s) = *left {
-        assert_eq!(s, "asdf\n");
+        assert_eq!(s.as_ref(), "asdf\n");
     } else { assert!(false) }
     if let Leaf(ref s) = *right {
-        assert_eq!(s, "qwer\n");
+        assert_eq!(s.as_ref(), "qwer\n");
     } else { assert!(false) }
 }
 
 #[test]
 #[should_panic(expected = "invalid index!")]
 fn line_split_test_4() {
-    let l1 = Node::new_leaf("asdf".to_string());
-    let l2 = Node::new_leaf("qwer".to_string());
+    let l1 = Node::new_leaf("asdf");
+    let l2 = Node::new_leaf("qwer");
     let b = Node::new_branch(l1, l2);
     let (left, right) = b.split(Line(1));
 }
 
 #[test]
 fn line_split_test_5() {
-    let l1 = Node::new_leaf("asdf".to_string());
-    let l2 = Node::new_leaf("qwer\n".to_string());
+    let l1 = Node::new_leaf("asdf");
+    let l2 = Node::new_leaf("qwer\n");
     let b = Node::new_branch(l1, l2);
     let (left, right) = b.split(Line(1));
     assert_eq!(left.strings().collect::<String>(), "asdfqwer\n");
     if let Leaf(ref s) = *right {
-        assert_eq!(s, "");
+        assert_eq!(s.as_ref(), "");
     } else { assert!(false) }
 }
 
 #[test]
 fn line_split_test_6() {
-    let l1 = Node::new_leaf("asdf\n".to_string());
-    let l2 = Node::new_leaf("qwer\n".to_string());
+    let l1 = Node::new_leaf("asdf\n");
+    let l2 = Node::new_leaf("qwer\n");
     let b = Node::new_branch(l1, l2);
     let (left, right) = b.split(Line(1));
     assert_eq!(left.strings().collect::<String>(), "asdf\nqwer\n");
     if let Leaf(ref s) = *right {
-        assert_eq!(s, "");
+        assert_eq!(s.as_ref(), "");
     } else { assert!(false) }
 }
 
 #[test]
 fn line_split_test_7() {
-    let l1 = Node::new_leaf("asdf\n".to_string());
-    let l2 = Node::new_leaf("qwer\n".to_string());
+    let l1 = Node::new_leaf("asdf\n");
+    let l2 = Node::new_leaf("qwer\n");
     let b = Node::new_branch(l1, l2);
     let (left, right) = b.split(Line(0));
     if let Leaf(ref s) = *left {
-        assert_eq!(s, "asdf\n");
+        assert_eq!(s.as_ref(), "asdf\n");
     } else { assert!(false) }
     if let Leaf(ref s) = *right {
-        assert_eq!(s, "qwer\n");
+        assert_eq!(s.as_ref(), "qwer\n");
     } else { assert!(false) }
 }
 
 #[test]
 fn line_split_test_8() {
-    let l1 = Node::new_leaf("".to_string());
-    let l2 = Node::new_leaf("qwer\n".to_string());
+    let l1 = Node::new_leaf("");
+    let l2 = Node::new_leaf("qwer\n");
     let b = Node::new_branch(l1, l2);
     let (left, right) = b.split(Line(0));
     assert_eq!(left.strings().collect::<String>(), "qwer\n");
     if let Leaf(ref s) = *right {
-        assert_eq!(s, "");
+        assert_eq!(s.as_ref(), "");
     } else { assert!(false) }
 }
 
 #[test]
 fn line_split_test_9() {
-    let l1 = Node::new_leaf("asdf\n".to_string());
-    let l2 = Node::new_leaf("qwer".to_string());
-    let l3 = Node::new_leaf("yxcv\n".to_string());
+    let l1 = Node::new_leaf("asdf\n");
+    let l2 = Node::new_leaf("qwer");
+    let l3 = Node::new_leaf("yxcv\n");
     let b1 = Node::new_branch(l1, l2);
     let b2 = Node::new_branch(b1, l3);
     let (left, right) = b2.split(Line(0));
     if let Leaf(ref s) = *left {
-        assert_eq!(s, "asdf\n");
+        assert_eq!(s.as_ref(), "asdf\n");
     } else { assert!(false) }
     assert_eq!(right.strings().collect::<String>(), "qweryxcv\n");
 }
 
 #[test]
 fn line_split_test_10() {
-    let l1 = Node::new_leaf("asdf".to_string());
-    let l2 = Node::new_leaf("qwer\n".to_string());
-    let l3 = Node::new_leaf("yxcv\n".to_string());
+    let l1 = Node::new_leaf("asdf");
+    let l2 = Node::new_leaf("qwer\n");
+    let l3 = Node::new_leaf("yxcv\n");
     let b1 = Node::new_branch(l2, l3);
     let b2 = Node::new_branch(l1, b1);
     let (left, right) = b2.split(Line(0));
     assert_eq!(left.strings().collect::<String>(), "asdfqwer\n");
     if let Leaf(ref s) = *right {
-        assert_eq!(s, "yxcv\n");
+        assert_eq!(s.as_ref(), "yxcv\n");
     } else { assert!(false) }
 }
 
@@ -183,7 +183,7 @@ fn line_delete_test_2() {
 
 #[test]
 fn delete_test_1() {
-    let mut r = Rope::from("this is not fine".to_string());
+    let mut r = Rope::from("this is not fine");
     r = r.delete((8..12));
     assert_eq!(&r, "this is fine");
 }
@@ -200,7 +200,7 @@ fn delete_test_2() {
 #[test]
 fn delete_test_3() {
     use std::ops::RangeFull;
-    let mut r = Rope::from("this is not fine".to_string());
+    let mut r = Rope::from("this is not fine");
     r = r.delete::<RangeFull, usize>((..));
     assert_eq!(&r, "");
 }
@@ -209,7 +209,7 @@ fn delete_test_3() {
 #[cfg(feature = "unstable")]
 #[test]
 fn delete_test_4() {
-    let mut r = Rope::from("this is not fine".to_string());
+    let mut r = Rope::from("this is not fine");
     r = r.delete((11..));
     assert_eq!(&r, "this is not");
 }
@@ -218,7 +218,7 @@ fn delete_test_4() {
 #[cfg(feature = "unstable")]
 #[test]
 fn delete_test_5() {
-    let mut r = Rope::from("this is not fine".to_string());
+    let mut r = Rope::from("this is not fine");
     r = r.delete((..5));
     assert_eq!(&r, "is not fine");
 }
@@ -228,7 +228,7 @@ fn delete_test_5() {
 #[test]
 #[should_panic(expected = "byte index 42 is out of bounds")]
 fn delete_test_6() {
-    let mut r = Rope::from("this is not fine".to_string());
+    let mut r = Rope::from("this is not fine");
     r.delete((..42));
 }
 
@@ -239,7 +239,7 @@ fn delete_test_6() {
           , should_panic(expected = "attempt to subtract with overflow"))]
 #[should_panic]
 fn delete_test_7() {
-    let mut r = Rope::from("this is not fine".to_string());
+    let mut r = Rope::from("this is not fine");
     r.delete((12..8)); // lol, fuck you
 }
 
@@ -251,14 +251,14 @@ fn fmt_debug_test_1() {
 
 #[test]
 fn fmt_debug_test_2() {
-    let s = format!("{:?}", Rope::from("NERD!!!".to_string()));
+    let s = format!("{:?}", Rope::from("NERD!!!"));
     assert_eq!(s, "Rope[\"NERD!!!\"] Leaf(\"NERD!!!\")");
 }
 
 #[test]
 fn fmt_debug_test_3() {
-    let r1 = Rope::from("Hello, ".to_string());
-    let r2 = Rope::from("World!".to_string());
+    let r1 = Rope::from("Hello, ");
+    let r2 = Rope::from("World!");
     let r = r1 + r2;
     let s = format!("{:?}", r);
     assert_eq!(s, "Rope[\"Hello, World!\"] \
@@ -268,7 +268,7 @@ fn fmt_debug_test_3() {
 #[test]
 fn rebalance_test_1() {
     let mut r = Rope::from("This is a large string \
-                        that will need to be rebalanced.".to_string());
+                        that will need to be rebalanced.");
     r.rebalance();
     assert!(r.is_balanced());
 }
@@ -284,7 +284,7 @@ fn rebalance_test_2() {
                      in voluptate velit esse cillum dolore eu fugiat nulla\
                      pariatur. Excepteur sint occaecat cupidatat non proid\
                     ent, sunt in culpa qui officia deserunt mollit anim id\
-                     est laborum.".to_string());
+                     est laborum.");
     r.rebalance();
     assert!(r.is_balanced());
 }
@@ -468,19 +468,16 @@ fn rope_lines_iter() {
 
 #[test]
 fn rope_lines_iter_split_on_node() {
-    use super::internals::Node;
-    use super::internals::Node::Leaf;
     let s = "line a\n\
              line b\n\
              line c\n";
     let r = Rope {
         root: Node::new_branch(
-                Node::new_branch( Leaf("line".to_string())
-                                , Leaf(" a\n".to_string())
-                                )
-              , Node::new_branch( Leaf("line b\n".to_string())
-                                , Node::new_branch( Leaf("li".to_string())
-                                                  , Leaf("ne c\n".to_string())
+                Node::new_branch( Node::new_leaf("line")
+                          , Node::new_leaf(" a\n") )
+              , Node::new_branch( Node::new_leaf("line b\n")
+                          , Node::new_branch( Node::new_leaf("li")
+                                      , Node::new_leaf("ne c\n")
                                                   )
                                 )
               )

@@ -8,30 +8,32 @@ use std::ops;
 use std::fmt;
 use std::convert;
 
-#[cfg(all(feature = "atomic", not(feature = "with_tendrils")))]
+#[cfg(all(feature = "atomic", not(feature = "tendril")))]
 use std::sync::Arc;
-#[cfg(any(not(feature = "atomic"), feature = "with_tendrils"))]
+#[cfg(any(not(feature = "atomic"), feature = "tendril"))]
 use std::rc::Rc;
 
-#[cfg(feature = "with_tendrils")]
+#[cfg(feature = "tendril")]
 use tendril;
+#[cfg(feature = "tendril")]
+use tendril::StrTendril;
 
 use self::Node::*;
 
-#[cfg(not(feature = "with_tendrils"))]
+#[cfg(not(feature = "tendril"))]
 type LeafRepr = String;
 
-#[cfg(all(feature = "with_tendrils", not(feature = "atomic") ))]
-type LeafRepr = tendril::StrTendril;
+#[cfg(all(feature = "tendril", not(feature = "atomic") ))]
+type LeafRepr = StrTendril;
 
-#[cfg(all(feature = "with_tendrils", feature = "atomic"))]
-type LeafRepr = tendril::tendril::Tendril<tendril::tendril::Atomic, tendril::fmt::UTF8>;
+#[cfg(all(feature = "tendril", feature = "atomic"))]
+type LeafRepr = tendril::Tendril<tendril::Atomic, tendril::fmt::UTF8>;
 
-#[cfg(any(not(feature = "atomic"), feature = "with_tendrils"))]
+#[cfg(any(not(feature = "atomic"), feature = "tendril"))]
 #[derive(Clone)]
 pub struct NodeLink(Rc<Node>);
 
-#[cfg(all(feature = "atomic", not(feature = "with_tendrils")))]
+#[cfg(all(feature = "atomic", not(feature = "tendril")))]
 #[derive(Clone)]
 pub struct NodeLink(Arc<Node>);
 
@@ -55,9 +57,61 @@ impl fmt::Display for Node {
     }
 }
 
-impl convert::Into<NodeLink> for Node {
-    #[inline] fn into(self) -> NodeLink {
-        NodeLink::new(self)
+// impl convert::Into<NodeLink> for Node {
+//     #[inline] fn into(self) -> NodeLink {
+//         NodeLink::new(self)
+//     }
+// }
+
+impl<T> convert::From<T> for NodeLink
+where Node: convert::From<T> {
+    fn from(that: T) -> Self {
+        NodeLink::new(Node::from(that))
+    }
+}
+
+#[cfg(feature = "tendril")]
+impl convert::From<String> for NodeLink {
+    #[inline] fn from(string: String) -> Self {
+        assert!(!string.is_empty());
+        let mut strings = string.rsplit('\n');
+        let last: Node = Node::new_leaf(LeafRepr::from(strings.next()
+                                                              .unwrap()));
+        let leaves = strings.map(|s| {
+            let mut r = StrTendril::from(s);
+            r.push_char('\n');
+            Node::new_leaf(r)
+        });
+        leaves.fold(NodeLink::new(last), |r, l| Node::new_branch(NodeLink::new(l), r))
+    }
+}
+
+#[cfg(not(feature = "tendril"))]
+impl convert::From<String> for NodeLink {
+    #[inline] fn from(string: String) -> Self {
+        assert!(!string.is_empty());
+        let mut strings = string.rsplit('\n');
+        let last: Node = Node::new_leaf(LeafRepr::from(strings.next()
+                                                              .unwrap()));
+        let leaves = strings.map(|s|
+            Node::new_leaf(String::from(s) + "\n"));
+        leaves.fold(NodeLink::new(last), |r, l| Node::new_branch(NodeLink::new(l), r))
+    }
+}
+
+#[cfg(feature = "tendril")]
+impl convert::From<StrTendril> for NodeLink {
+    #[inline] fn from(string: StrTendril) -> Self {
+        assert!(!string.is_empty());
+        let mut strings = string.rsplit('\n');
+        let last: Node = Node::new_leaf(LeafRepr::from(strings.next()
+                                                               .unwrap()));
+        let leaves = strings.map(|s| {
+            let mut r = LeafRepr::from(s);
+            r.push_char('\n');
+            Node::new_leaf(r)
+        });
+        leaves.fold(NodeLink::new(last), |r, l| Node::new_branch(NodeLink::new(l), r))
     }
 }
 
@@ -83,6 +137,7 @@ impl NodeLink {
         , Node: Measured<M>
         , BranchNode: Measured<M>
         , String: Measured<M>
+        , str: Measured<M>
         {
         match *self.0 {
             Leaf(ref s) if s.is_empty() =>
@@ -109,10 +164,10 @@ impl NodeLink {
         }
     }
 
-    #[cfg(any(not(feature = "atomic"), feature = "with_tendrils"))]
+    #[cfg(any(not(feature = "atomic"), feature = "tendril"))]
     pub fn new(node: Node) -> Self { NodeLink(Rc::new(node)) }
 
-    #[cfg(all(feature = "atomic", not(feature = "with_tendrils")))]
+    #[cfg(all(feature = "atomic", not(feature = "tendril")))]
     pub fn new(node: Node) -> Self { NodeLink(Arc::new(node)) }
 
     /// Rebalance the subrope starting at this `Node`, returning a new `Node`
@@ -447,6 +502,7 @@ impl<M> Measured<M> for Node
 where M: Metric
     , BranchNode: Measured<M>
     , String: Measured<M>
+, str: Measured<M>
     {
 
     fn to_byte_index(&self, index: M) -> Option<usize>  {
@@ -519,6 +575,7 @@ impl BranchNode {
         , Node: Measured<M>
         , BranchNode: Measured<M>
         , String: Measured<M>
+        , str: Measured<M>
         {
         let weight = (&self).measure_weight();
         // to determine which side of this node we are splitting on, we compare
@@ -634,13 +691,13 @@ impl Node {
     // }
 
 
-    #[cfg(any(not(feature = "atomic"), feature = "with_tendrils"))]
+    #[cfg(any(not(feature = "atomic"), feature = "tendril"))]
     #[inline]
     pub fn empty() -> NodeLink {
         NodeLink(Rc::new(Leaf(LeafRepr::new())))
     }
 
-    #[cfg(all(feature = "atomic", not(feature = "with_tendrils")))]
+    #[cfg(all(feature = "atomic", not(feature = "tendril")))]
     #[inline]
     pub fn empty() -> NodeLink {
         NodeLink(Arc::new(Leaf(LeafRepr::new())))
@@ -655,17 +712,19 @@ impl Node {
         NodeLink::new(Branch(BranchNode::new(left.into(), right.into())))
     }
 
+    //
+    // #[inline]
+    // #[cfg(feature = "unstable")]
+    // pub const fn new_leaf<T>(that: T) -> Self
+    // where T: convert::Into<LeafRepr> {
+    //     Leaf(that.into())
+    // }
 
     #[inline]
-    #[cfg(feature = "unstable")]
-    pub const fn new_leaf(string: LeafRepr) -> Self {
-        Leaf(string)
-    }
-
-    #[inline]
-    #[cfg(not(feature = "unstable"))]
-    pub fn new_leaf(string: LeafRepr) -> Self {
-        Leaf(string)
+    // #[cfg(not(feature = "unstable"))]
+    pub fn new_leaf<T>(that: T) -> Self
+    where T: convert::Into<LeafRepr> {
+        Leaf(that.into())
     }
 
     /// Returns true if this node is balanced
@@ -1155,6 +1214,7 @@ where M: Metric
     , Node: Measured<M>
     , BranchNode: Measured<M>
     , String: Measured<M>
+, str: Measured<M>
     {
     type Output = str;
 

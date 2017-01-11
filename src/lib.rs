@@ -432,6 +432,7 @@ impl Rope {
         , Node: Measured<M>
         , BranchNode: Measured<M>
         , String: Measured<M>
+        , str: Measured<M>
         {
         assert!( index <= self.measure()
                , "Rope::insert: index {:?} was > length {:?}"
@@ -472,6 +473,7 @@ impl Rope {
         , Node: Measured<M>
         , BranchNode: Measured<M>
         , String: Measured<M>
+        , str: Measured<M>
         {
         let start = range.start().map(|s| *s)
                          .unwrap_or_else(|| { M::default() });
@@ -491,6 +493,7 @@ impl Rope {
     where Node: Measured<M>
         , internals::BranchNode: Measured<M>
         , String: Measured<M>
+        , str: Measured<M>
         {
         let (l, r) = self.root.split(range.start);
         let (_, r) = r.split(range.end - range.start);
@@ -547,6 +550,7 @@ impl Rope {
         , Node: Measured<M>
         , BranchNode: Measured<M>
         , String: Measured<M>
+        , str: Measured<M>
         {
         if !rope.is_empty() {
             let len = self.measure();
@@ -617,6 +621,7 @@ impl Rope {
         , Node: Measured<M>
         , BranchNode: Measured<M>
         , String: Measured<M>
+        , str: Measured<M>
         {
         assert!( index <= self.measure()
                , "Rope::insert_str: index {:?} was > length {:?}"
@@ -698,6 +703,7 @@ impl Rope {
         , Node: Measured<M>
         , internals::BranchNode: Measured<M>
         , String: Measured<M>
+        , str: Measured<M>
         {
         assert!(index <= self.measure());
         let (l, r) = self.root.split(index);
@@ -976,39 +982,39 @@ impl convert::Into<Vec<u8>> for Rope {
 
 }
 
-fn str_to_tree(string: String) -> NodeLink {
-    assert!(!string.is_empty());
-    let mut strings = string.rsplit('\n');
-    let last: Node = Node::new_leaf(String::from(strings.next().unwrap()));
-    let leaves = strings.map(|s| Node::new_leaf(String::from(s) + "\n"));
-    leaves.fold(NodeLink::new(last), |r, l| Node::new_branch(NodeLink::new(l), r))
-}
+// fn str_to_tree(string: String) -> NodeLink {
+//     assert!(!string.is_empty());
+//     let mut strings = string.rsplit('\n');
+//     let last: Node = Node::new_leaf(LeafRepr::from(strings.next().unwrap()));
+//     let leaves = strings.map(|s| Node::new_leaf(LeafRepr::from(s));
+//     leaves.fold(NodeLink::new(last), |r, l| Node::new_branch(NodeLink::new(l), r))
+// }
 
-#[cfg(feature = "tendril")]
-impl convert::From<StrTendril> for Rope {
-    fn from(tendril: StrTendril) -> Rope {
-        Rope::from(str_to_tree(tendril))
-    }
-}
-
-impl convert::From<String> for Rope {
-
-
-    #[cfg(feature = "tendril")]
-    #[inline]
-    fn from(string: String) -> Rope {
-        Rope::from(if string.is_empty() { Node::empty() }
-                   else { str_to_tree(StrTendril::from(string)) })
-    }
-
-
-    #[cfg(not(feature = "tendril"))]
-    #[inline]
-    fn from(string: String) -> Rope {
-        Rope::from(if string.is_empty() { Node::empty() }
-                  else { str_to_tree(string) })
-    }
-}
+// #[cfg(feature = "tendril")]
+// impl convert::From<StrTendril> for Rope {
+//     fn from(tendril: StrTendril) -> Rope {
+//         Rope::from(str_to_tree(tendril))
+//     }
+// }
+//
+// impl convert::From<String> for Rope {
+//
+//
+//     #[cfg(feature = "tendril")]
+//     #[inline]
+//     fn from(string: String) -> Rope {
+//         Rope::from(if string.is_empty() { Node::empty() }
+//                    else { str_to_tree(StrTendril::from(string)) })
+//     }
+//
+//
+//     #[cfg(not(feature = "tendril"))]
+//     #[inline]
+//     fn from(string: String) -> Rope {
+//         Rope::from(if string.is_empty() { Node::empty() }
+//                   else { Node::from(string) })
+//     }
+// }
 
 
 impl<'a> convert::From<&'a str> for Rope {
