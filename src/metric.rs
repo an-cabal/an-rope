@@ -14,8 +14,8 @@
 //!
 //! ```
 //! # use an_rope::Rope;
-//! let mut r = Rope::from("this is a long rope");
-//! r.delete(10..15);
+//! let r = Rope::from("this is a long rope");
+//! let r = r.delete(10..15);
 //! assert_eq!(&r, "this is a rope");
 //! ```
 //!
@@ -26,8 +26,8 @@
 //! ```
 //! # use an_rope::Rope;
 //! use an_rope::metric::Grapheme;
-//! let mut r = Rope::from("this is a 🆒🆕 rope, 🆗!");
-//! r.delete(Grapheme(10)..Grapheme(13));
+//! let r = Rope::from("this is a 🆒🆕 rope, 🆗!");
+//! let r = r.delete(Grapheme(10)..Grapheme(13));
 //! assert_eq!(&r, "this is a rope, 🆗!");
 //! ```
 //!
@@ -40,12 +40,12 @@
 //! ```ignore
 //! # use an_rope::Rope;
 //! use an_rope::metric::Line;
-//! let mut r = Rope::from("this is\n\
+//! let r = Rope::from("this is\n\
 //!                         a\n\
 //!                         multi\n\
 //!                         line\n\
 //!                         rope");
-//! r.delete(Line(2)..Line(3));
+//! let r = r.delete(Line(2)..Line(3));
 //! assert_eq!(&r, "this is\na\nrope");
 //! ```
 //!

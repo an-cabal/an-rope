@@ -500,9 +500,6 @@ impl Rope {
 
     /// Insert `rope` into `index` in this `Rope`, returning a new `Rope`.
     ///
-    /// Consumes `rope`.
-    ///
-    ///
     /// # Returns
     /// * A new `Rope` with `rope` inserted at `index`
     ///
@@ -519,7 +516,7 @@ impl Rope {
     /// ```
     /// use an_rope::Rope;
     /// let an_rope = Rope::from("cd");
-    /// let new_rope = an_rope.insert_rope(0, Rope::from("ab"));
+    /// let new_rope = an_rope.insert_rope(0, &Rope::from("ab"));
     /// assert_eq!(new_rope, Rope::from("abcd"));
     /// assert_eq!(an_rope, Rope::from("cd"));
     /// ```
@@ -529,7 +526,7 @@ impl Rope {
     /// ```
     /// use an_rope::Rope;
     /// let an_rope = Rope::from("ab");
-    /// let new_rope = an_rope.insert_rope(an_rope.len(), Rope::from("cd"));
+    /// let new_rope = an_rope.insert_rope(an_rope.len(), &Rope::from("cd"));
     /// assert_eq!(new_rope, Rope::from("abcd"));
     /// assert_eq!(an_rope, Rope::from("ab"));
     /// ```
@@ -539,7 +536,7 @@ impl Rope {
     /// ```
     /// use an_rope::Rope;
     /// let an_rope = Rope::from("ad");
-    /// let new_rope = an_rope.insert_rope(1, Rope::from("bc"));
+    /// let new_rope = an_rope.insert_rope(1, &Rope::from("bc"));
     /// assert_eq!(new_rope, Rope::from("abcd"));
     /// assert_eq!(an_rope, Rope::from("ad"))
     /// ```
@@ -629,8 +626,6 @@ impl Rope {
 
     /// Appends a `Rope` to the end of this `Rope`, returning a new `Rope`
     ///
-    /// Consumes `other`.
-    ///
     /// Note that this is equivalent to using the `+` operator.
     ///
     /// # Examples
@@ -638,7 +633,7 @@ impl Rope {
     /// ```
     /// use an_rope::Rope;
     /// let an_rope = Rope::from("abcd");
-    /// let another_rope = an_rope.append(Rope::from("efgh"));
+    /// let another_rope = an_rope.append(&Rope::from("efgh"));
     /// assert_eq!(&another_rope, "abcdefgh");
     /// assert_eq!(&an_rope, "abcd");
     /// ```
@@ -652,14 +647,12 @@ impl Rope {
 
     /// Prepends a `Rope` to the end of this `Rope`, returning a new `Rope`
     ///
-    /// Consumes `other`.
-    ///
     /// # Examples
     ///
     /// ```
     /// use an_rope::Rope;
     /// let an_rope = Rope::from("efgh");
-    /// let another_rope = an_rope.prepend(Rope::from("abcd"));
+    /// let another_rope = an_rope.prepend(&Rope::from("abcd"));
     /// assert_eq!(&an_rope, "efgh");
     /// assert_eq!(&another_rope, "abcdefgh");
     /// ```
@@ -667,7 +660,7 @@ impl Rope {
     /// ```
     /// use an_rope::Rope;
     /// let an_rope = Rope::from("");
-    /// let another_rope = an_rope.prepend(Rope::from("abcd"));
+    /// let another_rope = an_rope.prepend(&Rope::from("abcd"));
     /// assert_eq!(&an_rope, "");
     /// assert_eq!(&another_rope, "abcd");
     /// ```
@@ -675,7 +668,7 @@ impl Rope {
     /// ```
     /// use an_rope::Rope;
     /// let an_rope = Rope::from("abcd");
-    /// let another_rope = an_rope.prepend(Rope::from(""));
+    /// let another_rope = an_rope.prepend(&Rope::from(""));
     /// assert_eq!(&an_rope, "abcd");
     /// assert_eq!(&another_rope, &an_rope);
     /// assert_eq!(&another_rope, "abcd");
@@ -691,8 +684,6 @@ impl Rope {
 
 
     /// Splits the rope into two ropes at the given index.
-    ///
-    /// Consumes this rope.
     ///
     /// # Examples
     /// ```
