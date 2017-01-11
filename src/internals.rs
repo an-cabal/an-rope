@@ -7,6 +7,7 @@ use metric::{Grapheme, Line, Metric, Measured};
 use std::ops;
 use std::fmt;
 use std::convert;
+use std::borrow::{Borrow, ToOwned};
 
 #[cfg(feature = "atomic")]      use std::sync::Arc;
 #[cfg(not(feature = "atomic"))] use std::rc::Rc;
@@ -27,7 +28,7 @@ type LeafRepr = String;
 type LeafRepr = StrTendril;
 
 #[cfg(all(feature = "tendril", feature = "atomic"))]
-type LeafRepr = tendril::Tendril<Atomic, tendril_fmt::UTF8>;
+type LeafRepr = tendril::Tendril<tendril_fmt::UTF8, Atomic>;
 
 #[cfg(not(feature = "atomic"))]
 #[derive(Clone)]
@@ -57,18 +58,18 @@ impl fmt::Display for Node {
     }
 }
 
-// impl convert::Into<NodeLink> for Node {
-//     #[inline] fn into(self) -> NodeLink {
-//         NodeLink::new(self)
-//     }
-// }
-
-impl<T> convert::From<T> for NodeLink
-where Node: convert::From<T> {
-    fn from(that: T) -> Self {
-        NodeLink::new(Node::from(that))
+impl convert::Into<NodeLink> for Node {
+    #[inline] fn into(self) -> NodeLink {
+        NodeLink::new(self)
     }
 }
+
+// impl<T> convert::From<T> for NodeLink
+// where Node: convert::From<T> {
+//     fn from(that: T) -> Self {
+//         NodeLink::new(Node::from(that))
+//     }
+// }
 
 #[cfg(feature = "tendril")]
 impl convert::From<String> for NodeLink {
@@ -80,7 +81,7 @@ impl convert::From<String> for NodeLink {
             let last: Node = Node::new_leaf(LeafRepr::from(strings.next()
                                                                   .unwrap()));
             let leaves = strings.map(|s| {
-                let mut r = LeafRepr::from(s);
+                let mut r = LeafRepr::from_slice(s);
                 r.push_char('\n');
                 Node::new_leaf(r)
             });
@@ -88,8 +89,7 @@ impl convert::From<String> for NodeLink {
         }
     }
 }
-
-#[cfg(not(feature = "tendril"))]
+#[cfg(not(feature = "tendril")) ]
 impl convert::From<String> for NodeLink {
     #[inline] fn from(string: String) -> Self {
         if string.is_empty() {
@@ -99,11 +99,23 @@ impl convert::From<String> for NodeLink {
             let last: Node = Node::new_leaf(LeafRepr::from(strings.next()
                                                                   .unwrap()));
             let leaves = strings.map(|s|
-                Node::new_leaf(String::from(s) + "\n"));
+                Node::new_leaf(LeafRepr::from(s)+ "\n")
+            );
             leaves.fold(NodeLink::new(last), |r, l| Node::new_branch(NodeLink::new(l), r))
         }
     }
 }
+
+impl<'a, S: ?Sized> convert::From<&'a S> for NodeLink
+where String: Borrow<S>
+    , S: ToOwned<Owned=String> {
+
+    #[inline] fn from(string: &'a S) -> Self {
+        NodeLink::from(string.to_owned())
+    }
+}
+
+
 
 #[cfg(feature = "tendril")]
 impl convert::From<LeafRepr> for NodeLink {

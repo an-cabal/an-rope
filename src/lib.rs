@@ -40,7 +40,7 @@ use std::string;
 use std::iter;
 
 #[cfg(feature = "tendril")] extern crate tendril;
-#[cfg(feature = "tendril")] use tendril::StrTendril;
+// #[cfg(feature = "tendril")] use tendril::StrTendril;
 
 #[cfg(test)] #[macro_use] extern crate quickcheck;
 #[cfg(test)] mod test;
@@ -1015,20 +1015,6 @@ impl convert::Into<Vec<u8>> for Rope {
 //                   else { Node::from(string) })
 //     }
 // }
-
-
-impl<'a> convert::From<&'a str> for Rope {
-    #[cfg(feature = "tendril")]
-    #[inline]
-    fn from(string: &'a str) -> Rope {
-         Rope::from(StrTendril::from_slice(string))
-     }
-
-    #[cfg(not(feature = "tendril"))]
-    #[inline]
-    fn from(string: &'a str) -> Rope { Rope::from(String::from(string)) }
-}
-
 
 //-- comparisons ----------------------------------------------------
 impl cmp::Eq for Rope {}
