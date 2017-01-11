@@ -12,9 +12,9 @@ fn rope_add_1000(b: &mut Bencher) {
     // rope.rebalance();
     b.iter(|| {
         let n = test::black_box(1000);
-        // let mut rope = Rope::new();
+        let mut r = rope.clone();
         for i in 0..n {
-            rope += i.to_string();
+            r = r + i.to_string();
         }
     })
 
@@ -23,11 +23,11 @@ fn rope_add_1000(b: &mut Bencher) {
 #[bench]
 fn string_add_1000(b: &mut Bencher) {
     let mut string = iter::repeat('a').take(100_000).collect::<String>();
-    b.iter(|| {
+    b.iter(move || {
         let n = test::black_box(1000);
-        // let mut string = String::new();
+        let mut s = string.clone();
         for i in 0..n {
-            string += &i.to_string();
+            s = s + &i.to_string();
         }
     })
 
@@ -39,7 +39,7 @@ fn rope_insert_1000(b: &mut Bencher) {
                                     .take(100_000)
                                     .collect::<String>());
     // rope.rebalance();
-    b.iter(|| {
+    b.iter(move || {
         // let n = test::black_box(1000);
         // let mut rope = Rope::from("aaaa");
         for i in 0..1000 {
@@ -88,10 +88,10 @@ macro_rules! insert_benches {
                     mk_bench! { char_long: insert, $lenl, 'c' }
                     mk_bench! { char_short: insert, $lens, 'c' }
                     mk_bench! { rope_long: insert_rope, $lenl,
-                        Rope::from(repeat('a').take($lenl)
+                        &Rope::from(repeat('a').take($lenl)
                                     .collect::<String>()) }
                     mk_bench! { rope_short: insert_rope, $lens,
-                        Rope::from(repeat('a').take($lens)
+                        &Rope::from(repeat('a').take($lens)
                                     .collect::<String>()) }
                 }
             )*
@@ -135,8 +135,7 @@ macro_rules! split_benches {
                         let rope = Rope::from(repeat('a').take($lenl)
                                                          .collect::<String>());
                         let split = || {
-                            rope.clone()
-                                .split(($lenl as f64 * $frac as f64) as usize) };
+                            rope.split(($lenl as f64 * $frac as f64) as usize) };
                         b.iter(split)
                     }
                     #[bench]
@@ -144,8 +143,7 @@ macro_rules! split_benches {
                         let rope = Rope::from(repeat('a').take($lens)
                                                          .collect::<String>());
                         let split = || {
-                            rope.clone()
-                                .split(($lens as f64 * $frac as f64) as usize) };
+                            rope.split(($lens as f64 * $frac as f64) as usize) };
                         b.iter(split)
                     }
                 }
