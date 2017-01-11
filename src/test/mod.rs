@@ -609,7 +609,8 @@ mod properties {
         quickcheck(prop as fn(String, char, usize) -> TestResult);
     }
 
-    #[cfg(all(feature = "unstable", not(feature = "tendril")))]
+    // #[cfg(all(feature = "unstable", not(feature = "tendril")))]
+    #[cfg(all(feature = "unstable"))]
     #[test]
     fn rope_insert_str_is_string_insert_str() {
         fn prop(a: String, b: String, i: usize) -> TestResult {
@@ -626,47 +627,13 @@ mod properties {
                 return TestResult::discard()
             }
 
-            let mut rope = Rope::from(a.clone());
-            rope.insert_str(i, &b[..]);
+            let rope = Rope::from(a.clone());
+            let rope = rope.insert_str(i, &b[..]);
 
             let mut string = a;
             string.insert_str(i, &b[..]);
 
-            assert_eq!(rope, string);
-            TestResult::from_bool(rope == string)
-        }
-        quickcheck(prop as fn(String, String, usize) -> TestResult);
-    }
-
-    #[cfg(all(feature = "unstable", feature = "tendril"))]
-    #[test]
-    fn rope_insert_str_is_string_insert_str() {
-        fn prop(a: String, b: String, i: usize) -> TestResult {
-            use tendril::StrTendril;
-            use unicode::Unicode;
-            // if the index is greater than the string's length...
-            if i > a.grapheme_len()
-                || a.grapheme_len() > 1
-                    // ...or the index falls in the middle of a char...
-                || !a.is_char_boundary(i)
-                    // ...or QuickCheck made the Dread String of 85 Nulls...
-                || a.contains("\u{0}") || b.contains("\u{0}")
-                    // ...or if tendril would validate the string better than
-                    // std::String...
-                || &StrTendril::from_slice(&a[..])[..] != &a[..]
-                || &StrTendril::from_slice(&b[..])[..] != &b[..]
-           {
-                // ..skip the test
-                return TestResult::discard()
-            }
-
-            let mut rope = Rope::from(a.clone());
-            rope.insert_str(i, &b[..]);
-
-            let mut string = a;
-            string.insert_str(i, &b[..]);
-
-            assert_eq!(rope, string);
+            // assert_eq!(rope, string);
             TestResult::from_bool(rope == string)
         }
         quickcheck(prop as fn(String, String, usize) -> TestResult);
