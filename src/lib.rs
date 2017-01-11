@@ -52,13 +52,17 @@ pub mod metric;
 use metric::{Measured, Metric};
 use self::internals::{Node, NodeLink, BranchNode};
 
-// pub use self::slice::{RopeSlice, RopeSliceMut};
+pub use self::slice::{ RopeSlice
+                    //, RopeSliceMut
+                        };
+
 impl<T> convert::From<T> for Rope
 where T: convert::Into<NodeLink> {
     #[inline] fn from(that: T) -> Self {
         Rope { root: that.into().rebalance() }
     }
 }
+
 /// A Rope
 ///
 /// This Rope implementation aims to eventually function as a superset of
@@ -212,7 +216,7 @@ macro_rules! unicode_seg_iters {
 }
 
 mod internals;
-// mod slice;
+mod slice;
 
 impl Rope {
 
@@ -942,26 +946,26 @@ impl Rope {
         pub fn strings<'a>(&'a self) -> impl Iterator<Item=&'a str> + 'a {
             self.root.strings()
         }
-        //
-        // #[doc="Returns an iterator over all the lines of text in this `Rope`."]
-        // pub fn lines<'a>(&'a self) -> impl Iterator<Item=RopeSlice<'a>> +'a  {
-        //     {   // create a new block here so the macro will bind the `use` stmt
-        //         use internals::IsLineEnding;
-        //         let last_idx = self.len() - 1;
-        //         Box::new(self.char_indices()
-        //                      .filter_map(move |(i, c)|
-        //                         if c.is_line_ending() { Some(i) }
-        //                         // special case: slice to the end of the rope
-        //                         // even if it doesn't end in a newline character
-        //                         else if i == last_idx { Some(i + 1) }
-        //                         else { None })
-        //                       .scan(0, move |mut l, i|  {
-        //                             let last = *l;
-        //                             *l = i + 1;
-        //                             Some(self.slice(last..i))
-        //                         }))
-        //     }
-        // }
+
+        #[doc="Returns an iterator over all the lines of text in this `Rope`."]
+        pub fn lines<'a>(&'a self) -> impl Iterator<Item=RopeSlice<'a>> +'a  {
+            {   // create a new block here so the macro will bind the `use` stmt
+                use internals::IsLineEnding;
+                let last_idx = self.len() - 1;
+                Box::new(self.char_indices()
+                             .filter_map(move |(i, c)|
+                                if c.is_line_ending() { Some(i) }
+                                // special case: slice to the end of the rope
+                                // even if it doesn't end in a newline character
+                                else if i == last_idx { Some(i + 1) }
+                                else { None })
+                              .scan(0, move |mut l, i|  {
+                                    let last = *l;
+                                    *l = i + 1;
+                                    Some(self.slice(last..i))
+                                }))
+            }
+        }
     }
     //
     //
@@ -1097,46 +1101,46 @@ impl Rope {
         self.bytes().zip(other).all(|(a, b)| a == b)
     }
 
-    // /// Returns an immutable slice of this `Rope` between the given indices.
-    // ///
-    // /// # Arguments
-    // /// + `range`: A [`RangeArgument`](https://doc.rust-lang.org/nightly/collections/range/trait.RangeArgument.html)
-    // /// specifying the range to slice. This can be produced by range syntax
-    // /// like `..`, `a..`, `..b` or `c..d`.
-    // ///
-    // /// # Panics
-    // /// If the start or end indices of the range to slice exceed the length of
-    // /// this `Rope`.
-    // ///
-    // /// # Examples
-    // /// ```ignore
-    // //  this doctest fails to link on my macbook for Secret Reasons.
-    // //  i'd really like to know why...
-    // //      - eliza, 12/23/2016
-    // /// #![feature(collections)]
-    // /// #![feature(collections_range)]
-    // ///
-    // /// extern crate collections;
-    // /// extern crate an_rope;
-    // /// # fn main() {
-    // /// use collections::range::RangeArgument;
-    // /// use an_rope::Rope;
-    // ///
-    // /// let rope = Rope::from("this is an example string");
-    // /// assert_eq!(&rope.slice(4..6), "is");
-    // /// # }
-    // /// ```
-    // #[inline]
-    // #[cfg(feature = "unstable")]
-    // pub fn slice<R>(&self, range: R) -> RopeSlice
-    // where R: RangeArgument<usize> {
-    //     RopeSlice::new(&self.root, range)
-    // }
-    // #[cfg(not(feature = "unstable"))]
-    // pub fn slice(&self, range: ops::Range<usize>) -> RopeSlice {
-    //     RopeSlice::new(&self.root, range)
-    // }
-    //
+    /// Returns an immutable slice of this `Rope` between the given indices.
+    ///
+    /// # Arguments
+    /// + `range`: A [`RangeArgument`](https://doc.rust-lang.org/nightly/collections/range/trait.RangeArgument.html)
+    /// specifying the range to slice. This can be produced by range syntax
+    /// like `..`, `a..`, `..b` or `c..d`.
+    ///
+    /// # Panics
+    /// If the start or end indices of the range to slice exceed the length of
+    /// this `Rope`.
+    ///
+    /// # Examples
+    /// ```ignore
+    //  this doctest fails to link on my macbook for Secret Reasons.
+    //  i'd really like to know why...
+    //      - eliza, 12/23/2016
+    /// #![feature(collections)]
+    /// #![feature(collections_range)]
+    ///
+    /// extern crate collections;
+    /// extern crate an_rope;
+    /// # fn main() {
+    /// use collections::range::RangeArgument;
+    /// use an_rope::Rope;
+    ///
+    /// let rope = Rope::from("this is an example string");
+    /// assert_eq!(&rope.slice(4..6), "is");
+    /// # }
+    /// ```
+    #[inline]
+    #[cfg(feature = "unstable")]
+    pub fn slice<R>(&self, range: R) -> RopeSlice
+    where R: RangeArgument<usize> {
+        RopeSlice::new(&self.root, range)
+    }
+    #[cfg(not(feature = "unstable"))]
+    pub fn slice(&self, range: ops::Range<usize>) -> RopeSlice {
+        RopeSlice::new(&self.root, range)
+    }
+
     // /// Returns an mutable slice of this `Rope` between the given indices.
     // ///
     // ///
