@@ -820,38 +820,39 @@ impl Node {
         }
     }
 
-    /// Returns a move iterator over all the strings in this `Node`s subrope'
-    ///
-    /// Consumes `self`.
-    #[inline]
-    #[cfg(all( feature = "unstable"
-             , not(feature = "tendril") ))]
-    pub fn into_strings(self) -> impl Iterator<Item=String> {
-        self.into_leaves().map(|n| match n {
-            Leaf(s) => s
-            , _ => unreachable!("Node.into_leaves() iterator contained \
-                                 something  that wasn't a leaf. Barring _force \
-                                 majeure_, this should be impossible. \
-                                 Something's broken.")
-        })
-    }
-
-
-    /// Returns a move iterator over all the strings in this `Node`s subrope'
-    ///
-    /// Consumes `self`.
-    #[inline]
-    #[cfg(all( feature = "unstable"
-             , feature = "tendril" ))]
-    pub fn into_strings(self) -> impl Iterator<Item=String> {
-        self.into_leaves().map(|n| match n {
-            Leaf(s) => s.into()
-            , _ => unreachable!("Node.into_leaves() iterator contained \
-                                 something  that wasn't a leaf. Barring _force \
-                                 majeure_, this should be impossible. \
-                                 Something's broken.")
-        })
-    }
+    // TODO: figure out if we can make move iterators work even with Rcs?
+    // /// Returns a move iterator over all the strings in this `Node`s subrope'
+    // ///
+    // /// Consumes `self`.
+    // #[inline]
+    // #[cfg(all( feature = "unstable"
+    //          , not(feature = "tendril") ))]
+    // pub fn into_strings(self) -> impl Iterator<Item=String> {
+    //     self.into_leaves().map(|n| match n {
+    //         Leaf(s) => s
+    //         , _ => unreachable!("Node.into_leaves() iterator contained \
+    //                              something  that wasn't a leaf. Barring _force \
+    //                              majeure_, this should be impossible. \
+    //                              Something's broken.")
+    //     })
+    // }
+    //
+    //
+    // /// Returns a move iterator over all the strings in this `Node`s subrope'
+    // ///
+    // /// Consumes `self`.
+    // #[inline]
+    // #[cfg(all( feature = "unstable"
+    //          , feature = "tendril" ))]
+    // pub fn into_strings(self) -> impl Iterator<Item=String> {
+    //     self.into_leaves().map(|n| match n {
+    //         Leaf(s) => s.into()
+    //         , _ => unreachable!("Node.into_leaves() iterator contained \
+    //                              something  that wasn't a leaf. Barring _force \
+    //                              majeure_, this should be impossible. \
+    //                              Something's broken.")
+    //     })
+    // }
 
     // /// Returns a move iterator over all the strings in this `Node`s subrope'
     // ///
