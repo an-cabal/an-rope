@@ -381,114 +381,6 @@ impl Rope {
     /// ```
     #[inline] pub fn is_empty(&self) -> bool { self.len() == 0 }
 
-    /// Insert `char` into `index` in this `Rope`,
-    ///
-    /// # Panics
-    /// * If `index` is greater than the length of this `Rope`
-    ///
-    /// # Time Complexity
-    /// O(log _n_)
-    ///
-    /// # Examples
-    ///
-    /// Inserting at index 0 prepends `char` to this `Rope`:
-    ///
-    /// ```
-    /// use an_rope::Rope;
-    /// let mut an_rope = Rope::from("bcd");
-    /// an_rope.insert(0, 'a');
-    /// assert_eq!(an_rope, Rope::from("abcd"));
-    /// ```
-    ///
-    /// Inserting at index `len` prepends `char` to this `Rope`:
-    ///
-    /// ```
-    /// use an_rope::Rope;
-    /// let mut an_rope = Rope::from("abc");
-    /// an_rope.insert(3, 'd');
-    /// assert_eq!(an_rope, Rope::from("abcd"));
-    /// ```
-    ///
-    /// Inserting at an index in the middle inserts `char` at that index:
-    ///
-    /// ```
-    /// use an_rope::Rope;
-    /// let mut an_rope = Rope::from("acd");
-    /// an_rope.insert(1, 'b');
-    /// assert_eq!(an_rope, Rope::from("abcd"));
-    /// ```
-    #[inline]
-    pub fn insert<M>(&self, index: M, ch: char) -> Rope
-    where M: Metric
-        , Self: Measured<M>
-        , Node: Measured<M>
-        , BranchNode: Measured<M>
-        , String: Measured<M>
-        {
-        assert!( index <= self.measure()
-               , "Rope::insert: index {:?} was > length {:?}"
-               , index, self.measure());
-        // TODO: this is gross...
-        let mut s = String::new();
-        s.push(ch);
-        self.insert_rope(index, &Rope::from(s))
-    }
-
-
-
-    /// Delete the range `range` from this `Rope`,
-    ///
-    /// # Panics
-    /// * If the start or end of `range` are indices outside of the `Rope`
-    /// * If the end index of `range` is greater than the start index
-    ///
-    /// # Time Complexity
-    /// O(log _n_)
-    ///
-    /// # Examples
-    ///
-    /// Deleting "not" from this `Rope`:
-    ///
-    /// ```
-    /// use an_rope::Rope;
-    /// let mut an_rope = Rope::from("this is not fine".to_string());
-    /// an_rope.delete((8..12));
-    /// assert_eq!(&an_rope, "this is fine");
-    /// ```
-    #[inline]
-    #[cfg(feature = "unstable")]
-    pub fn delete<R, M>(&self, range: R)
-    where R: RangeArgument<M>
-        , M: Metric
-        , Rope: Measured<M>
-        , Node: Measured<M>
-        , BranchNode: Measured<M>
-        , String: Measured<M>
-        {
-        let start = range.start().map(|s| *s)
-                         .unwrap_or_else(|| { M::default() });
-        let end = range.end().map(|e| *e)
-                       .unwrap_or_else(|| { self.measure() });
-
-        assert!( start <= end
-               , "invalid index! start {:?} > end {:?}", end, start);
-        let (l, r) = self.take_root().split(start);
-        let (_, r) = r.split(end - start);
-        Rope::from(Node::new_branch(l, r))
-    }
-
-    #[inline]
-    #[cfg(not(feature = "unstable"))]
-    pub fn delete<M: Metric>(&self, range: ops::Range<M>) -> Rope
-    where Node: Measured<M>
-        , internals::BranchNode: Measured<M>
-        , String: Measured<M>
-        {
-        let (l, r) = self.root.split(range.start);
-        let (_, r) = r.split(range.end - range.start);
-        Rope::from(Node::new_branch(l, r))
-    }
-
     /// Insert `ch` into `index` in this `Rope`, returning a new `Rope`.
     ///
     ///
@@ -533,7 +425,8 @@ impl Rope {
     /// assert_eq!(an_rope, Rope::from("acd"));
     /// ```
     #[inline]
-    pub fn with_insert<M>(&self, index: M, ch: char) -> Rope
+    #[inline]
+    pub fn insert<M>(&self, index: M, ch: char) -> Rope
     where M: Metric
         , Self: Measured<M>
         , Node: Measured<M>
@@ -541,13 +434,69 @@ impl Rope {
         , String: Measured<M>
         {
         assert!( index <= self.measure()
-               , "Rope::with_insert: index {:?} was > length {:?}"
+               , "Rope::insert: index {:?} was > length {:?}"
                , index, self.measure());
-       // TODO: this is gross...
-       let mut s = String::new();
-       s.push(ch);
-       self.with_insert_rope(index, &Rope::from(s))
+        // TODO: this is gross...
+        let mut s = String::new();
+        s.push(ch);
+        self.insert_rope(index, &Rope::from(s))
     }
+
+
+
+    /// Delete the range `range` from this `Rope`,
+    ///
+    /// # Panics
+    /// * If the start or end of `range` are indices outside of the `Rope`
+    /// * If the end index of `range` is greater than the start index
+    ///
+    /// # Time Complexity
+    /// O(log _n_)
+    ///
+    /// # Examples
+    ///
+    /// Deleting "not" from this `Rope`:
+    ///
+    /// ```
+    /// use an_rope::Rope;
+    /// let an_rope = Rope::from("this is not fine".to_string());
+    /// let an_rope = an_rope.delete((8..12));
+    /// assert_eq!(&an_rope, "this is fine");
+    /// ```
+    #[inline]
+    #[cfg(feature = "unstable")]
+    pub fn delete<R, M>(&self, range: R)
+    where R: RangeArgument<M>
+        , M: Metric
+        , Rope: Measured<M>
+        , Node: Measured<M>
+        , BranchNode: Measured<M>
+        , String: Measured<M>
+        {
+        let start = range.start().map(|s| *s)
+                         .unwrap_or_else(|| { M::default() });
+        let end = range.end().map(|e| *e)
+                       .unwrap_or_else(|| { self.measure() });
+
+        assert!( start <= end
+               , "invalid index! start {:?} > end {:?}", end, start);
+        let (l, r) = self.take_root().split(start);
+        let (_, r) = r.split(end - start);
+        Rope::from(Node::new_branch(l, r))
+    }
+
+    #[inline]
+    #[cfg(not(feature = "unstable"))]
+    pub fn delete<M: Metric>(&self, range: ops::Range<M>) -> Rope
+    where Node: Measured<M>
+        , internals::BranchNode: Measured<M>
+        , String: Measured<M>
+        {
+        let (l, r) = self.root.split(range.start);
+        let (_, r) = r.split(range.end - range.start);
+        Rope::from(Node::new_branch(l, r))
+    }
+
 
     /// Insert `rope` into `index` in this `Rope`,
     ///
