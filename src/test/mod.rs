@@ -184,14 +184,14 @@ fn line_delete_test_2() {
 #[test]
 fn delete_test_1() {
     let mut r = Rope::from("this is not fine".to_string());
-    r.delete((8..12));
+    r = r.delete((8..12));
     assert_eq!(&r, "this is fine");
 }
 
 #[test]
 fn delete_test_2() {
     let mut r = Rope::new();
-    r.delete((0..0));
+    r = r.delete((0..0));
     assert_eq!(&r, "");
 }
 
@@ -201,7 +201,7 @@ fn delete_test_2() {
 fn delete_test_3() {
     use std::ops::RangeFull;
     let mut r = Rope::from("this is not fine".to_string());
-    r.delete::<RangeFull, usize>((..));
+    r = r.delete::<RangeFull, usize>((..));
     assert_eq!(&r, "");
 }
 
@@ -210,7 +210,7 @@ fn delete_test_3() {
 #[test]
 fn delete_test_4() {
     let mut r = Rope::from("this is not fine".to_string());
-    r.delete((11..));
+    r = r.delete((11..));
     assert_eq!(&r, "this is not");
 }
 
@@ -219,7 +219,7 @@ fn delete_test_4() {
 #[test]
 fn delete_test_5() {
     let mut r = Rope::from("this is not fine".to_string());
-    r.delete((..5));
+    r = r.delete((..5));
     assert_eq!(&r, "is not fine");
 }
 
