@@ -13,8 +13,10 @@ use std::convert;
 
 #[cfg(feature = "tendril")]
 use tendril;
-#[cfg(feature = "tendril")]
+#[cfg(all(feature = "tendril", not(feature = "atomic")))]
 use tendril::StrTendril;
+#[cfg(all(feature = "tendril", feature = "atomic"))]
+use tendril::{Atomic, fmt as tendril_fmt};
 
 use self::Node::*;
 
@@ -25,7 +27,7 @@ type LeafRepr = String;
 type LeafRepr = StrTendril;
 
 #[cfg(all(feature = "tendril", feature = "atomic"))]
-type LeafRepr = tendril::Tendril<tendril::tendril::Atomic, tendril::fmt::UTF8>;
+type LeafRepr = tendril::Tendril<Atomic, tendril_fmt::UTF8>;
 
 #[cfg(not(feature = "atomic"))]
 #[derive(Clone)]
@@ -78,7 +80,7 @@ impl convert::From<String> for NodeLink {
             let last: Node = Node::new_leaf(LeafRepr::from(strings.next()
                                                                   .unwrap()));
             let leaves = strings.map(|s| {
-                let mut r = StrTendril::from(s);
+                let mut r = LeafRepr::from(s);
                 r.push_char('\n');
                 Node::new_leaf(r)
             });
@@ -104,8 +106,8 @@ impl convert::From<String> for NodeLink {
 }
 
 #[cfg(feature = "tendril")]
-impl convert::From<StrTendril> for NodeLink {
-    #[inline] fn from(string: StrTendril) -> Self {
+impl convert::From<LeafRepr> for NodeLink {
+    #[inline] fn from(string: LeafRepr) -> Self {
         if string.is_empty() {
             NodeLink::default()
         } else {
@@ -171,10 +173,10 @@ impl NodeLink {
         }
     }
 
-    #[cfg(any(not(feature = "atomic"), feature = "tendril"))]
+    #[cfg(not(feature = "atomic"))]
     pub fn new(node: Node) -> Self { NodeLink(Rc::new(node)) }
 
-    #[cfg(all(feature = "atomic", not(feature = "tendril")))]
+    #[cfg(feature = "atomic")]
     pub fn new(node: Node) -> Self { NodeLink(Arc::new(node)) }
 
     /// Rebalance the subrope starting at this `Node`, returning a new `Node`
@@ -717,17 +719,17 @@ impl Node {
     // }
 
 
-    #[cfg(any(not(feature = "atomic"), feature = "tendril"))]
+    // #[cfg(any(not(feature = "atomic"), feature = "tendril"))]
     #[inline]
     pub fn empty() -> NodeLink {
-        NodeLink(Rc::new(Leaf(LeafRepr::new())))
+        NodeLink::new(Leaf(LeafRepr::new()))
     }
 
-    #[cfg(all(feature = "atomic", not(feature = "tendril")))]
-    #[inline]
-    pub fn empty() -> NodeLink {
-        NodeLink(Arc::new(Leaf(LeafRepr::new())))
-    }
+    // #[cfg(all(feature = "atomic", not(feature = "tendril")))]
+    // #[inline]
+    // pub fn empty() -> NodeLink {
+    //     NodeLink(Arc::new(Leaf(LeafRepr::new())))
+    // }
 
     /// Concatenate two `Node`s to return a new `Branch` node.
     #[inline]
