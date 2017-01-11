@@ -30,8 +30,6 @@
 
 extern crate unicode_segmentation;
 
-
-use std::borrow::Borrow;
 use std::cmp;
 use std::ops;
 use std::convert;
@@ -712,6 +710,7 @@ impl Rope {
 
     /// Rebalances this entire `Rope`, returning a balanced `Rope`.
     #[inline]
+    #[cfg(any(test, feature = "rebalance"))]
     fn rebalance(&mut self) {
         if self.is_balanced() {
             // the rope is already balanced, do nothing
@@ -726,6 +725,7 @@ impl Rope {
     /// Balancing invariant:
     /// the rope length needs to be less than _F_(rope_length) where F is fibonacci
     #[inline]
+    #[cfg(any(test, feature = "rebalance"))]
     fn is_balanced(&self) -> bool {
         self.root.is_balanced()
     }

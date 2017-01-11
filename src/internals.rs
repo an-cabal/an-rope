@@ -491,7 +491,7 @@ impl Metric for usize {
     #[inline] fn is_splittable() -> bool { true }
 
     /// Returns true if index `i` in `node` is a boundary along this `Metric`
-    #[inline] fn is_boundary<M: Measured<Self>>(node: &M, i: usize) -> bool {
+    #[inline] fn is_boundary<M: Measured<Self>>(_node: &M, i: usize) -> bool {
         true
     }
 }

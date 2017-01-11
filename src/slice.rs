@@ -19,9 +19,7 @@ use collections::range::RangeArgument;
 use std::ops::Range;
 
 use super::Rope;
-use super::internals::{Node, BranchNode};
-
-use super::metric::{Metric, Measured};
+use super::internals::Node;
 
 /// An immutable borrowed slice of a `Rope`.
 ///
