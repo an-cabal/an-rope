@@ -78,14 +78,13 @@ impl convert::From<String> for NodeLink {
             NodeLink::default()
         } else {
             let mut strings = string.rsplit('\n');
-            let last = Node::new_leaf(LeafRepr::from_slice(strings.next()
-                                                                  .unwrap()));
-            let leaves = strings.map(|s| {
-                let mut r = LeafRepr::from_slice(s);
-                r.push_char('\n');
-                Node::new_leaf(r)
-            });
-            leaves.fold(last, |r, l| Node::new_branch(l, r))
+            let last = Node::new_leaf(strings.next().unwrap());
+            strings.map(|s| {
+                        let mut r = LeafRepr::from_slice(s);
+                        r.push_char('\n');
+                        Node::new_leaf(r)
+                    })
+                 .fold(last, |r, l| Node::new_branch(l, r))
         }
     }
 }
@@ -96,12 +95,9 @@ impl convert::From<String> for NodeLink {
             NodeLink::default()
         } else {
             let mut strings = string.rsplit('\n');
-            let last = Node::new_leaf(LeafRepr::from(strings.next()
-                                                                  .unwrap()));
-            let leaves = strings.map(|s|
-                Node::new_leaf(LeafRepr::from(s)+ "\n")
-            );
-            leaves.fold(last, |r, l| Node::new_branch(l, r))
+            let last = Node::new_leaf(strings.next().unwrap());
+            strings.map(|s| Node::new_leaf(LeafRepr::from(s) + "\n"))
+                   .fold(last, |r, l| Node::new_branch(l, r))
         }
     }
 }
@@ -124,14 +120,13 @@ impl convert::From<LeafRepr> for NodeLink {
             NodeLink::default()
         } else {
             let mut strings = string.rsplit('\n');
-            let last = Node::new_leaf(LeafRepr::from(strings.next()
-                                                                   .unwrap()));
-            let leaves = strings.map(|s| {
-                let mut r = LeafRepr::from(s);
-                r.push_char('\n');
-                Node::new_leaf(r)
-            });
-            leaves.fold(last, |r, l| Node::new_branch(l, r))
+            let last = Node::new_leaf(strings.next().unwrap());
+            strings.map(|s| {
+                    let mut r = LeafRepr::from_slice(s);
+                    r.push_char('\n');
+                    Node::new_leaf(r)
+                })
+                  .fold(last, |r, l| Node::new_branch(l, r))
         }
     }
 }
