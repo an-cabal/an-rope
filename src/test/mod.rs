@@ -31,7 +31,7 @@ fn line_split_test_1() {
     let (left, right) = b.split(Line(0));
     assert_eq!(left.strings().collect::<String>(), "asdfqwer");
     if let Leaf(ref s) = *right {
-        assert_eq!(s.as_ref(), "");
+        assert_eq!(&s[..], "");
     } else { assert!(false) }
 }
 
@@ -43,7 +43,7 @@ fn line_split_test_2() {
     let (left, right) = b.split(Line(0));
     assert_eq!(left.strings().collect::<String>(), "asdfqwer\n");
     if let Leaf(ref s) = *right {
-        assert_eq!(s.as_ref(), "");
+        assert_eq!(&s[..], "");
     } else { assert!(false) }
 }
 
@@ -54,10 +54,10 @@ fn line_split_test_3() {
     let b = Node::new_branch(l1, l2);
     let (left, right) = b.split(Line(0));
     if let Leaf(ref s) = *left {
-        assert_eq!(s.as_ref(), "asdf\n");
+        assert_eq!(&s[..], "asdf\n");
     } else { assert!(false) }
     if let Leaf(ref s) = *right {
-        assert_eq!(s.as_ref(), "qwer\n");
+        assert_eq!(&s[..], "qwer\n");
     } else { assert!(false) }
 }
 
@@ -78,7 +78,7 @@ fn line_split_test_5() {
     let (left, right) = b.split(Line(1));
     assert_eq!(left.strings().collect::<String>(), "asdfqwer\n");
     if let Leaf(ref s) = *right {
-        assert_eq!(s.as_ref(), "");
+        assert_eq!(&s[..], "");
     } else { assert!(false) }
 }
 
@@ -90,7 +90,7 @@ fn line_split_test_6() {
     let (left, right) = b.split(Line(1));
     assert_eq!(left.strings().collect::<String>(), "asdf\nqwer\n");
     if let Leaf(ref s) = *right {
-        assert_eq!(s.as_ref(), "");
+        assert_eq!(&s[..], "");
     } else { assert!(false) }
 }
 
@@ -101,10 +101,10 @@ fn line_split_test_7() {
     let b = Node::new_branch(l1, l2);
     let (left, right) = b.split(Line(0));
     if let Leaf(ref s) = *left {
-        assert_eq!(s.as_ref(), "asdf\n");
+        assert_eq!(&s[..], "asdf\n");
     } else { assert!(false) }
     if let Leaf(ref s) = *right {
-        assert_eq!(s.as_ref(), "qwer\n");
+        assert_eq!(&s[..], "qwer\n");
     } else { assert!(false) }
 }
 
@@ -116,7 +116,7 @@ fn line_split_test_8() {
     let (left, right) = b.split(Line(0));
     assert_eq!(left.strings().collect::<String>(), "qwer\n");
     if let Leaf(ref s) = *right {
-        assert_eq!(s.as_ref(), "");
+        assert_eq!(&s[..], "");
     } else { assert!(false) }
 }
 
@@ -129,7 +129,7 @@ fn line_split_test_9() {
     let b2 = Node::new_branch(b1, l3);
     let (left, right) = b2.split(Line(0));
     if let Leaf(ref s) = *left {
-        assert_eq!(s.as_ref(), "asdf\n");
+        assert_eq!(&s[..], "asdf\n");
     } else { assert!(false) }
     assert_eq!(right.strings().collect::<String>(), "qweryxcv\n");
 }
@@ -144,7 +144,7 @@ fn line_split_test_10() {
     let (left, right) = b2.split(Line(0));
     assert_eq!(left.strings().collect::<String>(), "asdfqwer\n");
     if let Leaf(ref s) = *right {
-        assert_eq!(s.as_ref(), "yxcv\n");
+        assert_eq!(&s[..], "yxcv\n");
     } else { assert!(false) }
 }
 
