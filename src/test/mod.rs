@@ -540,13 +540,7 @@ mod properties {
     #[cfg(feature = "atomic")]
     quickcheck! {
         fn rope_append_prepend_is_symmetric(a: Rope, b: Rope) -> bool {
-            a.append(b.clone()) == b.prepend(a.clone()) &&
-            a.prepend(b.clone()) == b.append(a.clone())
-        }
-
-        fn rope_append_prepend_is_symmetric(a: Rope, b: Rope) -> bool {
-            a.clone().append(b.clone()) == b.clone().prepend(a.clone()) &&
-            a.clone().prepend(b.clone()) == b.clone().append(a.clone())
+            a.append(&b) == b.prepend(&a) && a.prepend(&b) == b.append(&a)
         }
     }
     quickcheck! {
