@@ -81,7 +81,7 @@ impl convert::From<String> for NodeLink {
             let last: Node = Node::new_leaf(LeafRepr::from(strings.next()
                                                                   .unwrap()));
             let leaves = strings.map(|s| {
-                let mut r = LeafRepr::from_slice(s);
+                let mut r = LeafRepr::from(s);
                 r.push_char('\n');
                 Node::new_leaf(r)
             });
