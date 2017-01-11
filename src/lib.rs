@@ -465,7 +465,7 @@ impl Rope {
     /// ```
     #[inline]
     #[cfg(feature = "unstable")]
-    pub fn delete<R, M>(&self, range: R)
+    pub fn delete<R, M>(&self, range: R) -> Rope
     where R: RangeArgument<M>
         , M: Metric
         , Rope: Measured<M>
@@ -480,7 +480,7 @@ impl Rope {
 
         assert!( start <= end
                , "invalid index! start {:?} > end {:?}", end, start);
-        let (l, r) = self.take_root().split(start);
+        let (l, r) = self.root.split(start);
         let (_, r) = r.split(end - start);
         Rope::from(Node::new_branch(l, r))
     }
