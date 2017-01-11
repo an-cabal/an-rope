@@ -527,7 +527,7 @@ mod properties {
 
         fn rope_append_is_string_push_str(a: String, b: String) -> bool {
             let mut rope = Rope::from(a.clone());
-            rope.append(&Rope::from(b.clone()));
+            rope = rope.append(&Rope::from(b.clone()));
             let mut string = a;
             string.push_str(&b[..]);
             rope == string
