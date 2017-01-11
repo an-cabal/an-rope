@@ -73,45 +73,54 @@ where Node: convert::From<T> {
 #[cfg(feature = "tendril")]
 impl convert::From<String> for NodeLink {
     #[inline] fn from(string: String) -> Self {
-        assert!(!string.is_empty());
-        let mut strings = string.rsplit('\n');
-        let last: Node = Node::new_leaf(LeafRepr::from(strings.next()
-                                                              .unwrap()));
-        let leaves = strings.map(|s| {
-            let mut r = StrTendril::from(s);
-            r.push_char('\n');
-            Node::new_leaf(r)
-        });
-        leaves.fold(NodeLink::new(last), |r, l| Node::new_branch(NodeLink::new(l), r))
+        if string.is_empty() {
+            NodeLink::default()
+        } else {
+            let mut strings = string.rsplit('\n');
+            let last: Node = Node::new_leaf(LeafRepr::from(strings.next()
+                                                                  .unwrap()));
+            let leaves = strings.map(|s| {
+                let mut r = StrTendril::from(s);
+                r.push_char('\n');
+                Node::new_leaf(r)
+            });
+            leaves.fold(NodeLink::new(last), |r, l| Node::new_branch(NodeLink::new(l), r))
+        }
     }
 }
 
 #[cfg(not(feature = "tendril"))]
 impl convert::From<String> for NodeLink {
     #[inline] fn from(string: String) -> Self {
-        assert!(!string.is_empty());
-        let mut strings = string.rsplit('\n');
-        let last: Node = Node::new_leaf(LeafRepr::from(strings.next()
-                                                              .unwrap()));
-        let leaves = strings.map(|s|
-            Node::new_leaf(String::from(s) + "\n"));
-        leaves.fold(NodeLink::new(last), |r, l| Node::new_branch(NodeLink::new(l), r))
+        if string.is_empty() {
+            NodeLink::default()
+        } else {
+            let mut strings = string.rsplit('\n');
+            let last: Node = Node::new_leaf(LeafRepr::from(strings.next()
+                                                                  .unwrap()));
+            let leaves = strings.map(|s|
+                Node::new_leaf(String::from(s) + "\n"));
+            leaves.fold(NodeLink::new(last), |r, l| Node::new_branch(NodeLink::new(l), r))
+        }
     }
 }
 
 #[cfg(feature = "tendril")]
 impl convert::From<StrTendril> for NodeLink {
     #[inline] fn from(string: StrTendril) -> Self {
-        assert!(!string.is_empty());
-        let mut strings = string.rsplit('\n');
-        let last: Node = Node::new_leaf(LeafRepr::from(strings.next()
-                                                               .unwrap()));
-        let leaves = strings.map(|s| {
-            let mut r = LeafRepr::from(s);
-            r.push_char('\n');
-            Node::new_leaf(r)
-        });
-        leaves.fold(NodeLink::new(last), |r, l| Node::new_branch(NodeLink::new(l), r))
+        if string.is_empty() {
+            NodeLink::default()
+        } else {
+            let mut strings = string.rsplit('\n');
+            let last: Node = Node::new_leaf(LeafRepr::from(strings.next()
+                                                                   .unwrap()));
+            let leaves = strings.map(|s| {
+                let mut r = LeafRepr::from(s);
+                r.push_char('\n');
+                Node::new_leaf(r)
+            });
+            leaves.fold(NodeLink::new(last), |r, l| Node::new_branch(NodeLink::new(l), r))
+        }
     }
 }
 
