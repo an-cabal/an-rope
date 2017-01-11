@@ -22,7 +22,6 @@ impl Arbitrary for Rope {
 
 }
 
-
 #[test]
 fn line_split_test_1() {
     let l1 = Node::new_leaf("asdf");
@@ -243,27 +242,61 @@ fn delete_test_7() {
     r.delete((12..8)); // lol, fuck you
 }
 
-#[test]
-fn fmt_debug_test_1() {
-    let s = format!("{:?}", Rope::new());
-    assert_eq!(s, "Rope[\"\"] Leaf(\"\")");
+#[cfg(not(feature = "tendril"))]
+mod fmt {
+    use Rope;
+
+    #[test]
+    fn debug_test_1() {
+        let s = format!("{:?}", Rope::new());
+        assert_eq!(s, "Rope[\"\"] Leaf(\"\")");
+    }
+
+    #[test]
+    fn debug_test_2() {
+        let s = format!("{:?}", Rope::from("NERD!!!"));
+        assert_eq!(s, "Rope[\"NERD!!!\"] Leaf(\"NERD!!!\")");
+    }
+
+    #[test]
+    fn debug_test_3() {
+        let r1 = Rope::from("Hello, ");
+        let r2 = Rope::from("World!");
+        let r = r1 + r2;
+        let s = format!("{:?}", r);
+        assert_eq!(s, "Rope[\"Hello, World!\"] \
+                            Branch(7(Leaf(\"Hello, \"), Leaf(\"World!\")))");
+    }
 }
 
-#[test]
-fn fmt_debug_test_2() {
-    let s = format!("{:?}", Rope::from("NERD!!!"));
-    assert_eq!(s, "Rope[\"NERD!!!\"] Leaf(\"NERD!!!\")");
+#[cfg(feature = "tendril")]
+mod fmt {
+    use Rope;
+    #[test]
+    fn debug_test_1() {
+        let s = format!("{:?}", Rope::new());
+        assert_eq!(s, "Rope[\"\"] Leaf(Tendril<UTF8>(inline: \"\"))");
+    }
+
+    #[test]
+    fn debug_test_2() {
+        let s = format!("{:?}", Rope::from("NERD!!!"));
+        assert_eq!(s, "Rope[\"NERD!!!\"] Leaf(Tendril<UTF8>(inline: \
+                       \"NERD!!!\"))");
+    }
+
+    #[test]
+    fn debug_test_3() {
+        let r1 = Rope::from("Hello, ");
+        let r2 = Rope::from("World!");
+        let r = r1 + r2;
+        let s = format!("{:?}", r);
+        assert_eq!(s, "Rope[\"Hello, World!\"] \
+                       Branch(7(Leaf(Tendril<UTF8>(inline: \"Hello, \")), \
+                       Leaf(Tendril<UTF8>(inline: \"World!\"))))");
+    }
 }
 
-#[test]
-fn fmt_debug_test_3() {
-    let r1 = Rope::from("Hello, ");
-    let r2 = Rope::from("World!");
-    let r = r1 + r2;
-    let s = format!("{:?}", r);
-    assert_eq!(s, "Rope[\"Hello, World!\"] \
-                        Branch(7(Leaf(\"Hello, \"), Leaf(\"World!\")))");
-}
 
 #[test]
 fn rebalance_test_1() {
