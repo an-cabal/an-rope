@@ -8,10 +8,8 @@ use std::ops;
 use std::fmt;
 use std::convert;
 
-#[cfg(all(feature = "atomic", not(feature = "tendril")))]
-use std::sync::Arc;
-#[cfg(any(not(feature = "atomic"), feature = "tendril"))]
-use std::rc::Rc;
+#[cfg(feature = "atomic")]      use std::sync::Arc;
+#[cfg(not(feature = "atomic"))] use std::rc::Rc;
 
 #[cfg(feature = "tendril")]
 use tendril;
@@ -27,13 +25,13 @@ type LeafRepr = String;
 type LeafRepr = StrTendril;
 
 #[cfg(all(feature = "tendril", feature = "atomic"))]
-type LeafRepr = tendril::Tendril<tendril::Atomic, tendril::fmt::UTF8>;
+type LeafRepr = tendril::Tendril<tendril::tendril::Atomic, tendril::fmt::UTF8>;
 
-#[cfg(any(not(feature = "atomic"), feature = "tendril"))]
+#[cfg(not(feature = "atomic"))]
 #[derive(Clone)]
 pub struct NodeLink(Rc<Node>);
 
-#[cfg(all(feature = "atomic", not(feature = "tendril")))]
+#[cfg(feature = "atomic")]
 #[derive(Clone)]
 pub struct NodeLink(Arc<Node>);
 
