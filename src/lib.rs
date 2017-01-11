@@ -418,7 +418,7 @@ impl Rope {
     /// assert_eq!(an_rope, Rope::from("abcd"));
     /// ```
     #[inline]
-    pub fn insert<M>(&mut self, index: M, ch: char) -> Rope
+    pub fn insert<M>(&self, index: M, ch: char) -> Rope
     where M: Metric
         , Self: Measured<M>
         , Node: Measured<M>
@@ -457,7 +457,7 @@ impl Rope {
     /// ```
     #[inline]
     #[cfg(feature = "unstable")]
-    pub fn delete<R, M>(&mut self, range: R)
+    pub fn delete<R, M>(&self, range: R)
     where R: RangeArgument<M>
         , M: Metric
         , Rope: Measured<M>
@@ -713,7 +713,7 @@ impl Rope {
     /// assert_eq!(an_rope, Rope::from("abcd"));
     /// ```
     #[inline]
-    pub fn insert_str<M>(&mut self, index: M, s: &str) -> Rope
+    pub fn insert_str<M>(&self, index: M, s: &str) -> Rope
     where M: Metric
         , Self: Measured<M>
         , Node: Measured<M>
@@ -909,7 +909,7 @@ impl Rope {
     /// assert_eq!(ab, Rope::from(String::from("ab")));
     /// assert_eq!(cd, Rope::from(String::from("cd")));
     /// ```
-    pub fn split<M: Metric>(self, index: M) -> (Rope, Rope)
+    pub fn split<M: Metric>(&self, index: M) -> (Rope, Rope)
     where Self: Measured<M>
         , Node: Measured<M>
         , internals::BranchNode: Measured<M>
