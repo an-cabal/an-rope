@@ -248,8 +248,25 @@ impl fmt::Display for NodeLink {
 pub struct BranchNode {
     /// The length of this node
     len: usize
-  , /// The length of this node in graphemes
-    grapheme_len: Grapheme
+  // TODO: we used to cache grapheme length on nodes, but I removed it for
+  //       performance reasons.
+  //
+  //       this might seem counter-intuitive – we'd expect caching to make it
+  //       faster – but since we mostly manipulate `Rope`s by `char` rather
+  //       than by `Grapheme`, we often end up spending a lot of time
+  //       calculating a grapheme length measurement we *never actually use*.
+  //
+  //       this way, the added overhead of calculating grapheme length only
+  //       happens once it is actually needed.
+  //
+  //       the downside is that once grapheme length _is_ calculated once,
+  //       we don't cache the result, and have to recalcualte grapheme length
+  //       every time it's needed. might want to look into rigging up a lazy
+  //       field  using `RefCell`s.
+  //       see:  https://doc.rust-lang.org/std/cell/#implementation-details-of-logically-immutable-methods
+  //        - eliza, 1/10/2017
+  // , /// The length of this node in graphemes
+  //   grapheme_len: Grapheme
   , /// The weight of a node is the summed weight of its left subtree
     weight: usize
   , /// The number of started lines of this node
@@ -339,7 +356,9 @@ impl Measured<Grapheme> for BranchNode {
     }
 
     #[inline] fn measure(&self) -> Grapheme {
-        self.grapheme_len
+        let left: Grapheme = self.left.measure();
+        let right: Grapheme = self.right.measure();
+        left + right
     }
 
     #[inline] fn measure_weight(&self) -> Grapheme { self.left.measure() }
@@ -542,12 +561,12 @@ impl BranchNode {
 
     #[inline]
     fn new(left: NodeLink, right: NodeLink) -> Self {
-        let grapheme_left : Grapheme = left.measure();
-        let grapheme_right : Grapheme = right.measure();
+        // let grapheme_left : Grapheme = left.measure();
+        // let grapheme_right : Grapheme = right.measure();
         let line_left : Line = left.measure();
         let line_right : Line = right.measure();
         BranchNode { len: left.len() + right.len()
-                   , grapheme_len: grapheme_left + grapheme_right
+                //    , grapheme_len: grapheme_left + grapheme_right
                    , weight: left.subtree_weight()
                    , nlines: line_left + line_right
                    , wlines: left.measure()
@@ -624,15 +643,15 @@ impl BranchNode {
 }
 
 impl Node {
-
-    #[inline] pub fn grapheme_len(&self) -> Grapheme {
-        // todo: refactor
-        use unicode::Unicode;
-        match *self {
-            Branch(BranchNode { grapheme_len, ..}) => grapheme_len
-          , Leaf(ref s) => Grapheme(s.grapheme_len())
-        }
-    }
+    //
+    // #[inline] pub fn grapheme_len(&self) -> Grapheme {
+    //     // todo: refactor
+    //     use unicode::Unicode;
+    //     match *self {
+    //         Branch(BranchNode { grapheme_len, ..}) => grapheme_len
+    //       , Leaf(ref s) => Grapheme(s.grapheme_len())
+    //     }
+    // }
 
     pub fn spanning(&self, i: usize, span_len: usize) -> (&Node, usize) {
         assert!(self.len() >= span_len);
