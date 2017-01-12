@@ -2,16 +2,12 @@ use unicode_segmentation::UnicodeSegmentation;
 use unicode_segmentation::{ GraphemeIndices as StrGraphemeIndices
                           , UWordBoundIndices as StrUWordBoundIndices
                           };
-use metric::{Grapheme, Line, Metric, Measured};
-
-use Split;
+use metric::{Metric, Measured};
 
 use std::ops;
 use std::fmt;
 use std::convert;
 use std::borrow::{Borrow, ToOwned};
-use std::cell::Cell;
-
 
 macro_rules! or_zero {
     ($a: expr, $b: expr) => { if $a > $b { $a - $b } else { 0 } }
@@ -50,9 +46,6 @@ pub struct NodeLink(Rc<Node>);
 #[cfg(feature = "atomic")]
 #[derive(Clone)]
 pub struct NodeLink(Arc<Node>);
-
-
-
 
 // impl<T> convert::From<T> for NodeLink
 // where Node: convert::From<T> {
@@ -198,10 +191,10 @@ impl NodeLink {
     where M: Metric
         , Self: Measured<M> {
         match self.value {
-            Leaf(ref s) if self.is_empty() =>
+            Leaf(_) if self.is_empty() =>
                 // splitting an empty leaf node returns two empty leaf nodes
                 (Node::empty(), Node::empty())
-          , Leaf(ref s) if self.measure().into() == 1 =>
+          , Leaf(_) if self.measure().into() == 1 =>
                 (self.clone(), Node::empty())
           , Leaf(ref s) => {
                 // splitting a leaf node with length >= 2 returns two new Leaf
@@ -305,22 +298,6 @@ impl Default for NodeLink {
     fn default() -> Self { Node::empty() }
 }
 
-// impl Measured<Grapheme> for Node {
-//     fn to_byte_index(&self, index: Grapheme) -> Option<usize>  {
-//         unimplemented!()
-//     }
-//
-//     #[inline] fn measure(&self) -> Grapheme {
-//         match *self { Leaf(ref s) => s.measure(), Branch(ref n) => n.measure() }
-//     }
-//
-//     #[inline] fn measure_weight(&self) -> Grapheme {
-//         match *self { Leaf(ref s) => s.measure_weight()
-//                     , Branch(ref n) => n.measure_weight() }
-//     }
-//
-// }
-
 impl<M> Measured<M> for NodeLink
 where M: Metric
     , Node: Measured<M> {
@@ -346,57 +323,11 @@ fn fibonacci(n: usize) -> usize {
 }
 
 impl Node {
-    //
-    // #[inline] pub fn grapheme_len(&self) -> Grapheme {
-    //     // todo: refactor
-    //     use unicode::Unicode;
-    //     match *self {
-    //         Branch(BranchNode { grapheme_len, ..}) => grapheme_len
-    //       , Leaf(ref s) => Grapheme(s.grapheme_len())
-    //     }
-    // }
-    //
-    // pub fn spanning_mut(&mut self, i: usize, span_len: usize)
-    //                     -> (&mut Node, usize) {
-    //     assert!(self.len() >= span_len);
-    //     match *self {
-    //         Branch(BranchNode { ref mut right, ref left, weight, .. })
-    //         if weight < i => {
-    //             // if this node is a branch, and the weight is less than the
-    //             // index, where the span begins, then the first index of the
-    //             // span is on the right side
-    //             let span_i = or_zero!(i, left.len());
-    //             assert!(or_zero!(right.len(), span_i) >= span_len);
-    //             right.spanning_mut(span_i, span_len)
-    //         }
-    //       , Branch(BranchNode { ref mut left, .. })
-    //         // if the left child is long enough to contain the entire span,
-    //         // walk to the left child
-    //         if or_zero!(left.len(), i) >= span_len =>
-    //             left.spanning_mut(i, span_len)
-    //       , Leaf(_) | Branch (_)=>
-    //         // if this function has walked as far as a leaf node,
-    //         // then that leaf must be the spanning node. return it;
-    //         //
-    //         // otherwise, if the node is a branch node and the span is longer
-    //         // than the left child, then this node must be the minimum
-    //         // spanning node
-    //             (self, i)
-    //     }
-    // }
 
-
-    // #[cfg(any(not(feature = "atomic"), feature = "tendril"))]
     #[inline]
     pub fn empty() -> NodeLink {
         NodeLink::new(Leaf(LeafRepr::new()))
     }
-
-    // #[cfg(all(feature = "atomic", not(feature = "tendril")))]
-    // #[inline]
-    // pub fn empty() -> NodeLink {
-    //     NodeLink(Arc::new(Leaf(LeafRepr::new())))
-    // }
 
     /// Concatenate two `Node`s to return a new `Branch` node.
     #[inline]
@@ -406,14 +337,6 @@ impl Node {
         {
         NodeLink::new(Value::new_branch(left.into(), right.into()))
     }
-
-    //
-    // #[inline]
-    // #[cfg(feature = "unstable")]
-    // pub const fn new_leaf<T>(that: T) -> Self
-    // where T: convert::Into<LeafRepr> {
-    //     Leaf(that.into())
-    // }
 
     #[inline]
     // #[cfg(not(feature = "unstable"))]
@@ -651,17 +574,9 @@ impl Node {
                you actually want."]
         #[inline]
         impl chars<char> for Node {}
-        // TODO: this is actually Wrong, the indices will wrap around once we
-        //       iterate into the next leaf node. we'll need to write our own
-        //       char_indices iterator that tracks the character's index in the
-        //       global Rope. shouldn't be too hard, just a fold...
-        //          - eliza, 12/18/2016
-        // #[inline]
-        // impl char_indices<(usize, char)> for Node {}
+
         #[inline]
         impl split_whitespace<&'a str> for Node {}
-        // #[inline]
-        // impl lines<&'a str> for Node {}
     }
 
     // /// Returns n iterator over the bytes of this `Node`'s subrope
@@ -731,36 +646,6 @@ impl Node {
                           , char_length_so_far: 0
                           , curr_length: first_string.len() }
     }
-
-    // #[cfg(not(feature = "unstable"))]
-    // #[inline]
-    // pub fn grapheme_indices<'a>(&'a self)
-    //                         -> Box<Iterator<Item=(usize, &'a str)> + 'a> {
-    //     let strings = self.strings();
-    //     let first_graphemes = strings.next()
-    //                                  .unwrap_or_else(Iterator::empty());
-    //     Box::new(GraphemeIndices { strings: strings
-    //                              , graphemes: first_graphemes
-    //                              , char_length_so_far: 0})
-    // }
-    //
-    // #[cfg(feature = "unstable")]
-    // #[inline]
-    // pub fn split_word_bound_indices<'a>(&'a self)
-    //                        -> impl Iterator<Item=(usize, &'a str)> + 'a {
-    //     let s: String = self.strings().collect();
-    //     // TODO: rewrite this to not collect into a  string
-    //     s.split_word_bound_indices()
-    // }
-    //
-    // #[cfg(not(feature = "unstable"))]
-    // #[inline]
-    // pub fn split_word_bound_indices<'a>(&'a self)
-    //                         -> Box<Iterator<Item=(usize, &'a str)> + 'a> {
-    //     let s: String = self.strings().collect();
-    //     // TODO: rewrite this to not collect into a  string
-    //     Box::new(s.split_word_bound_indices())
-    // }
 
 }
 
@@ -888,24 +773,9 @@ impl Measured<usize> for String {
     #[inline] fn to_byte_index(&self, index: usize) -> Option<usize>  {
         Some(index)
     }
-
-    #[inline]
-    fn measure(&self) -> usize { self.len() }
-
-    #[inline]
-    fn measure_weight(&self) -> usize { self.len() }
+    #[inline] fn measure(&self) -> usize { self.len() }
+    #[inline] fn measure_weight(&self) -> usize { self.len() }
 }
-
-//
-// impl ops::AddAssign for Node {
-//     /// Concatenate two `Node`s
-//     fn add_assign(&mut self, right: Self) {
-//         use std::mem::replace;
-//         *self = Node::new_branch(self, right)
-//      }
-//
-// }
-//
 
 
 pub trait IsLineEnding { fn is_line_ending(&self) -> bool; }
