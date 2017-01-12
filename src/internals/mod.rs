@@ -201,10 +201,7 @@ impl NodeLink {
                 // nodes, one with the left half of the string, and one with
                 // the right
                 // TODO: make this properly respect metric index boundaries
-                let index = self.to_byte_index(index)
-                             .expect(
-                                &format!( "split: invalid index! {:?} in {:?}"
-                                        , index, s));
+                let index = self.to_byte_index(index).expect("invalid index!");
                 let left = Leaf(s[..index].into());
                 let right = Leaf(s[index..].into());
                 (NodeLink::new(left), NodeLink::new(right))
