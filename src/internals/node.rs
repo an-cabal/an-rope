@@ -82,7 +82,7 @@ macro_rules! lazy_field {
 }
 
 /// A `Node`.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Default)]
 pub struct Node { len: Lazy<usize>
                 , weight: Lazy<usize>
                 , line_count: Lazy<Line>
@@ -101,7 +101,7 @@ impl Node {
     where Node: Measured<usize> {
         assert!(self.len() >= span_len);
         match **self {
-            Branch { ref right, ref left } if <Node as Measured<usize>>::measure_weight(self) < i => {
+            Branch { ref right, ref left } if < Node as Measured<usize>>::measure_weight(self) < i => {
                 // if this node is a branch, and the weight is less than the
                 // index, where the span begins, then the first index of the
                 // span is on the right side
@@ -130,6 +130,26 @@ impl fmt::Display for Node {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.strings()
             .fold(Ok(()), |r, string| r.and_then(|_| write!(f, "{}", string)))
+    }
+}
+
+impl fmt::Debug for Node {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!( f, "{:?}{}{}{}{}{}{}"
+              , self.value
+              , self.len.get().map(|l| format!(" length: {:?},", l))
+                    .unwrap_or_else(|| { String::new() })
+              , self.weight.get().map(|w| format!(" weight: {:?},", w))
+                    .unwrap_or_else(|| { String::new() })
+              , self.grapheme_count.get().map(|w| format!("length: {:?},", w))
+                    .unwrap_or_else(|| { String::new() })
+              , self.grapheme_weight.get().map(|w| format!("weight: {:?},", w))
+                    .unwrap_or_else(|| { String::new() })
+              , self.line_count.get().map(|w| format!("length: {:?},", w))
+                    .unwrap_or_else(|| { String::new() })
+              , self.line_weight.get().map(|w| format!("weight: {:?},", w))
+                    .unwrap_or_else(|| { String::new() })
+              )
     }
 }
 
@@ -207,7 +227,7 @@ where M: Metric
 ///
 /// A `Node` is either a `Leaf` holding a `String`, or a
 /// a `Branch` concatenating together two `Node`s.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub enum Value {
     /// A leaf node
     Leaf(LeafRepr)
@@ -261,5 +281,16 @@ impl convert::Into<Node> for Value {
 impl Default for Value {
     fn default() -> Self {
         Leaf(LeafRepr::default())
+    }
+}
+
+impl fmt::Debug for Value {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Leaf(ref r) => write!(f, "Leaf({:?})", r)
+          , Branch { ref left, ref right } => write!( f, "Branch({:?}, {:?})"
+                                                    , left
+                                                    , right)
+        }
     }
 }
