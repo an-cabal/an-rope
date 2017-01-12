@@ -789,3 +789,13 @@ impl IsLineEnding for char {
         }
     }
 }
+
+impl IsLineEnding for str {
+    #[inline]
+    fn is_line_ending(self: &Self) -> bool {
+        match self {
+            "\u{000A}" => true,
+            _ => false
+        }
+    }
+}
