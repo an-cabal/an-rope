@@ -135,19 +135,19 @@ impl fmt::Display for Node {
 
 impl fmt::Debug for Node {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!( f, "{:?}{}{}{}{}{}{}"
+        write!( f, "({:?}{}{}{}{}{}{})"
               , self.value
-              , self.len.get().map(|l| format!(" length: {:?},", l))
+              , self.len.get().map(|l| format!(", length: {:?}", l))
                     .unwrap_or_else(|| { String::new() })
-              , self.weight.get().map(|w| format!(" weight: {:?},", w))
+              , self.weight.get().map(|w| format!(", weight: {:?}", w))
                     .unwrap_or_else(|| { String::new() })
-              , self.grapheme_count.get().map(|w| format!("length: {:?},", w))
+              , self.grapheme_count.get().map(|w| format!(", length: {:?}", w))
                     .unwrap_or_else(|| { String::new() })
-              , self.grapheme_weight.get().map(|w| format!("weight: {:?},", w))
+              , self.grapheme_weight.get().map(|w| format!(", weight: {:?}", w))
                     .unwrap_or_else(|| { String::new() })
-              , self.line_count.get().map(|w| format!("length: {:?},", w))
+              , self.line_count.get().map(|w| format!(", length: {:?}", w))
                     .unwrap_or_else(|| { String::new() })
-              , self.line_weight.get().map(|w| format!("weight: {:?},", w))
+              , self.line_weight.get().map(|w| format!(", weight: {:?}", w))
                     .unwrap_or_else(|| { String::new() })
               )
     }
