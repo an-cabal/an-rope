@@ -12,7 +12,7 @@ use std::ops;
 
 
 /// A lazily-evaluated field
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 struct Lazy<T: Copy>(Cell<Option<T>>);
 
 impl<T> Lazy<T>
@@ -44,6 +44,16 @@ where T: Copy {
     }
 }
 
+impl<T> fmt::Debug for Lazy<T>
+where T: fmt::Debug
+    , T: Copy {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.0.get() { Some(value) => value.fmt(f)
+                           , None => write!(f, "?")
+
+        }
+    }
+}
 macro_rules! lazy_field {
     ($method: ident, $field: ident, $ty:ty) => {
         #[inline] fn $method(&self) -> $ty {
