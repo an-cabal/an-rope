@@ -38,7 +38,6 @@ use std::string;
 use std::iter;
 
 #[cfg(feature = "tendril")] extern crate tendril;
-// #[cfg(feature = "tendril")] use tendril::StrTendril;
 
 #[cfg(test)] #[macro_use] extern crate quickcheck;
 #[cfg(test)] mod test;
@@ -48,7 +47,7 @@ mod unicode;
 pub mod metric;
 
 use metric::{Measured, Metric};
-use self::internals::{Node, NodeLink, Value};
+use self::internals::{Node, NodeLink};
 
 pub use self::slice::{ RopeSlice
                     //, RopeSliceMut
@@ -311,13 +310,6 @@ impl Rope {
     pub unsafe fn from_utf8_unchecked(bytes: Vec<u8>) -> Rope {
         Rope::from(String::from_utf8_unchecked(bytes))
     }
-    //
-    // /// Take this `Rope`s root node, leaving an empty node in its place
-    // #[inline]
-    // fn take_root(&mut self) -> Node {
-    //     use std::mem;
-    //     mem::replace(&mut self.root, Node::empty())
-    // }
 
     /// Returns a new empty Rope
     ///
@@ -931,48 +923,6 @@ impl Rope {
         RopeSlice::new(&self.root, range)
     }
 
-    // /// Returns an mutable slice of this `Rope` between the given indices.
-    // ///
-    // ///
-    // /// # Arguments
-    // /// + `range`: A [`RangeArgument`](https://doc.rust-lang.org/nightly/collections/range/trait.RangeArgument.html)
-    // /// specifying the range to slice. This can be produced by range syntax
-    // /// like `..`, `a..`, `..b` or `c..d`.
-    // ///
-    // ///
-    // /// # Panics
-    // /// If the start or end indices of the range to slice exceed the length of
-    // /// this `Rope`.
-    // ///
-    // /// # Examples
-    // /// ```ignore
-    // //  this doctest fails to link on my macbook for Secret Reasons.
-    // //  i'd really like to know why...
-    // //      - eliza, 12/23/2016
-    // /// #![feature(collections)]
-    // /// #![feature(collections_range)]
-    // ///
-    // /// extern crate collections;
-    // /// extern crate an_rope;
-    // /// # fn main() {
-    // /// use collections::range::RangeArgument;
-    // /// use an_rope::Rope;
-    // ///
-    // /// let mut rope = Rope::from("this is an example string");
-    // /// assert_eq!(&mut rope.slice_mut(4..6), "is");
-    // /// # }
-    // /// ```
-    // #[inline]
-    // #[cfg(feature = "unstable")]
-    // pub fn slice_mut<R>(&mut self, range: R) -> RopeSliceMut
-    // where R: RangeArgument<usize> {
-    //     RopeSliceMut::new(&mut self.root, range)
-    // }
-    // #[cfg(not(feature = "unstable"))]
-    // pub fn slice_mut(&mut self, range: ops::Range<usize>) -> RopeSliceMut {
-    //     RopeSliceMut::new(&mut self.root, range)
-    // }
-
 }
 
 impl convert::Into<Vec<u8>> for Rope {
@@ -981,40 +931,6 @@ impl convert::Into<Vec<u8>> for Rope {
     }
 
 }
-
-// fn str_to_tree(string: String) -> NodeLink {
-//     assert!(!string.is_empty());
-//     let mut strings = string.rsplit('\n');
-//     let last: Node = Node::new_leaf(LeafRepr::from(strings.next().unwrap()));
-//     let leaves = strings.map(|s| Node::new_leaf(LeafRepr::from(s));
-//     leaves.fold(NodeLink::new(last), |r, l| Node::new_branch(NodeLink::new(l), r))
-// }
-
-// #[cfg(feature = "tendril")]
-// impl convert::From<StrTendril> for Rope {
-//     fn from(tendril: StrTendril) -> Rope {
-//         Rope::from(str_to_tree(tendril))
-//     }
-// }
-//
-// impl convert::From<String> for Rope {
-//
-//
-//     #[cfg(feature = "tendril")]
-//     #[inline]
-//     fn from(string: String) -> Rope {
-//         Rope::from(if string.is_empty() { Node::empty() }
-//                    else { str_to_tree(StrTendril::from(string)) })
-//     }
-//
-//
-//     #[cfg(not(feature = "tendril"))]
-//     #[inline]
-//     fn from(string: String) -> Rope {
-//         Rope::from(if string.is_empty() { Node::empty() }
-//                   else { Node::from(string) })
-//     }
-// }
 
 //-- comparisons ----------------------------------------------------
 impl cmp::Eq for Rope {}
@@ -1184,58 +1100,6 @@ impl<'a> ops::Add<&'a str> for Rope {
      }
 
 }
-
-
-// impl ops::AddAssign for Rope {
-//
-//     /// Concatenate two `Rope`s mutably.
-//     ///
-//     /// # Examples
-//     /// ```
-//     /// use an_rope::Rope;
-//     /// let mut rope = Rope::from(String::from("ab"));
-//     /// rope += Rope::from(String::from("cd"));
-//     /// assert_eq!(rope, Rope::from(String::from("abcd")));
-//     /// ```
-//     #[inline]
-//     fn add_assign(&mut self, other: Rope) {
-//         self.append(other)
-//     }
-// }
-
-// impl ops::AddAssign<String> for Rope {
-//
-//     /// Concatenate a `String` onto a `Rope` mutably.
-//     ///
-//     /// # Examples
-//     /// ```
-//     /// use an_rope::Rope;
-//     /// let mut rope = Rope::from(String::from("ab"));
-//     /// rope += String::from("cd");
-//     /// assert_eq!(rope, Rope::from(String::from("abcd")));
-//     /// ```
-//     #[inline]
-//     fn add_assign(&mut self, string: String) {
-//         self.append(Rope::from(string))
-//     }
-// }
-//
-// impl<'a> ops::AddAssign<&'a str> for Rope {
-//
-//     /// Concatenate an `&str` onto a `Rope` mutably.
-//     ///
-//     /// # Examples
-//     /// ```
-//     /// use an_rope::Rope;
-//     /// let mut rope = Rope::from(String::from("ab"));
-//     /// rope += String::from("cd");
-//     /// assert_eq!(rope, Rope::from(String::from("abcd")));
-//     /// ```
-//     #[inline]
-//     fn add_assign(&mut self, string: &'a str) {
-//         self.append(Rope::from(string.to_owned()))
-//     }
-// }
 
 impl ops::Index<usize> for Rope {
     type Output = str;
