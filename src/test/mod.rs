@@ -140,7 +140,7 @@ mod fmt {
         let r = r1 + r2;
         let s = format!("{:?}", r);
         assert_eq!(s, "Rope[\"Hello, World!\"] \
-                            Branch(7(Leaf(\"Hello, \"), Leaf(\"World!\")))");
+                            Branch(Leaf(\"Hello, \"), Leaf(\"World!\"))");
     }
 }
 
@@ -167,7 +167,7 @@ mod fmt {
         let r = r1 + r2;
         let s = format!("{:?}", r);
         assert_eq!(s, "Rope[\"Hello, World!\"] \
-                       Branch(7(Leaf(Tendril<UTF8>(inline: \"Hello, \")), \
+                       Branch(Leaf(Tendril<UTF8>(inline: \"Hello, \"), \
                        Leaf(Tendril<UTF8>(inline: \"World!\"))))");
     }
 }
