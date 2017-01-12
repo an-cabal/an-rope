@@ -276,17 +276,11 @@ impl Measured<Line> for str {
 
     #[inline]
     fn measure(&self) -> Line {
-        Line(
-            if self.chars().last().unwrap_or('\0').is_line_ending() { 1
-            } else { 0 })
+        let len = self.len();
+        Line(if self[len-1..len].is_line_ending() { 1 } else { 0 })
     }
 
-    #[inline]
-    fn measure_weight(&self) -> Line {
-        Line(
-            if self.chars().last().unwrap_or('\0').is_line_ending() { 1
-            } else { 0 })
-    }
+    #[inline] fn measure_weight(&self) -> Line { self.measure() }
 }
 
 impl Measured<Line> for String {
@@ -300,17 +294,11 @@ impl Measured<Line> for String {
 
     #[inline]
     fn measure(&self) -> Line {
-        Line(
-            if self.chars().last().unwrap_or('\0').is_line_ending() { 1
-            } else { 0 })
+        let len = self.len();
+        Line(if self[len-1..len].is_line_ending() { 1 } else { 0 })
     }
 
-    #[inline]
-    fn measure_weight(&self) -> Line {
-        Line(
-            if self.chars().last().unwrap_or('\0').is_line_ending() { 1
-            } else { 0 })
-    }
+    #[inline] fn measure_weight(&self) -> Line { self.measure() }
 }
 
 /// usize is the "chars" metric
@@ -330,9 +318,6 @@ impl Measured<usize> for str {
         Some(index)
     }
 
-    #[inline]
-    fn measure(&self) -> usize { self.len() }
-
-    #[inline]
-    fn measure_weight(&self) -> usize { self.len() }
+    #[inline] fn measure(&self) -> usize { self.len() }
+    #[inline] fn measure_weight(&self) -> usize { self.len() }
 }
