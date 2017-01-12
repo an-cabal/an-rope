@@ -72,10 +72,11 @@ macro_rules! insert_benches {
                     use ::Rope;
                     use ::bench::test::Bencher;
                     use std::iter::repeat;
+
                     macro_rules! mk_bench {
                         ( $n:ident: $fun:ident, $l:expr, $ins:expr) => {
                             #[bench] fn $n(b: &mut Bencher) {
-                                let mut rope = Rope::from(repeat('a').take($l)
+                                let rope = Rope::from(repeat('a').take($l)
                                                         .collect::<String>());
                                 b.iter(|| { rope.$fun(
                                     ($l as f64 * $frac as f64) as usize, $ins)
@@ -83,16 +84,28 @@ macro_rules! insert_benches {
                             }
                         }
                     }
+
                     mk_bench! { long: insert_str, $lenl, "bbbbbbb" }
                     mk_bench! { short: insert_str, $lens, "bb" }
                     mk_bench! { char_long: insert, $lenl, 'c' }
                     mk_bench! { char_short: insert, $lens, 'c' }
-                    mk_bench! { rope_long: insert_rope, $lenl,
-                        &Rope::from(repeat('a').take($lenl)
-                                    .collect::<String>()) }
-                    mk_bench! { rope_short: insert_rope, $lens,
-                        &Rope::from(repeat('a').take($lens)
-                                    .collect::<String>()) }
+                    // mk_bench! { rope_long: insert_rope, $lenl, &rope }
+                    // mk_bench! { rope_short: insert_rope, $lens, &rope }
+
+                    #[bench] fn rope_long(b: &mut Bencher) {
+                        let rope = Rope::from(repeat('a').take($lenl)
+                                                .collect::<String>());
+                        b.iter(|| { rope.insert_rope(
+                            ($lenl as f64 * $frac as f64) as usize, &rope)
+                        })
+                    }
+                    #[bench] fn rope_short(b: &mut Bencher) {
+                        let rope = Rope::from(repeat('a').take($lens)
+                                                .collect::<String>());
+                        b.iter(|| { rope.insert_rope(
+                            ($lens as f64 * $frac as f64) as usize, &rope)
+                        })
+                    }
                 }
             )*
         }
