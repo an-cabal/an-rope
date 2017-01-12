@@ -18,9 +18,23 @@ struct Lazy<T: Copy>(Cell<Option<T>>);
 impl<T> Lazy<T>
 where T: Copy {
 
+    /// Get the value of the field if it has been computed
+    ///
+    /// # Returns
+    /// - `Some(T)` if the value of this field has been computed
+    /// - `None` if the field has yet to be computed
     #[inline]
     pub fn get(&self) -> Option<T> { self.0.get() }
 
+    /// Get the value of the field, or compute it
+    ///
+    /// # Arguments
+    /// - `f`: a function returning type `T` to use to calculate the value of
+    ///        the field if it has not already been calculated
+    ///
+    /// # Returns
+    /// - If the field has already been evaluated, the value of the field.
+    /// - If the field has not been evaluated, the value of `f`
     #[inline]
     pub fn get_or_else<F>(&self, f: F) -> T
     where F: FnOnce() -> T {
