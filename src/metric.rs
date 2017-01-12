@@ -60,6 +60,11 @@ use std::ops::{Add, Sub};
 use std::default::Default;
 use std::fmt;
 
+
+use internals::IsLineEnding;
+use unicode_segmentation::UnicodeSegmentation;
+
+
 /// The class of monoids
 ///
 /// [Monoid]s are types with an accumulative binary operation that has
@@ -194,4 +199,140 @@ impl fmt::Debug for Line {
    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
        write!(f, "line {}", self.0)
    }
+}
+
+impl Metric for Grapheme {
+
+    #[inline] fn is_splittable() -> bool { false }
+
+    /// Returns true if index `i` in `node` is a boundary along this `Metric`
+    fn is_boundary<M: Measured<Self>>(node: &M, i: usize) -> bool {
+        unimplemented!()
+    }
+}
+
+impl Measured<Grapheme> for str {
+    /// Convert the `Metric` into a byte index into the given `Node`
+    ///
+    /// # Returns
+    /// - `Some` with the byte index of the beginning of the `n`th  element
+    ///    in `node` measured by this `Metric`, if there is an `n`th element
+    /// - `None` if there is no `n`th element in `node`
+    fn to_byte_index(&self, index: Grapheme) -> Option<usize>  {
+        self.grapheme_indices(true)
+            .map(|(offset, _)| offset)
+            .nth(index.into())
+    }
+
+    #[inline]
+    fn measure(&self) -> Grapheme {
+        Grapheme(self.graphemes(true).count())
+    }
+
+    #[inline]
+    fn measure_weight(&self) -> Grapheme {
+        Grapheme(self.graphemes(true).count())
+    }
+}
+
+impl Measured<Grapheme> for String {
+    fn to_byte_index(&self, index: Grapheme) -> Option<usize>  {
+        self.grapheme_indices(true)
+            .map(|(offset, _)| offset)
+            .nth(index.into())
+    }
+
+    #[inline]
+    fn measure(&self) -> Grapheme {
+        Grapheme(self.graphemes(true).count())
+    }
+
+    #[inline]
+    fn measure_weight(&self) -> Grapheme {
+        Grapheme(self.graphemes(true).count())
+    }
+}
+
+
+
+impl Metric for Line {
+
+    #[inline] fn is_splittable() -> bool { true }
+
+    /// Returns true if index `i` in `node` is a boundary along this `Metric`
+    fn is_boundary<M: Measured<Self>>(node: &M, i: usize) -> bool {
+        unimplemented!()
+    }
+}
+
+impl Measured<Line> for str {
+    // This can only handle line endings at the end of a string.
+    fn to_byte_index(&self, index: Line) -> Option<usize>  {
+        match index.into() {
+            0 => Some(self.len())
+          , _ => None
+        }
+    }
+
+    #[inline]
+    fn measure(&self) -> Line {
+        Line(
+            if self.chars().last().unwrap_or('\0').is_line_ending() { 1
+            } else { 0 })
+    }
+
+    #[inline]
+    fn measure_weight(&self) -> Line {
+        Line(
+            if self.chars().last().unwrap_or('\0').is_line_ending() { 1
+            } else { 0 })
+    }
+}
+
+impl Measured<Line> for String {
+    // This can only handle line endings at the end of a string.
+    fn to_byte_index(&self, index: Line) -> Option<usize>  {
+        match index.into() {
+            0 => Some(self.len())
+          , _ => None
+        }
+    }
+
+    #[inline]
+    fn measure(&self) -> Line {
+        Line(
+            if self.chars().last().unwrap_or('\0').is_line_ending() { 1
+            } else { 0 })
+    }
+
+    #[inline]
+    fn measure_weight(&self) -> Line {
+        Line(
+            if self.chars().last().unwrap_or('\0').is_line_ending() { 1
+            } else { 0 })
+    }
+}
+
+/// usize is the "chars" metric
+impl Metric for usize {
+
+    #[inline] fn is_splittable() -> bool { true }
+
+    /// Returns true if index `i` in `node` is a boundary along this `Metric`
+    #[inline] fn is_boundary<M: Measured<Self>>(_node: &M, i: usize) -> bool {
+        true
+    }
+}
+
+impl Measured<usize> for str {
+
+    #[inline] fn to_byte_index(&self, index: usize) -> Option<usize>  {
+        Some(index)
+    }
+
+    #[inline]
+    fn measure(&self) -> usize { self.len() }
+
+    #[inline]
+    fn measure_weight(&self) -> usize { self.len() }
 }

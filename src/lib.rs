@@ -48,7 +48,7 @@ mod unicode;
 pub mod metric;
 
 use metric::{Measured, Metric};
-use self::internals::{Node, NodeLink, BranchNode};
+use self::internals::{Node, NodeLink, Value};
 
 pub use self::slice::{ RopeSlice
                     //, RopeSliceMut
@@ -80,10 +80,15 @@ pub struct Rope {
     root: NodeLink
 }
 
+pub trait Split: Sized {
+    fn split<M>(&self, index: M) -> (Self,Self)
+    where M: Metric
+        , Self: Measured<M>;
+}
+
 impl<M> Measured<M> for Rope
 where M: Metric
-    , Node: Measured<M>
-    , BranchNode: Measured<M>
+    , NodeLink: Measured<M>
     , String: Measured<M>
     {
 
@@ -427,8 +432,7 @@ impl Rope {
     pub fn insert<M>(&self, index: M, ch: char) -> Rope
     where M: Metric
         , Self: Measured<M>
-        , Node: Measured<M>
-        , BranchNode: Measured<M>
+        , NodeLink: Measured<M>
         , String: Measured<M>
         , str: Measured<M>
         {
@@ -468,8 +472,7 @@ impl Rope {
     where R: RangeArgument<M>
         , M: Metric
         , Rope: Measured<M>
-        , Node: Measured<M>
-        , BranchNode: Measured<M>
+        , NodeLink: Measured<M>
         , String: Measured<M>
         , str: Measured<M>
         {
@@ -488,8 +491,7 @@ impl Rope {
     #[inline]
     #[cfg(not(feature = "unstable"))]
     pub fn delete<M: Metric>(&self, range: ops::Range<M>) -> Rope
-    where Node: Measured<M>
-        , internals::BranchNode: Measured<M>
+    where NodeLink: Measured<M>
         , String: Measured<M>
         , str: Measured<M>
         {
@@ -545,8 +547,7 @@ impl Rope {
     pub fn insert_rope<M>(&self, index: M, rope: &Rope) -> Rope
     where M: Metric
         , Self: Measured<M>
-        , Node: Measured<M>
-        , BranchNode: Measured<M>
+        , NodeLink: Measured<M>
         , String: Measured<M>
         , str: Measured<M>
         {
@@ -616,8 +617,8 @@ impl Rope {
     pub fn insert_str<M>(&self, index: M, s: &str) -> Rope
     where M: Metric
         , Self: Measured<M>
-        , Node: Measured<M>
-        , BranchNode: Measured<M>
+        , NodeLink: Measured<M>
+
         , String: Measured<M>
         , str: Measured<M>
         {
@@ -698,8 +699,7 @@ impl Rope {
     /// ```
     pub fn split<M: Metric>(&self, index: M) -> (Rope, Rope)
     where Self: Measured<M>
-        , Node: Measured<M>
-        , internals::BranchNode: Measured<M>
+        , NodeLink: Measured<M>
         , String: Measured<M>
         , str: Measured<M>
         {
