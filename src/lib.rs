@@ -30,8 +30,6 @@
 
 extern crate unicode_segmentation;
 
-
-use std::borrow::Borrow;
 use std::cmp;
 use std::ops;
 use std::convert;
@@ -40,7 +38,7 @@ use std::string;
 use std::iter;
 
 #[cfg(feature = "tendril")] extern crate tendril;
-#[cfg(feature = "tendril")] use tendril::StrTendril;
+// #[cfg(feature = "tendril")] use tendril::StrTendril;
 
 #[cfg(test)] #[macro_use] extern crate quickcheck;
 #[cfg(test)] mod test;
@@ -50,9 +48,18 @@ mod unicode;
 pub mod metric;
 
 use metric::{Measured, Metric};
+use self::internals::{Node, NodeLink, BranchNode};
 
-use self::internals::{Node, BranchNode};
-pub use self::slice::{RopeSlice, RopeSliceMut};
+pub use self::slice::{ RopeSlice
+                    //, RopeSliceMut
+                        };
+
+impl<T> convert::From<T> for Rope
+where T: convert::Into<NodeLink> {
+    #[inline] fn from(that: T) -> Self {
+        Rope { root: that.into().rebalance() }
+    }
+}
 
 /// A Rope
 ///
@@ -64,13 +71,13 @@ pub use self::slice::{RopeSlice, RopeSliceMut};
 /// `Rope` provides two APIs for editing a `Rope`: a destructive,
 /// append-in-place API whose methods match those of `String`, and a
 /// non-destructive, persistant API. The persistant API's methods have names
-/// prefixed with `with_`, such as `with_push()` and `with_append()`.
+/// prefixed with ``, such as `push()` and `append()`.
 ///
 #[derive(Clone, Default)]
 pub struct Rope {
     // can we get away with having these be of &str or will they need
     // to be string?
-    root: Node
+    root: NodeLink
 }
 
 impl<M> Measured<M> for Rope
@@ -299,13 +306,13 @@ impl Rope {
     pub unsafe fn from_utf8_unchecked(bytes: Vec<u8>) -> Rope {
         Rope::from(String::from_utf8_unchecked(bytes))
     }
-
-    /// Take this `Rope`s root node, leaving an empty node in its place
-    #[inline]
-    fn take_root(&mut self) -> Node {
-        use std::mem;
-        mem::replace(&mut self.root, Node::empty())
-    }
+    //
+    // /// Take this `Rope`s root node, leaving an empty node in its place
+    // #[inline]
+    // fn take_root(&mut self) -> Node {
+    //     use std::mem;
+    //     mem::replace(&mut self.root, Node::empty())
+    // }
 
     /// Returns a new empty Rope
     ///
@@ -315,9 +322,7 @@ impl Rope {
     /// let mut an_rope = Rope::new();
     /// assert_eq!(an_rope.len(), 0);
     /// ```
-    pub fn new() -> Rope {
-        Rope { root: Node::empty() }
-    }
+    #[inline] pub fn new() -> Rope { Rope::from(Node::empty()) }
 
     /// Returns the length of this Rope
     ///
@@ -374,114 +379,6 @@ impl Rope {
     /// ```
     #[inline] pub fn is_empty(&self) -> bool { self.len() == 0 }
 
-    /// Insert `char` into `index` in this `Rope`,
-    ///
-    /// # Panics
-    /// * If `index` is greater than the length of this `Rope`
-    ///
-    /// # Time Complexity
-    /// O(log _n_)
-    ///
-    /// # Examples
-    ///
-    /// Inserting at index 0 prepends `char` to this `Rope`:
-    ///
-    /// ```
-    /// use an_rope::Rope;
-    /// let mut an_rope = Rope::from("bcd");
-    /// an_rope.insert(0, 'a');
-    /// assert_eq!(an_rope, Rope::from("abcd"));
-    /// ```
-    ///
-    /// Inserting at index `len` prepends `char` to this `Rope`:
-    ///
-    /// ```
-    /// use an_rope::Rope;
-    /// let mut an_rope = Rope::from("abc");
-    /// an_rope.insert(3, 'd');
-    /// assert_eq!(an_rope, Rope::from("abcd"));
-    /// ```
-    ///
-    /// Inserting at an index in the middle inserts `char` at that index:
-    ///
-    /// ```
-    /// use an_rope::Rope;
-    /// let mut an_rope = Rope::from("acd");
-    /// an_rope.insert(1, 'b');
-    /// assert_eq!(an_rope, Rope::from("abcd"));
-    /// ```
-    #[inline]
-    pub fn insert<M>(&mut self, index: M, ch: char)
-    where M: Metric
-        , Self: Measured<M>
-        , Node: Measured<M>
-        , BranchNode: Measured<M>
-        , String: Measured<M>
-        {
-        assert!( index <= self.measure()
-               , "Rope::insert: index {:?} was > length {:?}"
-               , index, self.measure());
-        // TODO: this is gross...
-        let mut s = String::new();
-        s.push(ch);
-        self.insert_rope(index, Rope::from(s))
-    }
-
-
-
-    /// Delete the range `range` from this `Rope`,
-    ///
-    /// # Panics
-    /// * If the start or end of `range` are indices outside of the `Rope`
-    /// * If the end index of `range` is greater than the start index
-    ///
-    /// # Time Complexity
-    /// O(log _n_)
-    ///
-    /// # Examples
-    ///
-    /// Deleting "not" from this `Rope`:
-    ///
-    /// ```
-    /// use an_rope::Rope;
-    /// let mut an_rope = Rope::from("this is not fine".to_string());
-    /// an_rope.delete((8..12));
-    /// assert_eq!(&an_rope, "this is fine");
-    /// ```
-    #[inline]
-    #[cfg(feature = "unstable")]
-    pub fn delete<R, M>(&mut self, range: R)
-    where R: RangeArgument<M>
-        , M: Metric
-        , Rope: Measured<M>
-        , Node: Measured<M>
-        , BranchNode: Measured<M>
-        , String: Measured<M>
-        {
-        let start = range.start().map(|s| *s)
-                         .unwrap_or_else(|| { M::default() });
-        let end = range.end().map(|e| *e)
-                       .unwrap_or_else(|| { self.measure() });
-
-        assert!( start <= end
-               , "invalid index! start {:?} > end {:?}", end, start);
-        let (l, r) = self.take_root().split(start);
-        let (_, r) = r.split(end - start);
-        self.root = Node::new_branch(l, r);
-    }
-
-    #[inline]
-    #[cfg(not(feature = "unstable"))]
-    pub fn delete<M: Metric>(&mut self, range: ops::Range<M>)
-    where Node: Measured<M>
-        , internals::BranchNode: Measured<M>
-        , String: Measured<M>
-        {
-        let (l, r) = self.take_root().split(range.start);
-        let (_, r) = r.split(range.end - range.start);
-        self.root = Node::new_branch(l, r);
-    }
-
     /// Insert `ch` into `index` in this `Rope`, returning a new `Rope`.
     ///
     ///
@@ -501,7 +398,7 @@ impl Rope {
     /// ```
     /// use an_rope::Rope;
     /// let an_rope = Rope::from("bcd");
-    /// let new_rope = an_rope.with_insert(0, 'a');
+    /// let new_rope = an_rope.insert(0, 'a');
     /// assert_eq!(new_rope, Rope::from("abcd"));
     /// assert_eq!(an_rope, Rope::from("bcd"));
     /// ```
@@ -511,7 +408,7 @@ impl Rope {
     /// ```
     /// use an_rope::Rope;
     /// let an_rope = Rope::from("abc");
-    /// let new_rope = an_rope.with_insert(an_rope.len(), 'd');
+    /// let new_rope = an_rope.insert(an_rope.len(), 'd');
     /// assert_eq!(new_rope, Rope::from("abcd"));
     /// assert_eq!(an_rope, Rope::from("abc"));
     /// ```
@@ -521,97 +418,88 @@ impl Rope {
     /// ```
     /// use an_rope::Rope;
     /// let an_rope = Rope::from("acd");
-    /// let new_rope = an_rope.with_insert(1, 'b');
+    /// let new_rope = an_rope.insert(1, 'b');
     /// assert_eq!(new_rope, Rope::from("abcd"));
     /// assert_eq!(an_rope, Rope::from("acd"));
     /// ```
     #[inline]
-    pub fn with_insert<M>(&self, index: M, ch: char) -> Rope
+    #[inline]
+    pub fn insert<M>(&self, index: M, ch: char) -> Rope
     where M: Metric
         , Self: Measured<M>
         , Node: Measured<M>
         , BranchNode: Measured<M>
         , String: Measured<M>
+        , str: Measured<M>
         {
         assert!( index <= self.measure()
-               , "Rope::with_insert: index {:?} was > length {:?}"
+               , "Rope::insert: index {:?} was > length {:?}"
                , index, self.measure());
-       // TODO: this is gross...
-       let mut s = String::new();
-       s.push(ch);
-       self.with_insert_rope(index, Rope::from(s))
+        // TODO: this is gross...
+        let mut s = String::new();
+        s.push(ch);
+        self.insert_rope(index, &Rope::from(s))
     }
 
-    /// Insert `rope` into `index` in this `Rope`,
-    ///
-    /// Consumes `rope`.
+
+
+    /// Delete the range `range` from this `Rope`,
     ///
     /// # Panics
-    /// * If `index` is greater than the length of this `Rope`
+    /// * If the start or end of `range` are indices outside of the `Rope`
+    /// * If the end index of `range` is greater than the start index
     ///
     /// # Time Complexity
     /// O(log _n_)
     ///
     /// # Examples
     ///
-    /// Inserting at index 0 prepends `rope` to this `Rope`:
+    /// Deleting "not" from this `Rope`:
     ///
     /// ```
     /// use an_rope::Rope;
-    /// let mut an_rope = Rope::from("cd");
-    /// an_rope.insert_rope(0, Rope::from("ab"));
-    /// assert_eq!(an_rope, Rope::from("abcd"));
-    /// ```
-    ///
-    /// Inserting at index `len` prepends `rope` to this `Rope`:
-    ///
-    /// ```
-    /// use an_rope::Rope;
-    /// let mut an_rope = Rope::from("ab");
-    /// an_rope.insert_rope(2, Rope::from("cd"));
-    /// assert_eq!(an_rope, Rope::from("abcd"));
-    /// ```
-    ///
-    /// Inserting at an index in the middle inserts `rope` at that index:
-    ///
-    /// ```
-    /// use an_rope::Rope;
-    /// let mut an_rope = Rope::from("ad");
-    /// an_rope.insert_rope(1, Rope::from("bc"));
-    /// assert_eq!(an_rope, Rope::from("abcd"));
+    /// let an_rope = Rope::from("this is not fine".to_string());
+    /// let an_rope = an_rope.delete((8..12));
+    /// assert_eq!(&an_rope, "this is fine");
     /// ```
     #[inline]
-    pub fn insert_rope<M>(&mut self, index: M, rope: Rope)
-    where M: Metric
-        , Self: Measured<M>
+    #[cfg(feature = "unstable")]
+    pub fn delete<R, M>(&self, range: R) -> Rope
+    where R: RangeArgument<M>
+        , M: Metric
+        , Rope: Measured<M>
         , Node: Measured<M>
         , BranchNode: Measured<M>
         , String: Measured<M>
+        , str: Measured<M>
         {
-        if !rope.is_empty() {
-            let len = self.measure();
-            if index.into() == 0 {
-                // if the rope is being inserted at index 0, just prepend it
-                self.prepend(rope)
-            } else if index == len {
-                // if the rope is being inserted at index len, append it
-                self.append(rope)
-            } else {
-                // split the rope at the given index
-                let (left, right) = self.take_root().split(index);
+        let start = range.start().map(|s| *s)
+                         .unwrap_or_else(|| { M::default() });
+        let end = range.end().map(|e| *e)
+                       .unwrap_or_else(|| { self.measure() });
 
-                // construct the new root node with `Rope` inserted
-                self.root = left + rope.root + right;
-            }
-            // rebalance the new rope
-            self.rebalance();
-        }
+        assert!( start <= end
+               , "invalid index! start {:?} > end {:?}", end, start);
+        let (l, r) = self.root.split(start);
+        let (_, r) = r.split(end - start);
+        Rope::from(Node::new_branch(l, r))
     }
 
+    #[inline]
+    #[cfg(not(feature = "unstable"))]
+    pub fn delete<M: Metric>(&self, range: ops::Range<M>) -> Rope
+    where Node: Measured<M>
+        , internals::BranchNode: Measured<M>
+        , String: Measured<M>
+        , str: Measured<M>
+        {
+        let (l, r) = self.root.split(range.start);
+        let (_, r) = r.split(range.end - range.start);
+        Rope::from(Node::new_branch(l, r))
+    }
+
+
     /// Insert `rope` into `index` in this `Rope`, returning a new `Rope`.
-    ///
-    /// Consumes `rope`.
-    ///
     ///
     /// # Returns
     /// * A new `Rope` with `rope` inserted at `index`
@@ -629,7 +517,7 @@ impl Rope {
     /// ```
     /// use an_rope::Rope;
     /// let an_rope = Rope::from("cd");
-    /// let new_rope = an_rope.with_insert_rope(0, Rope::from("ab"));
+    /// let new_rope = an_rope.insert_rope(0, &Rope::from("ab"));
     /// assert_eq!(new_rope, Rope::from("abcd"));
     /// assert_eq!(an_rope, Rope::from("cd"));
     /// ```
@@ -639,7 +527,7 @@ impl Rope {
     /// ```
     /// use an_rope::Rope;
     /// let an_rope = Rope::from("ab");
-    /// let new_rope = an_rope.with_insert_rope(an_rope.len(), Rope::from("cd"));
+    /// let new_rope = an_rope.insert_rope(an_rope.len(), &Rope::from("cd"));
     /// assert_eq!(new_rope, Rope::from("abcd"));
     /// assert_eq!(an_rope, Rope::from("ab"));
     /// ```
@@ -649,73 +537,38 @@ impl Rope {
     /// ```
     /// use an_rope::Rope;
     /// let an_rope = Rope::from("ad");
-    /// let new_rope = an_rope.with_insert_rope(1, Rope::from("bc"));
+    /// let new_rope = an_rope.insert_rope(1, &Rope::from("bc"));
     /// assert_eq!(new_rope, Rope::from("abcd"));
     /// assert_eq!(an_rope, Rope::from("ad"))
     /// ```
-    pub fn with_insert_rope<M>(&self, index: M, rope: Rope) -> Rope
-    where M: Metric
-        , Self: Measured<M>
-        , Node: Measured<M>
-        , BranchNode: Measured<M>
-        , String: Measured<M>
-        {
-        assert!( index <= self.measure()
-               , "Rope::with_:insert_rope: index {:?} was > length {:?}"
-               , index, self.measure());
-        let mut new_rope = self.clone();
-        new_rope.insert_rope(index, rope);
-        new_rope
-    }
-
-    /// Insert string slice `s` into `index` in this `Rope`,
-    ///
-    /// # Panics
-    /// * If `index` is greater than the length of this `Rope`
-    ///
-    /// # Time Complexity
-    /// O(log _n_)
-    ///
-    /// # Examples
-    ///
-    /// Inserting at index 0 prepends `s` to this `Rope`:
-    ///
-    /// ```
-    /// use an_rope::Rope;
-    /// let mut an_rope = Rope::from("cd");
-    /// an_rope.insert_str(0, "ab");
-    /// assert_eq!(an_rope, Rope::from("abcd"));
-    /// ```
-    ///
-    /// Inserting at index `len` prepends `s` to this `Rope`:
-    ///
-    /// ```
-    /// use an_rope::Rope;
-    /// let mut an_rope = Rope::from("ab");
-    /// an_rope.insert_str(2, "cd");
-    /// assert_eq!(an_rope, Rope::from("abcd"));
-    /// ```
-    ///
-    /// Inserting at an index in the middle inserts `s` at that index:
-    ///
-    /// ```
-    /// use an_rope::Rope;
-    /// let mut an_rope = Rope::from("ad");
-    /// an_rope.insert_str(1, "bc");
-    /// assert_eq!(an_rope, Rope::from("abcd"));
-    /// ```
     #[inline]
-    pub fn insert_str<M>(&mut self, index: M, s: &str)
+    pub fn insert_rope<M>(&self, index: M, rope: &Rope) -> Rope
     where M: Metric
         , Self: Measured<M>
         , Node: Measured<M>
         , BranchNode: Measured<M>
         , String: Measured<M>
+        , str: Measured<M>
         {
-        assert!( index <= self.measure()
-               , "Rope::insert_str: index {:?} was > length {:?}"
-               , index, self.measure());
-        self.insert_rope(index, s.into())
+        if !rope.is_empty() {
+            let len = self.measure();
+            if index.into() == 0 {
+                // if the rope is being inserted at index 0, just prepend it
+                self.prepend(rope)
+            } else if index == len {
+                // if the rope is being inserted at index len, append it
+                self.append(rope)
+            } else {
+                // split the rope at the given index
+                let (left, right) = self.root.split(index);
+
+                // construct the new root node with `Rope` inserted
+                // rebalance the new rope
+                Rope::from(&left + &rope.root + right)
+            }
+        } else {
+            self.clone()
+        }
     }
 
     /// Insert `s` into `index` in this `Rope`, returning a new `Rope`.
@@ -736,7 +589,7 @@ impl Rope {
     /// ```
     /// use an_rope::Rope;
     /// let an_rope = Rope::from("cd");
-    /// let an_rope = an_rope.with_insert_str(0, "ab");
+    /// let an_rope = an_rope.insert_str(0, "ab");
     /// assert_eq!(an_rope, Rope::from("abcd"));
     /// ```
     ///
@@ -745,7 +598,7 @@ impl Rope {
     /// ```
     /// use an_rope::Rope;
     /// let an_rope = Rope::from("ab");
-    /// let new_rope = an_rope.with_insert_str(an_rope.len(), "cd");
+    /// let new_rope = an_rope.insert_str(an_rope.len(), "cd");
     /// assert_eq!(new_rope, Rope::from("abcd"));
     /// assert_eq!(an_rope, Rope::from("ab"));
     /// ```
@@ -755,46 +608,26 @@ impl Rope {
     /// ```
     /// use an_rope::Rope;
     /// let an_rope = Rope::from("ad");
-    /// let new_rope = an_rope.with_insert_str(1, "bc");
+    /// let new_rope = an_rope.insert_str(1, "bc");
     /// assert_eq!(an_rope, Rope::from("ad"));
     /// assert_eq!(new_rope, Rope::from("abcd"));
     /// ```
     #[inline]
-    pub fn with_insert_str<M>(&self, index: M, s: &str) -> Rope
+    pub fn insert_str<M>(&self, index: M, s: &str) -> Rope
     where M: Metric
         , Self: Measured<M>
         , Node: Measured<M>
         , BranchNode: Measured<M>
         , String: Measured<M>
+        , str: Measured<M>
         {
         assert!( index <= self.measure()
-               , "Rope::with_insert_str: index {:?} was > length {:?}"
+               , "Rope::insert_str: index {:?} was > length {:?}"
                , index, self.measure());
-        self.with_insert_rope(index, s.into())
-    }
-
-    /// Appends a `Rope` to the end of this `Rope`, updating it in place.
-    ///
-    /// Note that this is equivalent to using the `+=` operator.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use an_rope::Rope;
-    /// let mut an_rope = Rope::from(String::from("abcd"));
-    /// an_rope.append(Rope::from(String::from("efgh")));
-    /// assert_eq!(an_rope, Rope::from(String::from("abcdefgh")) );
-    /// ```
-    pub fn append(&mut self, other: Rope) {
-        if !other.is_empty() {
-            self.root += other.root;
-            self.rebalance();
-        }
+        self.insert_rope(index, &s.into())
     }
 
     /// Appends a `Rope` to the end of this `Rope`, returning a new `Rope`
-    ///
-    /// Consumes `other`.
     ///
     /// Note that this is equivalent to using the `+` operator.
     ///
@@ -803,53 +636,26 @@ impl Rope {
     /// ```
     /// use an_rope::Rope;
     /// let an_rope = Rope::from("abcd");
-    /// let another_rope = an_rope.with_append(Rope::from("efgh"));
+    /// let another_rope = an_rope.append(&Rope::from("efgh"));
     /// assert_eq!(&another_rope, "abcdefgh");
     /// assert_eq!(&an_rope, "abcd");
     /// ```
-    pub fn with_append(&self, other: Rope) -> Rope {
-        if other.is_empty() {
-            self.clone()
-        } else {
-            // let mut rope = Rope {
-            //     root: Node::new_branch(self.root.clone(), other.root)
-            // };
-            // rope.rebalance();
-            // rope
-            let mut rope = self.clone();
-            rope.append(other);
-            rope
-        }
-    }
-
-    /// Prepends a `Rope` to the front of this `Rope`, modifying it in place.
-    ///
-    /// Consumes `other`.
-    ///
-    /// # Examples
-    /// ```
-    /// use an_rope::Rope;
-    /// let mut an_rope = Rope::from(String::from("efgh"));
-    /// an_rope.prepend(Rope::from(String::from("abcd")));
-    /// assert_eq!(&an_rope, "abcdefgh");
-    /// ```
-    pub fn prepend(&mut self, other: Rope) {
+    pub fn append(&self, other: &Rope) -> Rope {
         if !other.is_empty() {
-            self.root = other.root + self.take_root();
-            self.rebalance();
+            Rope::from(&self.root + &other.root)
+        } else {
+            self.clone()
         }
     }
 
     /// Prepends a `Rope` to the end of this `Rope`, returning a new `Rope`
-    ///
-    /// Consumes `other`.
     ///
     /// # Examples
     ///
     /// ```
     /// use an_rope::Rope;
     /// let an_rope = Rope::from("efgh");
-    /// let another_rope = an_rope.with_prepend(Rope::from("abcd"));
+    /// let another_rope = an_rope.prepend(&Rope::from("abcd"));
     /// assert_eq!(&an_rope, "efgh");
     /// assert_eq!(&another_rope, "abcdefgh");
     /// ```
@@ -857,7 +663,7 @@ impl Rope {
     /// ```
     /// use an_rope::Rope;
     /// let an_rope = Rope::from("");
-    /// let another_rope = an_rope.with_prepend(Rope::from("abcd"));
+    /// let another_rope = an_rope.prepend(&Rope::from("abcd"));
     /// assert_eq!(&an_rope, "");
     /// assert_eq!(&another_rope, "abcd");
     /// ```
@@ -865,57 +671,52 @@ impl Rope {
     /// ```
     /// use an_rope::Rope;
     /// let an_rope = Rope::from("abcd");
-    /// let another_rope = an_rope.with_prepend(Rope::from(""));
+    /// let another_rope = an_rope.prepend(&Rope::from(""));
     /// assert_eq!(&an_rope, "abcd");
     /// assert_eq!(&another_rope, &an_rope);
     /// assert_eq!(&another_rope, "abcd");
     /// ```
-    pub fn with_prepend(&self, other: Rope) -> Rope {
-        if other.is_empty() {
-            self.clone()
+    pub fn prepend(&self, other: &Rope) -> Rope {
+        if !other.is_empty() {
+            Rope::from(&other.root + &self.root)
         } else {
-            // let mut rope = Rope {
-            //     root: Node::new_branch(self.root.clone(), other.root)
-            // };
-            // rope.rebalance();
-            // rope
-            let mut rope = self.clone();
-            rope.prepend(other);
-            rope
+            self.clone()
         }
     }
 
+
+
     /// Splits the rope into two ropes at the given index.
-    ///
-    /// Consumes this rope.
     ///
     /// # Examples
     /// ```
     /// use an_rope::Rope;
-    /// let mut an_rope = Rope::from(String::from("abcd"));
+    /// let an_rope = Rope::from(String::from("abcd"));
     /// let (ab, cd) = an_rope.split(2);
     /// assert_eq!(ab, Rope::from(String::from("ab")));
     /// assert_eq!(cd, Rope::from(String::from("cd")));
     /// ```
-    pub fn split<M: Metric>(self, index: M) -> (Rope, Rope)
+    pub fn split<M: Metric>(&self, index: M) -> (Rope, Rope)
     where Self: Measured<M>
         , Node: Measured<M>
         , internals::BranchNode: Measured<M>
         , String: Measured<M>
+        , str: Measured<M>
         {
         assert!(index <= self.measure());
         let (l, r) = self.root.split(index);
-        (Rope { root: l }, Rope { root: r })
+        (Rope::from(l), Rope::from(r))
     }
 
     /// Rebalances this entire `Rope`, returning a balanced `Rope`.
     #[inline]
+    #[cfg(any(test, feature = "rebalance"))]
     fn rebalance(&mut self) {
         if self.is_balanced() {
             // the rope is already balanced, do nothing
         } else {
             // rebalance the rope
-            self.root = self.take_root().rebalance();
+            // self.root = self.root.rebalance();
         }
     }
 
@@ -924,6 +725,7 @@ impl Rope {
     /// Balancing invariant:
     /// the rope length needs to be less than _F_(rope_length) where F is fibonacci
     #[inline]
+    #[cfg(any(test, feature = "rebalance"))]
     fn is_balanced(&self) -> bool {
         self.root.is_balanced()
     }
@@ -955,25 +757,25 @@ impl Rope {
             }
         }
     }
-
-
-    /// Returns a move iterator over all the strings in this `Rope`
-    ///
-    /// Consumes `self`.
-    #[cfg(feature = "unstable")]
-    #[inline]
-    pub fn into_strings<'a>(self) -> impl Iterator<Item=String> + 'a {
-        self.root.into_strings()
-    }
-
-    /// Returns a move iterator over all the strings in this `Rope`
-    ///
-    /// Consumes `self`.
-    #[cfg(not(feature = "unstable"))]
-    #[inline]
-    pub fn into_strings<'a>(self) -> Box<Iterator<Item=String> + 'a> {
-        self.root.into_strings()
-    }
+    //
+    //
+    // /// Returns a move iterator over all the strings in this `Rope`
+    // ///
+    // /// Consumes `self`.
+    // #[cfg(feature = "unstable")]
+    // #[inline]
+    // pub fn into_strings<'a>(self) -> impl Iterator<Item=String> + 'a {
+    //     self.root.into_strings()
+    // }
+    //
+    // /// Returns a move iterator over all the strings in this `Rope`
+    // ///
+    // /// Consumes `self`.
+    // #[cfg(not(feature = "unstable"))]
+    // #[inline]
+    // pub fn into_strings<'a>(self) -> Box<Iterator<Item=String> + 'a> {
+    //     self.root.into_strings()
+    // }
 
 
     str_iters! {
@@ -1129,47 +931,47 @@ impl Rope {
         RopeSlice::new(&self.root, range)
     }
 
-    /// Returns an mutable slice of this `Rope` between the given indices.
-    ///
-    ///
-    /// # Arguments
-    /// + `range`: A [`RangeArgument`](https://doc.rust-lang.org/nightly/collections/range/trait.RangeArgument.html)
-    /// specifying the range to slice. This can be produced by range syntax
-    /// like `..`, `a..`, `..b` or `c..d`.
-    ///
-    ///
-    /// # Panics
-    /// If the start or end indices of the range to slice exceed the length of
-    /// this `Rope`.
-    ///
-    /// # Examples
-    /// ```ignore
-    //  this doctest fails to link on my macbook for Secret Reasons.
-    //  i'd really like to know why...
-    //      - eliza, 12/23/2016
-    /// #![feature(collections)]
-    /// #![feature(collections_range)]
-    ///
-    /// extern crate collections;
-    /// extern crate an_rope;
-    /// # fn main() {
-    /// use collections::range::RangeArgument;
-    /// use an_rope::Rope;
-    ///
-    /// let mut rope = Rope::from("this is an example string");
-    /// assert_eq!(&mut rope.slice_mut(4..6), "is");
-    /// # }
-    /// ```
-    #[inline]
-    #[cfg(feature = "unstable")]
-    pub fn slice_mut<R>(&mut self, range: R) -> RopeSliceMut
-    where R: RangeArgument<usize> {
-        RopeSliceMut::new(&mut self.root, range)
-    }
-    #[cfg(not(feature = "unstable"))]
-    pub fn slice_mut(&mut self, range: ops::Range<usize>) -> RopeSliceMut {
-        RopeSliceMut::new(&mut self.root, range)
-    }
+    // /// Returns an mutable slice of this `Rope` between the given indices.
+    // ///
+    // ///
+    // /// # Arguments
+    // /// + `range`: A [`RangeArgument`](https://doc.rust-lang.org/nightly/collections/range/trait.RangeArgument.html)
+    // /// specifying the range to slice. This can be produced by range syntax
+    // /// like `..`, `a..`, `..b` or `c..d`.
+    // ///
+    // ///
+    // /// # Panics
+    // /// If the start or end indices of the range to slice exceed the length of
+    // /// this `Rope`.
+    // ///
+    // /// # Examples
+    // /// ```ignore
+    // //  this doctest fails to link on my macbook for Secret Reasons.
+    // //  i'd really like to know why...
+    // //      - eliza, 12/23/2016
+    // /// #![feature(collections)]
+    // /// #![feature(collections_range)]
+    // ///
+    // /// extern crate collections;
+    // /// extern crate an_rope;
+    // /// # fn main() {
+    // /// use collections::range::RangeArgument;
+    // /// use an_rope::Rope;
+    // ///
+    // /// let mut rope = Rope::from("this is an example string");
+    // /// assert_eq!(&mut rope.slice_mut(4..6), "is");
+    // /// # }
+    // /// ```
+    // #[inline]
+    // #[cfg(feature = "unstable")]
+    // pub fn slice_mut<R>(&mut self, range: R) -> RopeSliceMut
+    // where R: RangeArgument<usize> {
+    //     RopeSliceMut::new(&mut self.root, range)
+    // }
+    // #[cfg(not(feature = "unstable"))]
+    // pub fn slice_mut(&mut self, range: ops::Range<usize>) -> RopeSliceMut {
+    //     RopeSliceMut::new(&mut self.root, range)
+    // }
 
 }
 
@@ -1180,57 +982,39 @@ impl convert::Into<Vec<u8>> for Rope {
 
 }
 
-fn str_to_tree(string: String) -> Node {
-    assert!(!string.is_empty());
-    let mut strings = string.rsplit('\n');
-    let last: Node = Node::new_leaf(String::from(strings.next().unwrap()));
-    let leaves = strings.map(|s| Node::new_leaf(String::from(s) + "\n"));
-    leaves.fold(last, |r, l| Node::new_branch(l, r))
-}
+// fn str_to_tree(string: String) -> NodeLink {
+//     assert!(!string.is_empty());
+//     let mut strings = string.rsplit('\n');
+//     let last: Node = Node::new_leaf(LeafRepr::from(strings.next().unwrap()));
+//     let leaves = strings.map(|s| Node::new_leaf(LeafRepr::from(s));
+//     leaves.fold(NodeLink::new(last), |r, l| Node::new_branch(NodeLink::new(l), r))
+// }
 
-#[cfg(feature = "tendril")]
-impl convert::From<StrTendril> for Rope {
-    fn from(tendril: StrTendril) -> Rope {
-        Rope { root: str_to_tree(tendril) }
-    }
-}
-
-impl convert::From<String> for Rope {
-
-
-    #[cfg(feature = "tendril")]
-    #[inline]
-    fn from(string: String) -> Rope {
-        Rope {
-            root: if string.is_empty() { Node::empty() }
-                  else { str_to_tree(StrTendril::from(string)) }
-        }
-    }
-
-
-    #[cfg(not(feature = "tendril"))]
-    #[inline]
-    fn from(string: String) -> Rope {
-        Rope {
-            root: if string.is_empty() { Node::empty() }
-                  else { str_to_tree(string) }
-        }
-    }
-}
-
-
-impl<'a> convert::From<&'a str> for Rope {
-    #[cfg(feature = "tendril")]
-    #[inline]
-    fn from(string: &'a str) -> Rope {
-         Rope::from(StrTendril::from_slice(string))
-     }
-
-    #[cfg(not(feature = "tendril"))]
-    #[inline]
-    fn from(string: &'a str) -> Rope { Rope::from(String::from(string)) }
-}
-
+// #[cfg(feature = "tendril")]
+// impl convert::From<StrTendril> for Rope {
+//     fn from(tendril: StrTendril) -> Rope {
+//         Rope::from(str_to_tree(tendril))
+//     }
+// }
+//
+// impl convert::From<String> for Rope {
+//
+//
+//     #[cfg(feature = "tendril")]
+//     #[inline]
+//     fn from(string: String) -> Rope {
+//         Rope::from(if string.is_empty() { Node::empty() }
+//                    else { str_to_tree(StrTendril::from(string)) })
+//     }
+//
+//
+//     #[cfg(not(feature = "tendril"))]
+//     #[inline]
+//     fn from(string: String) -> Rope {
+//         Rope::from(if string.is_empty() { Node::empty() }
+//                   else { Node::from(string) })
+//     }
+// }
 
 //-- comparisons ----------------------------------------------------
 impl cmp::Eq for Rope {}
@@ -1326,7 +1110,7 @@ impl<'a> ops::Add for &'a Rope {
     /// assert_eq!( &rope + &Rope::from(String::from("cd"))
     ///           , Rope::from(String::from("abcd")) );
     /// ```
-    #[inline] fn add(self, other: Self) -> Rope { self.with_append((*other).clone()) }
+    #[inline] fn add(self, other: Self) -> Rope { self.append(other) }
 
 }
 
@@ -1341,7 +1125,7 @@ impl ops::Add for Rope {
     /// assert_eq!( rope + Rope::from(String::from("cd"))
     ///           , Rope::from(String::from("abcd")) );
     /// ```
-    #[inline] fn add(self, other: Self) -> Rope { self.with_append(other) }
+    #[inline] fn add(self, other: Self) -> Rope { self.append(&other) }
 }
 
 impl ops::Add<String> for Rope {
@@ -1358,7 +1142,7 @@ impl ops::Add<String> for Rope {
     ///           , Rope::from(String::from("abcd")));
     /// ```
     #[inline] fn add(self, other: String) -> Rope {
-         self.with_append(Rope::from(other))
+         self.append(&Rope::from(other))
     }
 }
 
@@ -1377,7 +1161,7 @@ impl<'a, 'b> ops::Add<&'b str> for &'a Rope {
     ///           , Rope::from(String::from("abcd")));
     /// ```
     #[inline] fn add(self, other: &'b str) -> Rope {
-         self.with_append(Rope::from(other.to_owned()))
+         self.append(&Rope::from(other.to_owned()))
      }
 
 }
@@ -1396,62 +1180,62 @@ impl<'a> ops::Add<&'a str> for Rope {
     ///           , Rope::from(String::from("abcd")));
     /// ```
     #[inline] fn add(self, other: &'a str) -> Rope {
-         self.with_append(Rope::from(other.to_owned()))
+         self.append(&Rope::from(other.to_owned()))
      }
 
 }
 
 
-impl ops::AddAssign for Rope {
+// impl ops::AddAssign for Rope {
+//
+//     /// Concatenate two `Rope`s mutably.
+//     ///
+//     /// # Examples
+//     /// ```
+//     /// use an_rope::Rope;
+//     /// let mut rope = Rope::from(String::from("ab"));
+//     /// rope += Rope::from(String::from("cd"));
+//     /// assert_eq!(rope, Rope::from(String::from("abcd")));
+//     /// ```
+//     #[inline]
+//     fn add_assign(&mut self, other: Rope) {
+//         self.append(other)
+//     }
+// }
 
-    /// Concatenate two `Rope`s mutably.
-    ///
-    /// # Examples
-    /// ```
-    /// use an_rope::Rope;
-    /// let mut rope = Rope::from(String::from("ab"));
-    /// rope += Rope::from(String::from("cd"));
-    /// assert_eq!(rope, Rope::from(String::from("abcd")));
-    /// ```
-    #[inline]
-    fn add_assign(&mut self, other: Rope) {
-        self.append(other)
-    }
-}
-
-impl ops::AddAssign<String> for Rope {
-
-    /// Concatenate a `String` onto a `Rope` mutably.
-    ///
-    /// # Examples
-    /// ```
-    /// use an_rope::Rope;
-    /// let mut rope = Rope::from(String::from("ab"));
-    /// rope += String::from("cd");
-    /// assert_eq!(rope, Rope::from(String::from("abcd")));
-    /// ```
-    #[inline]
-    fn add_assign(&mut self, string: String) {
-        self.append(Rope::from(string))
-    }
-}
-
-impl<'a> ops::AddAssign<&'a str> for Rope {
-
-    /// Concatenate an `&str` onto a `Rope` mutably.
-    ///
-    /// # Examples
-    /// ```
-    /// use an_rope::Rope;
-    /// let mut rope = Rope::from(String::from("ab"));
-    /// rope += String::from("cd");
-    /// assert_eq!(rope, Rope::from(String::from("abcd")));
-    /// ```
-    #[inline]
-    fn add_assign(&mut self, string: &'a str) {
-        self.append(Rope::from(string.to_owned()))
-    }
-}
+// impl ops::AddAssign<String> for Rope {
+//
+//     /// Concatenate a `String` onto a `Rope` mutably.
+//     ///
+//     /// # Examples
+//     /// ```
+//     /// use an_rope::Rope;
+//     /// let mut rope = Rope::from(String::from("ab"));
+//     /// rope += String::from("cd");
+//     /// assert_eq!(rope, Rope::from(String::from("abcd")));
+//     /// ```
+//     #[inline]
+//     fn add_assign(&mut self, string: String) {
+//         self.append(Rope::from(string))
+//     }
+// }
+//
+// impl<'a> ops::AddAssign<&'a str> for Rope {
+//
+//     /// Concatenate an `&str` onto a `Rope` mutably.
+//     ///
+//     /// # Examples
+//     /// ```
+//     /// use an_rope::Rope;
+//     /// let mut rope = Rope::from(String::from("ab"));
+//     /// rope += String::from("cd");
+//     /// assert_eq!(rope, Rope::from(String::from("abcd")));
+//     /// ```
+//     #[inline]
+//     fn add_assign(&mut self, string: &'a str) {
+//         self.append(Rope::from(string.to_owned()))
+//     }
+// }
 
 impl ops::Index<usize> for Rope {
     type Output = str;
@@ -1521,23 +1305,23 @@ impl ops::IndexMut<ops::RangeFrom<usize>> for Rope {
     }
 }
 
-impl<'a> Borrow<RopeSlice<'a>> for &'a Rope {
-    fn borrow(&self) -> &RopeSlice<'a> {
-        unimplemented!()
-    }
-}
+// impl<'a> Borrow<RopeSlice<'a>> for &'a Rope {
+//     fn borrow(&self) -> &RopeSlice<'a> {
+//         unimplemented!()
+//     }
+// }
 
-impl<A> iter::Extend<A> for Rope
-where Rope: iter::FromIterator<A>{
-
-    fn extend<B>(&mut self, iter: B)
-    where B: IntoIterator<Item=A> {
-
-        self.append(iter.into_iter().collect());
-
-    }
-
-}
+// impl<A> iter::Extend<A> for Rope
+// where Rope: iter::FromIterator<A>{
+//
+//     fn extend<B>(&mut self, iter: B)
+//     where B: IntoIterator<Item=A> {
+//
+//         self.append(&(iter.into_iter().collect()));
+//
+//     }
+//
+// }
 
 impl iter::FromIterator<char> for Rope {
 
@@ -1554,7 +1338,7 @@ impl iter::FromIterator<String> for Rope {
 
     fn from_iter<I>(iter: I) -> Rope
     where I: IntoIterator<Item=String> {
-        iter.into_iter().fold(Rope::new(), |mut acc, x| {acc.append(Rope::from(x)); acc})
+        iter.into_iter().fold(Rope::new(), |acc, x| acc + x)
     }
 
 }
@@ -1563,7 +1347,7 @@ impl iter::FromIterator<Rope> for Rope {
 
     fn from_iter<I>(iter: I) -> Rope
     where I: IntoIterator<Item=Rope> {
-        iter.into_iter().fold(Rope::new(), |mut acc, x| {acc.append(x); acc})
+        iter.into_iter().fold(Rope::new(), |acc, x| acc + x)
     }
 
 }
@@ -1582,7 +1366,7 @@ impl<'a> iter::FromIterator<&'a str> for Rope {
 
     fn from_iter<I>(iter: I) -> Rope
     where I: IntoIterator<Item=&'a str> {
-        iter.into_iter().fold(Rope::new(), |mut acc, x| {acc.append(Rope::from(x)); acc})
+        iter.into_iter().fold(Rope::new(), |acc, x| acc + x)
     }
 
 }

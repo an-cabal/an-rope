@@ -6,16 +6,37 @@ use metric::{Grapheme, Line, Metric, Measured};
 
 use std::ops;
 use std::fmt;
+use std::convert;
+use std::borrow::{Borrow, ToOwned};
+
+#[cfg(feature = "atomic")]      use std::sync::Arc;
+#[cfg(not(feature = "atomic"))] use std::rc::Rc;
+
 #[cfg(feature = "tendril")]
 use tendril;
+#[cfg(all(feature = "tendril", not(feature = "atomic")))]
+use tendril::StrTendril;
+#[cfg(all(feature = "tendril", feature = "atomic"))]
+use tendril::{Atomic, fmt as tendril_fmt};
 
 use self::Node::*;
 
 #[cfg(not(feature = "tendril"))]
 type LeafRepr = String;
 
-#[cfg(feature = "tendril")]
-type LeafRepr = tendril::StrTendril;
+#[cfg(all(feature = "tendril", not(feature = "atomic") ))]
+type LeafRepr = StrTendril;
+
+#[cfg(all(feature = "tendril", feature = "atomic"))]
+type LeafRepr = tendril::Tendril<tendril_fmt::UTF8, Atomic>;
+
+#[cfg(not(feature = "atomic"))]
+#[derive(Clone)]
+pub struct NodeLink(Rc<Node>);
+
+#[cfg(feature = "atomic")]
+#[derive(Clone)]
+pub struct NodeLink(Arc<Node>);
 
 /// A `Node` in the `Rope`'s tree.
 ///
@@ -37,6 +58,199 @@ impl fmt::Display for Node {
     }
 }
 
+impl convert::Into<NodeLink> for Node {
+    #[inline] fn into(self) -> NodeLink {
+        NodeLink::new(self)
+    }
+}
+
+// impl<T> convert::From<T> for NodeLink
+// where Node: convert::From<T> {
+//     fn from(that: T) -> Self {
+//         NodeLink::new(Node::from(that))
+//     }
+// }
+
+#[cfg(feature = "tendril")]
+impl convert::From<String> for NodeLink {
+    #[inline] fn from(string: String) -> Self {
+        if string.is_empty() {
+            NodeLink::default()
+        } else {
+            let mut strings = string.rsplit('\n');
+            let last = Node::new_leaf(strings.next().unwrap());
+            strings.map(|s| {
+                        let mut r = LeafRepr::from_slice(s);
+                        r.push_char('\n');
+                        Node::new_leaf(r)
+                    })
+                 .fold(last, |r, l| Node::new_branch(l, r))
+        }
+    }
+}
+#[cfg(not(feature = "tendril")) ]
+impl convert::From<String> for NodeLink {
+    #[inline] fn from(string: String) -> Self {
+        if string.is_empty() {
+            NodeLink::default()
+        } else {
+            let mut strings = string.rsplit('\n');
+            let last = Node::new_leaf(strings.next().unwrap());
+            strings.map(|s| Node::new_leaf(LeafRepr::from(s) + "\n"))
+                   .fold(last, |r, l| Node::new_branch(l, r))
+        }
+    }
+}
+
+impl<'a, S: ?Sized> convert::From<&'a S> for NodeLink
+where String: Borrow<S>
+    , S: ToOwned<Owned=String> {
+
+    #[inline] fn from(string: &'a S) -> Self {
+        NodeLink::from(string.to_owned())
+    }
+}
+
+
+
+#[cfg(feature = "tendril")]
+impl convert::From<LeafRepr> for NodeLink {
+    #[inline] fn from(string: LeafRepr) -> Self {
+        if string.is_empty() {
+            NodeLink::default()
+        } else {
+            let mut strings = string.rsplit('\n');
+            let last = Node::new_leaf(strings.next().unwrap());
+            strings.map(|s| {
+                    let mut r = LeafRepr::from_slice(s);
+                    r.push_char('\n');
+                    Node::new_leaf(r)
+                })
+                  .fold(last, |r, l| Node::new_branch(l, r))
+        }
+    }
+}
+
+impl NodeLink {
+    /// Split this `Node`'s subtree on the specified `index`.
+    ///
+    /// Consumes `self`.
+    ///
+    /// This function walks the tree from this node until it reaches the index
+    /// to split on, and then it splits the leaf node containing that index.
+    ///
+    /// # Returns
+    /// A tuple containing the left and right sides of the split node. These are
+    /// returned as a tuple rather than as a new branch, since the expected use
+    /// case for this function is splitting a node so that new text can be
+    /// inserted between the two split halves.
+    ///
+    /// # Time complexity
+    /// O(log _n_)
+    #[inline]
+    pub fn split<M>(&self, index: M) -> (NodeLink, NodeLink)
+    where M: Metric
+        , Node: Measured<M>
+        , BranchNode: Measured<M>
+        , String: Measured<M>
+        , str: Measured<M>
+        {
+        match *self.0 {
+            Leaf(ref s) if s.is_empty() =>
+                // splitting an empty leaf node returns two empty leaf nodes
+                (Node::empty(), Node::empty())
+          , Leaf(ref s) if s.measure().into() == 1 =>
+                (self.clone(), Node::empty())
+          , Leaf(ref s) => {
+                // splitting a leaf node with length >= 2 returns two new Leaf
+                // nodes, one with the left half of the string, and one with
+                // the right
+                // TODO: make this properly respect metric index boundaries
+                let index = s.to_byte_index(index)
+                             .expect(
+                                &format!( "split: invalid index! {:?} in {:?}"
+                                        , index, s));
+                let left = Leaf(s[..index].into());
+                let right = Leaf(s[index..].into());
+                (NodeLink::new(left), NodeLink::new(right))
+            }
+          , Branch(ref node) =>
+                // otherwise, just delegate out to `BranchNode::split()`
+                node.split(index)
+        }
+    }
+
+    #[cfg(not(feature = "atomic"))]
+    pub fn new(node: Node) -> Self { NodeLink(Rc::new(node)) }
+
+    #[cfg(feature = "atomic")]
+    pub fn new(node: Node) -> Self { NodeLink(Arc::new(node)) }
+
+    /// Rebalance the subrope starting at this `Node`, returning a new `Node`
+    ///
+    /// From "Ropes: An Alternative to Strings":
+    /// > "The rebalancing operation maintains an ordered sequence of (empty
+    /// > or) balanced ropes, one for each length interval [_Fn_, _Fn_+1), for
+    /// > _n_ >= 2. We traverse the rope from left to right, inserting each
+    /// > leaf into the appropriate sequence position, depending on its length.
+    ///
+    /// > The concatenation of the sequence of ropes in order of decreasing
+    /// > length is equivalent to the prefix of the rope we have traversed so
+    /// > far. Each new leaf _x_ is with_insert_ropeed into the appropriate entry of the
+    /// > sequence. Assume that _x_’s length is in the interval [_Fn_, _Fn_+1),
+    /// > and thus it should be put in slot _n_ (which also corresponds to
+    /// > maximum depth _n_ − 2). If all lower and equal numbered levels are
+    /// > empty, then this can be done directly. If not, then we concatenate
+    /// > ropes in slots 2, ... ,(_n_ − 1) (concatenating onto the left), and
+    /// > concatenate _x_ to the right of the result. We then continue to
+    /// > concatenate ropes from the sequence in increasing order to the left
+    /// > of this result, until the result fits into an empty slot in the
+    /// > sequence."
+    pub fn rebalance(self) -> Self {
+        // TODO: this is a huge mess, I based it on the IBM Java implementation
+        //       please refactor until it stops being ugly!
+        //        - eliza, 12/17/2016
+
+        if self.is_balanced() {
+            // the subrope is already balanced, do nothing
+            self
+        } else {
+            // let mut leaves: Vec<Option<Node>> =
+            //     self.into_leaves().map(Option::Some).collect();
+            // let len = leaves.len();
+            // fn _rebalance(l: &mut Vec<Option<Node>>, start: usize, end: usize)
+            //               -> Node {
+            //     match end - start {
+            //         1 => l[start].take().unwrap()
+            //       , 2 => l[start].take().unwrap() + l[start + 1].take().unwrap()
+            //       , n => {
+            //             let mid = start + (n / 2);
+            //             _rebalance(l, start, mid) + _rebalance(l, mid, end)
+            //
+            //         }
+            //     }
+            // };
+            // _rebalance(&mut leaves, 0, len)
+            self
+        }
+    }
+}
+
+impl ops::Deref for NodeLink {
+    type Target = Node;
+    fn deref(&self) -> &Node { self.0.as_ref() }
+}
+
+impl fmt::Debug for NodeLink {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self.0)
+    }
+}
+impl fmt::Display for NodeLink {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 // impl fmt::Display for Node {
 //     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 //         match *self {
@@ -50,8 +264,25 @@ impl fmt::Display for Node {
 pub struct BranchNode {
     /// The length of this node
     len: usize
-  , /// The length of this node in graphemes
-    grapheme_len: Grapheme
+  // TODO: we used to cache grapheme length on nodes, but I removed it for
+  //       performance reasons.
+  //
+  //       this might seem counter-intuitive – we'd expect caching to make it
+  //       faster – but since we mostly manipulate `Rope`s by `char` rather
+  //       than by `Grapheme`, we often end up spending a lot of time
+  //       calculating a grapheme length measurement we *never actually use*.
+  //
+  //       this way, the added overhead of calculating grapheme length only
+  //       happens once it is actually needed.
+  //
+  //       the downside is that once grapheme length _is_ calculated once,
+  //       we don't cache the result, and have to recalcualte grapheme length
+  //       every time it's needed. might want to look into rigging up a lazy
+  //       field  using `RefCell`s.
+  //       see:  https://doc.rust-lang.org/std/cell/#implementation-details-of-logically-immutable-methods
+  //        - eliza, 1/10/2017
+  // , /// The length of this node in graphemes
+  //   grapheme_len: Grapheme
   , /// The weight of a node is the summed weight of its left subtree
     weight: usize
   , /// The number of started lines of this node
@@ -59,9 +290,9 @@ pub struct BranchNode {
   , /// The number of started lines in the node's left subtree
     wlines: Line
   , /// The left branch node
-    pub left: Box<Node>
+    pub left: NodeLink
   , /// The right branch node
-    pub right: Box<Node>
+    pub right: NodeLink
 }
 
 
@@ -78,7 +309,7 @@ impl fmt::Display for BranchNode {
 }
 
 
-impl Default for Node {
+impl Default for NodeLink {
     fn default() -> Self { Node::empty() }
 }
 
@@ -141,7 +372,9 @@ impl Measured<Grapheme> for BranchNode {
     }
 
     #[inline] fn measure(&self) -> Grapheme {
-        self.grapheme_len
+        let left: Grapheme = self.left.measure();
+        let right: Grapheme = self.right.measure();
+        left + right
     }
 
     #[inline] fn measure_weight(&self) -> Grapheme { self.left.measure() }
@@ -258,7 +491,7 @@ impl Metric for usize {
     #[inline] fn is_splittable() -> bool { true }
 
     /// Returns true if index `i` in `node` is a boundary along this `Metric`
-    #[inline] fn is_boundary<M: Measured<Self>>(node: &M, i: usize) -> bool {
+    #[inline] fn is_boundary<M: Measured<Self>>(_node: &M, i: usize) -> bool {
         true
     }
 }
@@ -304,6 +537,7 @@ impl<M> Measured<M> for Node
 where M: Metric
     , BranchNode: Measured<M>
     , String: Measured<M>
+, str: Measured<M>
     {
 
     fn to_byte_index(&self, index: M) -> Option<usize>  {
@@ -342,18 +576,18 @@ macro_rules! or_zero {
 impl BranchNode {
 
     #[inline]
-    fn new(left: Node, right: Node) -> Self {
-        let grapheme_left : Grapheme = left.measure();
-        let grapheme_right : Grapheme = right.measure();
+    fn new(left: NodeLink, right: NodeLink) -> Self {
+        // let grapheme_left : Grapheme = left.measure();
+        // let grapheme_right : Grapheme = right.measure();
         let line_left : Line = left.measure();
         let line_right : Line = right.measure();
         BranchNode { len: left.len() + right.len()
-                   , grapheme_len: grapheme_left + grapheme_right
+                //    , grapheme_len: grapheme_left + grapheme_right
                    , weight: left.subtree_weight()
                    , nlines: line_left + line_right
                    , wlines: left.measure()
-                   , left: Box::new(left)
-                   , right: Box::new(right)
+                   , left: left
+                   , right: right
                    }
     }
 
@@ -371,11 +605,12 @@ impl BranchNode {
     ///
     /// # Time complexity
     /// O(log _n_)
-    #[inline] fn split<M>(self, index: M) -> (Node, Node)
+    #[inline] fn split<M>(&self, index: M) -> (NodeLink, NodeLink)
     where M: Metric
         , Node: Measured<M>
         , BranchNode: Measured<M>
         , String: Measured<M>
+        , str: Measured<M>
         {
         let weight = (&self).measure_weight();
         // to determine which side of this node we are splitting on, we compare
@@ -390,12 +625,12 @@ impl BranchNode {
             let right = if left_right.is_empty() {
                 // if the right side of the split is empty, then the right
                 // side of the returned pair is just this node's right child
-                *self.right
+                self.right.clone()
             } else {
                 // otherwise, the right side of the returned pair is a branch
                 // containing the right side of the split node on the left,
                 // and this node's right child on the right
-                Node::new_branch(left_right, *self.right)
+                Node::new_branch(left_right, self.right.clone())
             };
             (left, right)
         } else {
@@ -410,12 +645,12 @@ impl BranchNode {
             let left = if right_left.is_empty() {
                 // if the left side of the split right child is empty, then the
                 // left side of the returned pair is just this node's left child
-                *self.left
+                self.left.clone()
             } else {
                 // otherwise, the left side of the returned pair is a branch
                 // containing the left side of the split node on the right,
                 // and this node's left child on the left
-                Node::new_branch(*self.left, right_left)
+                Node::new_branch(self.left.clone(), right_left)
             };
             (left, right)
         }
@@ -424,15 +659,15 @@ impl BranchNode {
 }
 
 impl Node {
-
-    #[inline] pub fn grapheme_len(&self) -> Grapheme {
-        // todo: refactor
-        use unicode::Unicode;
-        match *self {
-            Branch(BranchNode { grapheme_len, ..}) => grapheme_len
-          , Leaf(ref s) => Grapheme(s.grapheme_len())
-        }
-    }
+    //
+    // #[inline] pub fn grapheme_len(&self) -> Grapheme {
+    //     // todo: refactor
+    //     use unicode::Unicode;
+    //     match *self {
+    //         Branch(BranchNode { grapheme_len, ..}) => grapheme_len
+    //       , Leaf(ref s) => Grapheme(s.grapheme_len())
+    //     }
+    // }
 
     pub fn spanning(&self, i: usize, span_len: usize) -> (&Node, usize) {
         assert!(self.len() >= span_len);
@@ -460,104 +695,71 @@ impl Node {
             (self, i)
         }
     }
+    //
+    // pub fn spanning_mut(&mut self, i: usize, span_len: usize)
+    //                     -> (&mut Node, usize) {
+    //     assert!(self.len() >= span_len);
+    //     match *self {
+    //         Branch(BranchNode { ref mut right, ref left, weight, .. })
+    //         if weight < i => {
+    //             // if this node is a branch, and the weight is less than the
+    //             // index, where the span begins, then the first index of the
+    //             // span is on the right side
+    //             let span_i = or_zero!(i, left.len());
+    //             assert!(or_zero!(right.len(), span_i) >= span_len);
+    //             right.spanning_mut(span_i, span_len)
+    //         }
+    //       , Branch(BranchNode { ref mut left, .. })
+    //         // if the left child is long enough to contain the entire span,
+    //         // walk to the left child
+    //         if or_zero!(left.len(), i) >= span_len =>
+    //             left.spanning_mut(i, span_len)
+    //       , Leaf(_) | Branch (_)=>
+    //         // if this function has walked as far as a leaf node,
+    //         // then that leaf must be the spanning node. return it;
+    //         //
+    //         // otherwise, if the node is a branch node and the span is longer
+    //         // than the left child, then this node must be the minimum
+    //         // spanning node
+    //             (self, i)
+    //     }
+    // }
 
-    pub fn spanning_mut(&mut self, i: usize, span_len: usize)
-                        -> (&mut Node, usize) {
-        assert!(self.len() >= span_len);
-        match *self {
-            Branch(BranchNode { ref mut right, ref left, weight, .. })
-            if weight < i => {
-                // if this node is a branch, and the weight is less than the
-                // index, where the span begins, then the first index of the
-                // span is on the right side
-                let span_i = or_zero!(i, left.len());
-                assert!(or_zero!(right.len(), span_i) >= span_len);
-                right.spanning_mut(span_i, span_len)
-            }
-          , Branch(BranchNode { ref mut left, .. })
-            // if the left child is long enough to contain the entire span,
-            // walk to the left child
-            if or_zero!(left.len(), i) >= span_len =>
-                left.spanning_mut(i, span_len)
-          , Leaf(_) | Branch (_)=>
-            // if this function has walked as far as a leaf node,
-            // then that leaf must be the spanning node. return it;
-            //
-            // otherwise, if the node is a branch node and the span is longer
-            // than the left child, then this node must be the minimum
-            // spanning node
-                (self, i)
-        }
-    }
-    /// Split this `Node`'s subtree on the specified `index`.
-    ///
-    /// Consumes `self`.
-    ///
-    /// This function walks the tree from this node until it reaches the index
-    /// to split on, and then it splits the leaf node containing that index.
-    ///
-    /// # Returns
-    /// A tuple containing the left and right sides of the split node. These are
-    /// returned as a tuple rather than as a new branch, since the expected use
-    /// case for this function is splitting a node so that new text can be
-    /// inserted between the two split halves.
-    ///
-    /// # Time complexity
-    /// O(log _n_)
+
+    // #[cfg(any(not(feature = "atomic"), feature = "tendril"))]
     #[inline]
-    pub fn split<M>(self, index: M) -> (Node, Node)
-    where M: Metric
-        , Node: Measured<M>
-        , BranchNode: Measured<M>
-        , String: Measured<M>
-        {
-        match self {
-            Leaf(ref s) if s.is_empty() =>
-                // splitting an empty leaf node returns two empty leaf nodes
-                (Node::empty(), Node::empty())
-          , Leaf(ref s) if s.measure().into() == 1 =>
-                (Leaf(s.clone()), Node::empty())
-          , Leaf(s) => {
-                // splitting a leaf node with length >= 2 returns two new Leaf
-                // nodes, one with the left half of the string, and one with
-                // the right
-                // TODO: make this properly respect metric index boundaries
-                let index = s.to_byte_index(index)
-                             .expect(
-                                &format!( "split: invalid index! {:?} in {:?}"
-                                        , index, s));
-                let left = Leaf(s[..index].into());
-                let right = Leaf(s[index..].into());
-                (left, right)
-            }
-          , Branch(node) =>
-                // otherwise, just delegate out to `BranchNode::split()`
-                node.split(index)
-        }
+    pub fn empty() -> NodeLink {
+        NodeLink::new(Leaf(LeafRepr::new()))
     }
 
-    #[inline]
-    pub fn empty() -> Self {
-        Leaf("".into())
-    }
+    // #[cfg(all(feature = "atomic", not(feature = "tendril")))]
+    // #[inline]
+    // pub fn empty() -> NodeLink {
+    //     NodeLink(Arc::new(Leaf(LeafRepr::new())))
+    // }
 
     /// Concatenate two `Node`s to return a new `Branch` node.
     #[inline]
-    pub fn new_branch(left: Self, right: Self) -> Self {
-        Branch(BranchNode::new(left, right))
+    pub fn new_branch<A, B>(left: A, right: B) -> NodeLink
+    where A: convert::Into<NodeLink>
+        , B: convert::Into<NodeLink>
+        {
+        NodeLink::new(Branch(BranchNode::new(left.into(), right.into())))
     }
 
+    //
+    // #[inline]
+    // #[cfg(feature = "unstable")]
+    // pub const fn new_leaf<T>(that: T) -> Self
+    // where T: convert::Into<LeafRepr> {
+    //     Leaf(that.into())
+    // }
 
     #[inline]
-    #[cfg(feature = "unstable")]
-    pub const fn new_leaf(string: LeafRepr) -> Self {
-        Leaf(string)
-    }
-
-    #[inline]
-    #[cfg(not(feature = "unstable"))]
-    pub fn new_leaf(string: LeafRepr) -> Self {
-        Leaf(string)
+    // #[cfg(not(feature = "unstable"))]
+    pub fn new_leaf<T>(that: T) -> NodeLink
+    where T: convert::Into<LeafRepr> {
+        NodeLink::new(Leaf(that.into()))
     }
 
     /// Returns true if this node is balanced
@@ -652,23 +854,24 @@ impl Node {
             // the subrope is already balanced, do nothing
             self
         } else {
-            let mut leaves: Vec<Option<Node>> =
-                self.into_leaves().map(Option::Some).collect();
-            let len = leaves.len();
-            #[inline]
-            fn _rebalance(l: &mut Vec<Option<Node>>, start: usize, end: usize)
-                          -> Node {
-                match end - start {
-                    1 => l[start].take().unwrap()
-                  , 2 => l[start].take().unwrap() + l[start + 1].take().unwrap()
-                  , n => {
-                        let mid = start + (n / 2);
-                        _rebalance(l, start, mid) + _rebalance(l, mid, end)
-
-                    }
-                }
-            };
-            _rebalance(&mut leaves, 0, len)
+            // let mut leaves: Vec<Option<Node>> =
+            //     self.into_leaves().map(Option::Some).collect();
+            // let len = leaves.len();
+            // #[inline]
+            // fn _rebalance(l: &mut Vec<Option<Node>>, start: usize, end: usize)
+            //               -> Node {
+            //     match end - start {
+            //         1 => l[start].take().unwrap()
+            //       , 2 => l[start].take().unwrap() + l[start + 1].take().unwrap()
+            //       , n => {
+            //             let mid = start + (n / 2);
+            //             _rebalance(l, start, mid) + _rebalance(l, mid, end)
+            //
+            //         }
+            //     }
+            // };
+            // _rebalance(&mut leaves, 0, len)
+            self
         }
     }
 
@@ -685,11 +888,11 @@ impl Node {
         Leaves(vec![self])
     }
 
-    /// Returns a move iterator over all leaf nodes in this `Node`'s subrope
-    #[inline]
-    fn into_leaves(self) -> IntoLeaves {
-        IntoLeaves(vec![self])
-    }
+    // /// Returns a move iterator over all leaf nodes in this `Node`'s subrope
+    // #[inline]
+    // fn into_leaves(self) -> IntoLeaves {
+    //     IntoLeaves(vec![self])
+    // }
 
     unstable_iters! {
         #[doc=
@@ -711,71 +914,72 @@ impl Node {
         }
     }
 
-    /// Returns a move iterator over all the strings in this `Node`s subrope'
-    ///
-    /// Consumes `self`.
-    #[inline]
-    #[cfg(all( feature = "unstable"
-             , not(feature = "tendril") ))]
-    pub fn into_strings(self) -> impl Iterator<Item=String> {
-        self.into_leaves().map(|n| match n {
-            Leaf(s) => s
-            , _ => unreachable!("Node.into_leaves() iterator contained \
-                                 something  that wasn't a leaf. Barring _force \
-                                 majeure_, this should be impossible. \
-                                 Something's broken.")
-        })
-    }
+    // TODO: figure out if we can make move iterators work even with Rcs?
+    // /// Returns a move iterator over all the strings in this `Node`s subrope'
+    // ///
+    // /// Consumes `self`.
+    // #[inline]
+    // #[cfg(all( feature = "unstable"
+    //          , not(feature = "tendril") ))]
+    // pub fn into_strings(self) -> impl Iterator<Item=String> {
+    //     self.into_leaves().map(|n| match n {
+    //         Leaf(s) => s
+    //         , _ => unreachable!("Node.into_leaves() iterator contained \
+    //                              something  that wasn't a leaf. Barring _force \
+    //                              majeure_, this should be impossible. \
+    //                              Something's broken.")
+    //     })
+    // }
+    //
+    //
+    // /// Returns a move iterator over all the strings in this `Node`s subrope'
+    // ///
+    // /// Consumes `self`.
+    // #[inline]
+    // #[cfg(all( feature = "unstable"
+    //          , feature = "tendril" ))]
+    // pub fn into_strings(self) -> impl Iterator<Item=String> {
+    //     self.into_leaves().map(|n| match n {
+    //         Leaf(s) => s.into()
+    //         , _ => unreachable!("Node.into_leaves() iterator contained \
+    //                              something  that wasn't a leaf. Barring _force \
+    //                              majeure_, this should be impossible. \
+    //                              Something's broken.")
+    //     })
+    // }
 
-
-    /// Returns a move iterator over all the strings in this `Node`s subrope'
-    ///
-    /// Consumes `self`.
-    #[inline]
-    #[cfg(all( feature = "unstable"
-             , feature = "tendril" ))]
-    pub fn into_strings(self) -> impl Iterator<Item=String> {
-        self.into_leaves().map(|n| match n {
-            Leaf(s) => s.into()
-            , _ => unreachable!("Node.into_leaves() iterator contained \
-                                 something  that wasn't a leaf. Barring _force \
-                                 majeure_, this should be impossible. \
-                                 Something's broken.")
-        })
-    }
-
-    /// Returns a move iterator over all the strings in this `Node`s subrope'
-    ///
-    /// Consumes `self`.
-    #[inline]
-    #[cfg(all( not(feature = "unstable")
-             , not(feature = "tendril") ))]
-    pub fn into_strings(self) -> Box<Iterator<Item=String>> {
-        Box::new(self.into_leaves().map(|n| match n {
-            Leaf(s) => s
-            , _ => unreachable!("Node.into_leaves() iterator contained \
-                                 something  that wasn't a leaf. Barring _force \
-                                 majeure_, this should be impossible. \
-                                 Something's broken.")
-        }))
-    }
-
-
-    /// Returns a move iterator over all the strings in this `Node`s subrope'
-    ///
-    /// Consumes `self`.
-    #[inline]
-    #[cfg(all( not(feature = "unstable")
-             , feature = "tendril" ))]
-    pub fn into_strings(self) -> Box<Iterator<Item=String>> {
-        Box::new(self.into_leaves().map(|n| match n {
-            Leaf(s) => s.into()
-            , _ => unreachable!("Node.into_leaves() iterator contained \
-                                 something  that wasn't a leaf. Barring _force \
-                                 majeure_, this should be impossible. \
-                                 Something's broken.")
-        }))
-    }
+    // /// Returns a move iterator over all the strings in this `Node`s subrope'
+    // ///
+    // /// Consumes `self`.
+    // #[inline]
+    // #[cfg(all( not(feature = "unstable")
+    //          , not(feature = "tendril") ))]
+    // pub fn into_strings(self) -> Box<Iterator<Item=String>> {
+    //     Box::new(self.into_leaves().map(|n| match n {
+    //         Leaf(s) => s
+    //         , _ => unreachable!("Node.into_leaves() iterator contained \
+    //                              something  that wasn't a leaf. Barring _force \
+    //                              majeure_, this should be impossible. \
+    //                              Something's broken.")
+    //     }))
+    // }
+    //
+    //
+    // /// Returns a move iterator over all the strings in this `Node`s subrope'
+    // ///
+    // /// Consumes `self`.
+    // #[inline]
+    // #[cfg(all( not(feature = "unstable")
+    //          , feature = "tendril" ))]
+    // pub fn into_strings(self) -> Box<Iterator<Item=String>> {
+    //     Box::new(self.into_leaves().map(|n| match n {
+    //         Leaf(s) => s.into()
+    //         , _ => unreachable!("Node.into_leaves() iterator contained \
+    //                              something  that wasn't a leaf. Barring _force \
+    //                              majeure_, this should be impossible. \
+    //                              Something's broken.")
+    //     }))
+    // }
 
     str_iters! {
         #[doc="Returns an iterator over all the bytes in this `Node`'s \
@@ -948,26 +1152,26 @@ impl<'a> Iterator for Leaves<'a> {
     }
 }
 
-/// A move iterator over a series of leaf `Node`s
-struct IntoLeaves(Vec<Node>);
-
-impl Iterator for IntoLeaves {
-    type Item = Node;
-    #[inline]
-    fn next(&mut self) -> Option<Self::Item> {
-        loop {
-            match self.0.pop() {
-                None => return None
-              , Some(Leaf(ref s)) if s.is_empty() => {}
-              , leaf @ Some(Leaf(_))=> return leaf
-              , Some(Branch(BranchNode { left, right, .. })) => {
-                    self.0.push(*right);
-                    self.0.push(*left);
-                }
-            }
-        }
-    }
-}
+// /// A move iterator over a series of leaf `Node`s
+// struct IntoLeaves(Vec<Node>);
+//
+// impl Iterator for IntoLeaves {
+//     type Item = Node;
+//     #[inline]
+//     fn next(&mut self) -> Option<Self::Item> {
+//         loop {
+//             match self.0.pop() {
+//                 None => return None
+//               , Some(Leaf(ref s)) if s.is_empty() => {}
+//               , leaf @ Some(Leaf(_))=> return leaf
+//               , Some(Branch(BranchNode { left, right, .. })) => {
+//                     self.0.push(*right);
+//                     self.0.push(*left);
+//                 }
+//             }
+//         }
+//     }
+// }
 
 pub struct GraphemeIndices<'a> {
     strings: Box<Iterator<Item = &'a str> + 'a >
@@ -1015,28 +1219,37 @@ impl<'a> Iterator for UWordBoundIndices<'a> {
     }
 }
 
-impl ops::Add for Node {
+impl ops::Add for NodeLink {
     type Output = Self;
     /// Concatenate two `Node`s, returning a `Branch` node.
     fn add(self, right: Self) -> Self { Node::new_branch(self, right) }
 }
 
-
-impl ops::AddAssign for Node {
-    /// Concatenate two `Node`s
-    fn add_assign(&mut self, right: Self) {
-        use std::mem::replace;
-        *self = Node::new_branch(replace(self, Node::empty()), right)
-     }
-
+impl<'a> ops::Add for &'a NodeLink {
+    type Output = NodeLink;
+    /// Concatenate two `Node`s, returning a `Branch` node.
+    fn add(self, right: Self) -> Self::Output {
+        Node::new_branch(self.clone(), right.clone())
+    }
 }
 
+//
+// impl ops::AddAssign for Node {
+//     /// Concatenate two `Node`s
+//     fn add_assign(&mut self, right: Self) {
+//         use std::mem::replace;
+//         *self = Node::new_branch(self, right)
+//      }
+//
+// }
+//
 
 impl<M> ops::Index<M> for Node
 where M: Metric
     , Node: Measured<M>
     , BranchNode: Measured<M>
     , String: Measured<M>
+, str: Measured<M>
     {
     type Output = str;
 

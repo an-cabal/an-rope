@@ -5,8 +5,10 @@ use internals::Node::Leaf;
 use metric::Line;
 use metric::Measured;
 
+#[cfg(feature = "atomic")]
 use quickcheck::{Arbitrary, Gen};
 
+#[cfg(feature = "atomic")]
 impl Arbitrary for Rope {
     fn arbitrary<G: Gen>(g: &mut G) -> Rope {
         Rope::from(String::arbitrary(g))
@@ -20,129 +22,128 @@ impl Arbitrary for Rope {
 
 }
 
-
 #[test]
 fn line_split_test_1() {
-    let l1 = Node::new_leaf("asdf".to_string());
-    let l2 = Node::new_leaf("qwer".to_string());
+    let l1 = Node::new_leaf("asdf");
+    let l2 = Node::new_leaf("qwer");
     let b = Node::new_branch(l1, l2);
     let (left, right) = b.split(Line(0));
     assert_eq!(left.strings().collect::<String>(), "asdfqwer");
-    if let Leaf(s) = right {
-        assert_eq!(s, "");
+    if let Leaf(ref s) = *right {
+        assert_eq!(&s[..], "");
     } else { assert!(false) }
 }
 
 #[test]
 fn line_split_test_2() {
-    let l1 = Node::new_leaf("asdf".to_string());
-    let l2 = Node::new_leaf("qwer\n".to_string());
+    let l1 = Node::new_leaf("asdf");
+    let l2 = Node::new_leaf("qwer\n");
     let b = Node::new_branch(l1, l2);
     let (left, right) = b.split(Line(0));
     assert_eq!(left.strings().collect::<String>(), "asdfqwer\n");
-    if let Leaf(s) = right {
-        assert_eq!(s, "");
+    if let Leaf(ref s) = *right {
+        assert_eq!(&s[..], "");
     } else { assert!(false) }
 }
 
 #[test]
 fn line_split_test_3() {
-    let l1 = Node::new_leaf("asdf\n".to_string());
-    let l2 = Node::new_leaf("qwer\n".to_string());
+    let l1 = Node::new_leaf("asdf\n");
+    let l2 = Node::new_leaf("qwer\n");
     let b = Node::new_branch(l1, l2);
     let (left, right) = b.split(Line(0));
-    if let Leaf(s) = left {
-        assert_eq!(s, "asdf\n");
+    if let Leaf(ref s) = *left {
+        assert_eq!(&s[..], "asdf\n");
     } else { assert!(false) }
-    if let Leaf(s) = right {
-        assert_eq!(s, "qwer\n");
+    if let Leaf(ref s) = *right {
+        assert_eq!(&s[..], "qwer\n");
     } else { assert!(false) }
 }
 
 #[test]
 #[should_panic(expected = "invalid index!")]
 fn line_split_test_4() {
-    let l1 = Node::new_leaf("asdf".to_string());
-    let l2 = Node::new_leaf("qwer".to_string());
+    let l1 = Node::new_leaf("asdf");
+    let l2 = Node::new_leaf("qwer");
     let b = Node::new_branch(l1, l2);
     let (left, right) = b.split(Line(1));
 }
 
 #[test]
 fn line_split_test_5() {
-    let l1 = Node::new_leaf("asdf".to_string());
-    let l2 = Node::new_leaf("qwer\n".to_string());
+    let l1 = Node::new_leaf("asdf");
+    let l2 = Node::new_leaf("qwer\n");
     let b = Node::new_branch(l1, l2);
     let (left, right) = b.split(Line(1));
     assert_eq!(left.strings().collect::<String>(), "asdfqwer\n");
-    if let Leaf(s) = right {
-        assert_eq!(s, "");
+    if let Leaf(ref s) = *right {
+        assert_eq!(&s[..], "");
     } else { assert!(false) }
 }
 
 #[test]
 fn line_split_test_6() {
-    let l1 = Node::new_leaf("asdf\n".to_string());
-    let l2 = Node::new_leaf("qwer\n".to_string());
+    let l1 = Node::new_leaf("asdf\n");
+    let l2 = Node::new_leaf("qwer\n");
     let b = Node::new_branch(l1, l2);
     let (left, right) = b.split(Line(1));
     assert_eq!(left.strings().collect::<String>(), "asdf\nqwer\n");
-    if let Leaf(s) = right {
-        assert_eq!(s, "");
+    if let Leaf(ref s) = *right {
+        assert_eq!(&s[..], "");
     } else { assert!(false) }
 }
 
 #[test]
 fn line_split_test_7() {
-    let l1 = Node::new_leaf("asdf\n".to_string());
-    let l2 = Node::new_leaf("qwer\n".to_string());
+    let l1 = Node::new_leaf("asdf\n");
+    let l2 = Node::new_leaf("qwer\n");
     let b = Node::new_branch(l1, l2);
     let (left, right) = b.split(Line(0));
-    if let Leaf(s) = left {
-        assert_eq!(s, "asdf\n");
+    if let Leaf(ref s) = *left {
+        assert_eq!(&s[..], "asdf\n");
     } else { assert!(false) }
-    if let Leaf(s) = right {
-        assert_eq!(s, "qwer\n");
+    if let Leaf(ref s) = *right {
+        assert_eq!(&s[..], "qwer\n");
     } else { assert!(false) }
 }
 
 #[test]
 fn line_split_test_8() {
-    let l1 = Node::new_leaf("".to_string());
-    let l2 = Node::new_leaf("qwer\n".to_string());
+    let l1 = Node::new_leaf("");
+    let l2 = Node::new_leaf("qwer\n");
     let b = Node::new_branch(l1, l2);
     let (left, right) = b.split(Line(0));
     assert_eq!(left.strings().collect::<String>(), "qwer\n");
-    if let Leaf(s) = right {
-        assert_eq!(s, "");
+    if let Leaf(ref s) = *right {
+        assert_eq!(&s[..], "");
     } else { assert!(false) }
 }
 
 #[test]
 fn line_split_test_9() {
-    let l1 = Node::new_leaf("asdf\n".to_string());
-    let l2 = Node::new_leaf("qwer".to_string());
-    let l3 = Node::new_leaf("yxcv\n".to_string());
+    let l1 = Node::new_leaf("asdf\n");
+    let l2 = Node::new_leaf("qwer");
+    let l3 = Node::new_leaf("yxcv\n");
     let b1 = Node::new_branch(l1, l2);
     let b2 = Node::new_branch(b1, l3);
     let (left, right) = b2.split(Line(0));
-    if let Leaf(s) = left {
-        assert_eq!(s, "asdf\n");
+    if let Leaf(ref s) = *left {
+        assert_eq!(&s[..], "asdf\n");
     } else { assert!(false) }
     assert_eq!(right.strings().collect::<String>(), "qweryxcv\n");
 }
 
 #[test]
 fn line_split_test_10() {
-    let l1 = Node::new_leaf("asdf".to_string());
-    let l2 = Node::new_leaf("qwer\n".to_string());
-    let l3 = Node::new_leaf("yxcv\n".to_string());
+    let l1 = Node::new_leaf("asdf");
+    let l2 = Node::new_leaf("qwer\n");
+    let l3 = Node::new_leaf("yxcv\n");
     let b1 = Node::new_branch(l2, l3);
     let b2 = Node::new_branch(l1, b1);
     let (left, right) = b2.split(Line(0));
     assert_eq!(left.strings().collect::<String>(), "asdfqwer\n");
-    if let Leaf(s) = right {
-        assert_eq!(s, "yxcv\n");
+    if let Leaf(ref s) = *right {
+        assert_eq!(&s[..], "yxcv\n");
     } else { assert!(false) }
 }
 
@@ -181,15 +182,15 @@ fn line_delete_test_2() {
 
 #[test]
 fn delete_test_1() {
-    let mut r = Rope::from("this is not fine".to_string());
-    r.delete((8..12));
+    let mut r = Rope::from("this is not fine");
+    r = r.delete((8..12));
     assert_eq!(&r, "this is fine");
 }
 
 #[test]
 fn delete_test_2() {
     let mut r = Rope::new();
-    r.delete((0..0));
+    r = r.delete((0..0));
     assert_eq!(&r, "");
 }
 
@@ -198,8 +199,8 @@ fn delete_test_2() {
 #[test]
 fn delete_test_3() {
     use std::ops::RangeFull;
-    let mut r = Rope::from("this is not fine".to_string());
-    r.delete::<RangeFull, usize>((..));
+    let mut r = Rope::from("this is not fine");
+    r = r.delete::<RangeFull, usize>((..));
     assert_eq!(&r, "");
 }
 
@@ -207,8 +208,8 @@ fn delete_test_3() {
 #[cfg(feature = "unstable")]
 #[test]
 fn delete_test_4() {
-    let mut r = Rope::from("this is not fine".to_string());
-    r.delete((11..));
+    let mut r = Rope::from("this is not fine");
+    r = r.delete((11..));
     assert_eq!(&r, "this is not");
 }
 
@@ -216,8 +217,8 @@ fn delete_test_4() {
 #[cfg(feature = "unstable")]
 #[test]
 fn delete_test_5() {
-    let mut r = Rope::from("this is not fine".to_string());
-    r.delete((..5));
+    let mut r = Rope::from("this is not fine");
+    r = r.delete((..5));
     assert_eq!(&r, "is not fine");
 }
 
@@ -226,7 +227,7 @@ fn delete_test_5() {
 #[test]
 #[should_panic(expected = "byte index 42 is out of bounds")]
 fn delete_test_6() {
-    let mut r = Rope::from("this is not fine".to_string());
+    let mut r = Rope::from("this is not fine");
     r.delete((..42));
 }
 
@@ -237,36 +238,70 @@ fn delete_test_6() {
           , should_panic(expected = "attempt to subtract with overflow"))]
 #[should_panic]
 fn delete_test_7() {
-    let mut r = Rope::from("this is not fine".to_string());
+    let mut r = Rope::from("this is not fine");
     r.delete((12..8)); // lol, fuck you
 }
 
-#[test]
-fn fmt_debug_test_1() {
-    let s = format!("{:?}", Rope::new());
-    assert_eq!(s, "Rope[\"\"] Leaf(\"\")");
+#[cfg(not(feature = "tendril"))]
+mod fmt {
+    use Rope;
+
+    #[test]
+    fn debug_test_1() {
+        let s = format!("{:?}", Rope::new());
+        assert_eq!(s, "Rope[\"\"] Leaf(\"\")");
+    }
+
+    #[test]
+    fn debug_test_2() {
+        let s = format!("{:?}", Rope::from("NERD!!!"));
+        assert_eq!(s, "Rope[\"NERD!!!\"] Leaf(\"NERD!!!\")");
+    }
+
+    #[test]
+    fn debug_test_3() {
+        let r1 = Rope::from("Hello, ");
+        let r2 = Rope::from("World!");
+        let r = r1 + r2;
+        let s = format!("{:?}", r);
+        assert_eq!(s, "Rope[\"Hello, World!\"] \
+                            Branch(7(Leaf(\"Hello, \"), Leaf(\"World!\")))");
+    }
 }
 
-#[test]
-fn fmt_debug_test_2() {
-    let s = format!("{:?}", Rope::from("NERD!!!".to_string()));
-    assert_eq!(s, "Rope[\"NERD!!!\"] Leaf(\"NERD!!!\")");
+#[cfg(feature = "tendril")]
+mod fmt {
+    use Rope;
+    #[test]
+    fn debug_test_1() {
+        let s = format!("{:?}", Rope::new());
+        assert_eq!(s, "Rope[\"\"] Leaf(Tendril<UTF8>(inline: \"\"))");
+    }
+
+    #[test]
+    fn debug_test_2() {
+        let s = format!("{:?}", Rope::from("NERD!!!"));
+        assert_eq!(s, "Rope[\"NERD!!!\"] Leaf(Tendril<UTF8>(inline: \
+                       \"NERD!!!\"))");
+    }
+
+    #[test]
+    fn debug_test_3() {
+        let r1 = Rope::from("Hello, ");
+        let r2 = Rope::from("World!");
+        let r = r1 + r2;
+        let s = format!("{:?}", r);
+        assert_eq!(s, "Rope[\"Hello, World!\"] \
+                       Branch(7(Leaf(Tendril<UTF8>(inline: \"Hello, \")), \
+                       Leaf(Tendril<UTF8>(inline: \"World!\"))))");
+    }
 }
 
-#[test]
-fn fmt_debug_test_3() {
-    let r1 = Rope::from("Hello, ".to_string());
-    let r2 = Rope::from("World!".to_string());
-    let r = r1 + r2;
-    let s = format!("{:?}", r);
-    assert_eq!(s, "Rope[\"Hello, World!\"] \
-                        Branch(7(Leaf(\"Hello, \"), Leaf(\"World!\")))");
-}
 
 #[test]
 fn rebalance_test_1() {
     let mut r = Rope::from("This is a large string \
-                        that will need to be rebalanced.".to_string());
+                        that will need to be rebalanced.");
     r.rebalance();
     assert!(r.is_balanced());
 }
@@ -282,7 +317,7 @@ fn rebalance_test_2() {
                      in voluptate velit esse cillum dolore eu fugiat nulla\
                      pariatur. Excepteur sint occaecat cupidatat non proid\
                     ent, sunt in culpa qui officia deserunt mollit anim id\
-                     est laborum.".to_string());
+                     est laborum.");
     r.rebalance();
     assert!(r.is_balanced());
 }
@@ -316,85 +351,51 @@ fn repeated_concat_right_rebalance() {
     assert!(r.is_balanced());
 }
 
+
+
 #[test]
 fn append_empty_rope() {
-    let mut an_rope = Rope::from("");
-    an_rope.append(Rope::from("abcd"));
-    assert_eq!(&an_rope, "abcd");
+    let an_rope = Rope::from("");
+    let another_rope = an_rope.append(&Rope::from("abcd"));
+    assert_eq!(&another_rope, "abcd");
+    assert_eq!(&an_rope, "");
 
-    let mut an_rope = Rope::from("abcd");
-    an_rope.append(Rope::from(""));
+    let an_rope = Rope::from("abcd");
+    let an_rope = an_rope.append(&Rope::from(""));
     assert_eq!(&an_rope, "abcd");
 }
 
 #[test]
 fn append() {
-    let mut an_rope = Rope::from(String::from("abcd"));
-    an_rope.append(Rope::from(String::from("efgh")));
-    assert_eq!(an_rope, Rope::from(String::from("abcdefgh")) );
-}
-
-#[test]
-fn with_append_empty_rope() {
-    let an_rope = Rope::from("");
-    let another_rope = an_rope.with_append(Rope::from("abcd"));
-    assert_eq!(&another_rope, "abcd");
-    assert_eq!(&an_rope, "");
-
     let an_rope = Rope::from("abcd");
-    let an_rope = an_rope.with_append(Rope::from(""));
-    assert_eq!(&an_rope, "abcd");
-}
-
-#[test]
-fn with_append() {
-    let an_rope = Rope::from("abcd");
-    let another_rope = an_rope.with_append(Rope::from("efgh"));
+    let another_rope = an_rope.append(&Rope::from("efgh"));
     assert_eq!(&another_rope, "abcdefgh");
     assert_eq!(&an_rope, "abcd");
 }
 
+
 #[test]
 fn prepend_empty_rope() {
-    let mut an_rope = Rope::from("");
-    an_rope.prepend(Rope::from("abcd"));
-    assert_eq!(&an_rope, "abcd");
-
-
-    let mut an_rope = Rope::from("abcd");
-    an_rope.prepend(Rope::from(""));
-    assert_eq!(&an_rope, "abcd");
-}
-
-
-#[test]
-fn with_prepend_empty_rope() {
     let an_rope = Rope::from("");
-    let another_rope = an_rope.with_prepend(Rope::from("abcd"));
+    let another_rope = an_rope.prepend(&Rope::from("abcd"));
     assert_eq!(&an_rope, "");
     assert_eq!(&another_rope, "abcd");
 
     let an_rope = Rope::from("abcd");
-    let another_rope = an_rope.with_prepend(Rope::from(""));
+    let another_rope = an_rope.prepend(&Rope::from(""));
     assert_eq!(&an_rope, "abcd");
     assert_eq!(&another_rope, &an_rope);
     assert_eq!(&another_rope, "abcd");
 }
 
 #[test]
-fn with_prepend() {
+fn prepend() {
     let an_rope = Rope::from("efgh");
-    let another_rope = an_rope.with_prepend(Rope::from("abcd"));
+    let another_rope = an_rope.prepend(&Rope::from("abcd"));
     assert_eq!(&an_rope, "efgh");
     assert_eq!(&another_rope, "abcdefgh");
 }
 
-#[test]
-fn prepend() {
-    let mut an_rope = Rope::from(String::from("efgh"));
-    an_rope.prepend(Rope::from(String::from("abcd")));
-    assert_eq!(&an_rope, "abcdefgh");
-}
 
 #[test]
 fn merge_rebalance_test() {
@@ -415,38 +416,38 @@ fn merge_rebalance_test() {
 }
 
 #[test]
-fn with_insert_rope_balance_test() {
+fn insert_rope_balance_test() {
     let s: String = iter::repeat('a').take(10).collect();
     let mut r_1 = Rope::from(s);
     for _ in 0..99 {
         let t: String = iter::repeat('a').take(10).collect();
-        r_1 = r_1.with_insert_rope(5, Rope::from(t));
+        r_1 = r_1.insert_rope(5, &Rope::from(t));
     }
-    //  this isn't necessary, with_insert_rope() will automatically rebalance
+    //  this isn't necessary, insert_rope() will automatically rebalance
     //      - eliza, 12/18/2016
     // r_1.rebalance();
     assert!(r_1.is_balanced());
 }
 
 #[test]
-fn with_insert_rope_test_1() {
+fn insert_rope_test_1() {
     let s: String = iter::repeat('a').take(1_000).collect();
     let r_1 = Rope::from(s);
     let mut r_2 = Rope::new();
     for _ in 0..100 {
         let t: String = iter::repeat('a').take(10).collect();
-        r_2 = r_2.with_insert_rope(0, Rope::from(t));
+        r_2 = r_2.insert_rope(0, &Rope::from(t));
     }
     assert_eq!(r_1, r_2);
 }
 
 #[test]
-fn with_insert_rope_test_2() {
+fn insert_rope_test_2() {
     let s: String = iter::repeat('a').take(10).collect();
     let mut r_1 = Rope::from(s);
     for _ in 0..99 {
         let t: String = iter::repeat('a').take(10).collect();
-        r_1 = r_1.with_insert_rope(5, Rope::from(t));
+        r_1 = r_1.insert_rope(5, &Rope::from(t));
     }
 
     let q: String = iter::repeat('a').take(1_000).collect();
@@ -454,58 +455,15 @@ fn with_insert_rope_test_2() {
     assert_eq!(r_1, r_2);
 }
 
-#[test]
-fn mutable_insert_rope_test_1() {
-    let mut s_1 = Rope::from(String::from("aaaaa"));
-    let mut s_2 = Rope::from(String::from("bbbbb"));
-    let s_3 = Rope::from(String::from("ccccc"));
-    s_2.insert_rope(0, s_3);
-    s_1.insert_rope(0, s_2);
-    assert_eq!(&s_1, "cccccbbbbbaaaaa");
-}
 
 #[test]
-fn mutable_insert_str_test_1() {
-    let mut s = Rope::from("aaaaa");
-    s.insert_str(0, "bbbbb");
-    s.insert_str(10, "ccccc");
-    assert_eq!(&s, "bbbbbaaaaaccccc");
-}
-
-#[test]
-fn mutable_insert_char_test_1() {
-    let mut s = Rope::from("aaaaa");
-    for _ in 0..5 { s.insert(0, 'b')}
-    for _ in 0..5 { s.insert(10, 'c')}
-    assert_eq!(&s, "bbbbbaaaaaccccc");
-}
-
-#[test]
-fn mutable_insert_char_test_2() {
-    // this is the same as with_insert_char_test1() except mutable
-    let mut s = Rope::from("aaaaa");
-    assert_eq!(&s, "aaaaa");
-    s.insert(5, 'b');
-    assert_eq!(&s, "aaaaab");
-    s.insert(4, 'b');
-    assert_eq!(&s, "aaaabab");
-    s.insert(3, 'b');
-    assert_eq!(&s, "aaababab");
-    s.insert(2, 'b');
-    assert_eq!(&s, "aabababab");
-    s.insert(1, 'b');
-    assert_eq!(&s, "ababababab");
-
-}
-
-#[test]
-fn with_insert_char_test_1() {
+fn insert_char_test_1() {
     let s = Rope::from("aaaaa");
-    let s_1 = s.with_insert(5, 'b');
-    let s_2 = s_1.with_insert(4, 'b');
-    let s_3 = s_2.with_insert(3, 'b');
-    let s_4 = s_3.with_insert(2, 'b');
-    let s_5 = s_4.with_insert(1, 'b');
+    let s_1 = s.insert(5, 'b');
+    let s_2 = s_1.insert(4, 'b');
+    let s_3 = s_2.insert(3, 'b');
+    let s_4 = s_3.insert(2, 'b');
+    let s_5 = s_4.insert(1, 'b');
     assert_eq!(&s, "aaaaa");
     assert_eq!(&s_1, "aaaaab");
     assert_eq!(&s_2, "aaaabab");
@@ -516,10 +474,10 @@ fn with_insert_char_test_1() {
 }
 
 #[test]
-fn with_insert_str_test_1() {
+fn insert_str_test_1() {
     let s = Rope::from("aaaaa");
-    let s_1 = s.with_insert_str(5, "ccccc");
-    let s_2 = s_1.with_insert_str(5, "bbbbb");
+    let s_1 = s.insert_str(5, "ccccc");
+    let s_2 = s_1.insert_str(5, "bbbbb");
     assert_eq!(&s, "aaaaa");
     assert_eq!(&s_1, "aaaaaccccc");
     assert_eq!(&s_2, "aaaaabbbbbccccc");
@@ -543,19 +501,16 @@ fn rope_lines_iter() {
 
 #[test]
 fn rope_lines_iter_split_on_node() {
-    use super::internals::Node;
-    use super::internals::Node::Leaf;
     let s = "line a\n\
              line b\n\
              line c\n";
     let r = Rope {
         root: Node::new_branch(
-                Node::new_branch( Leaf("line".to_string())
-                                , Leaf(" a\n".to_string())
-                                )
-              , Node::new_branch( Leaf("line b\n".to_string())
-                                , Node::new_branch( Leaf("li".to_string())
-                                                  , Leaf("ne c\n".to_string())
+                Node::new_branch( Node::new_leaf("line")
+                          , Node::new_leaf(" a\n") )
+              , Node::new_branch( Node::new_leaf("line b\n")
+                          , Node::new_branch( Node::new_leaf("li")
+                                      , Node::new_leaf("ne c\n")
                                                   )
                                 )
               )
@@ -567,9 +522,9 @@ fn rope_lines_iter_split_on_node() {
 #[test]
 fn rope_char_indices() {
     let rope = Rope::from("aaaaa")
-        .with_append(Rope::from("bbbbbb"))
-        .with_append(Rope::from("cccccccccccc"))
-        .with_append(Rope::from("defgdefgaabababab"));
+        .append(&Rope::from("bbbbbb"))
+        .append(&Rope::from("cccccccccccc"))
+        .append(&Rope::from("defgdefgaabababab"));
     let string = String::from("aaaaabbbbbbccccccccccccdefgdefgaabababab");
     let indices = rope.char_indices().zip(string.char_indices());
     for ((ridx, rch), (sidx, sch)) in indices {
@@ -581,37 +536,34 @@ fn rope_char_indices() {
 mod properties {
     use ::Rope;
     use quickcheck::{TestResult, quickcheck};
+
+    #[cfg(feature = "atomic")]
+    quickcheck! {
+        fn rope_append_prepend_is_symmetric(a: Rope, b: Rope) -> bool {
+            a.append(&b) == b.prepend(&a) && a.prepend(&b) == b.append(&a)
+        }
+    }
     quickcheck! {
         fn rope_concat_is_string_concat(a: String, b: String) -> bool {
             let r_a = Rope::from(a.clone()); let r_b = Rope::from(b.clone());
             &(r_a + r_b) == &(a + b.as_str())
         }
 
-        fn rope_with_append_prepend_is_symmetric(a: Rope, b: Rope) -> bool {
-            a.with_append(b.clone()) == b.with_prepend(a.clone()) &&
-            a.with_prepend(b.clone()) == b.with_append(a.clone())
-        }
-
-        fn rope_append_prepend_is_symmetric(a: Rope, b: Rope) -> bool {
-            a.clone().append(b.clone()) == b.clone().prepend(a.clone()) &&
-            a.clone().prepend(b.clone()) == b.clone().append(a.clone())
-        }
-
         fn rope_append_is_string_push_str(a: String, b: String) -> bool {
             let mut rope = Rope::from(a.clone());
-            rope.append(Rope::from(b.clone()));
+            rope = rope.append(&Rope::from(b.clone()));
             let mut string = a;
             string.push_str(&b[..]);
             rope == string
         }
 
-        fn rope_add_assign_is_string_push_str(a: String, b: String) -> bool {
-            let mut rope = Rope::from(a.clone());
-            rope += b.clone();
-            let mut string = a;
-            string.push_str(&b[..]);
-            rope == string
-        }
+        // fn rope_add_assign_is_string_push_str(a: String, b: String) -> bool {
+        //     let mut rope = Rope::from(a.clone());
+        //     rope = rope + &b;
+        //     let mut string = a;
+        //     string.push_str(&b[..]);
+        //     rope == string
+        // }
 
     }
 
@@ -657,7 +609,8 @@ mod properties {
         quickcheck(prop as fn(String, char, usize) -> TestResult);
     }
 
-    #[cfg(feature = "unstable")]
+    // #[cfg(all(feature = "unstable", not(feature = "tendril")))]
+    #[cfg(all(feature = "unstable"))]
     #[test]
     fn rope_insert_str_is_string_insert_str() {
         fn prop(a: String, b: String, i: usize) -> TestResult {
@@ -674,12 +627,13 @@ mod properties {
                 return TestResult::discard()
             }
 
-            let mut rope = Rope::from(a.clone());
-            rope.insert_str(i, &b[..]);
+            let rope = Rope::from(a.clone());
+            let rope = rope.insert_str(i, &b[..]);
 
             let mut string = a;
             string.insert_str(i, &b[..]);
 
+            // assert_eq!(rope, string);
             TestResult::from_bool(rope == string)
         }
         quickcheck(prop as fn(String, String, usize) -> TestResult);
@@ -690,96 +644,96 @@ mod properties {
 
 mod iterator {
 
-    mod Extend {
-        use ::Rope;
-        #[test]
-        fn char_ref_empty () {
-            let mut rope = Rope::from("");
-            rope.extend(&vec!['a', 'b', 'c', 'd']);
-            assert_eq!(&rope, "abcd");
-        }
-
-        #[test]
-        fn char_refs_nonempty () {
-            let mut rope = Rope::from("a");
-            rope.extend(vec![&'b', &'c', &'d']);
-            assert_eq!(&rope, "abcd");
-        }
-
-        fn empty_iter () {
-            let mut rope = Rope::from("");
-            let empty_vec: Vec<String> = vec![];
-            rope.extend(empty_vec);
-            assert_eq!(&rope, "");
-        }
-
-
-        #[test]
-        fn string_empty () {
-            let mut rope = Rope::from("");
-            rope.extend(vec![ String::from("aaaa")
-                            , String::from("bbbb")
-                            , String::from("cccc")
-                            ]);
-            assert_eq!(&rope, "aaaabbbbcccc");
-        }
-
-        #[test]
-        fn string_nonempty () {
-            let mut rope = Rope::from("aaaa");
-            rope.extend(vec![String::from("bbbb"), String::from("cccc")]);
-            assert_eq!(&rope, "aaaabbbbcccc");
-        }
-
-
-        #[test]
-        fn rope_empty () {
-            let mut rope = Rope::from("");
-            rope.extend(vec![ Rope::from("aaaa")
-                            , Rope::from("bbbb")
-                            , Rope::from("cccc")
-                            ]);
-            assert_eq!(&rope, "aaaabbbbcccc");
-        }
-
-        #[test]
-        fn rope_nonempty () {
-            let mut rope = Rope::from("aaaa");
-            rope.extend(vec![Rope::from("bbbb"), Rope::from("cccc")]);
-            assert_eq!(&rope, "aaaabbbbcccc");
-        }
-
-        #[test]
-        fn str_slice_empty () {
-            let mut rope = Rope::from("");
-            rope.extend(vec![ "aaaa"
-                            , "bbbb"
-                            , "cccc"
-                            ]);
-            assert_eq!(&rope, "aaaabbbbcccc");
-        }
-
-        #[test]
-        fn str_slice_nonempty () {
-            let mut rope = Rope::from("aaaa");
-            rope.extend(vec!["bbbb", "cccc"]);
-            assert_eq!(&rope, "aaaabbbbcccc");
-        }
-
-        #[test]
-        fn chars_empty () {
-            let mut rope = Rope::from("");
-            rope.extend(vec!['a', 'b', 'c', 'd']);
-            assert_eq!(&rope, "abcd");
-        }
-
-        #[test]
-        fn chars_nonempty () {
-            let mut rope = Rope::from("a");
-            rope.extend(vec!['b', 'c', 'd']);
-            assert_eq!(&rope, "abcd");
-        }
-    }
+    // mod Extend {
+    //     use ::Rope;
+    //     #[test]
+    //     fn char_ref_empty () {
+    //         let mut rope = Rope::from("");
+    //         rope.extend(&vec!['a', 'b', 'c', 'd']);
+    //         assert_eq!(&rope, "abcd");
+    //     }
+    //
+    //     #[test]
+    //     fn char_refs_nonempty () {
+    //         let mut rope = Rope::from("a");
+    //         rope.extend(vec![&'b', &'c', &'d']);
+    //         assert_eq!(&rope, "abcd");
+    //     }
+    //
+    //     fn empty_iter () {
+    //         let mut rope = Rope::from("");
+    //         let empty_vec: Vec<String> = vec![];
+    //         rope.extend(empty_vec);
+    //         assert_eq!(&rope, "");
+    //     }
+    //
+    //
+    //     #[test]
+    //     fn string_empty () {
+    //         let mut rope = Rope::from("");
+    //         rope.extend(vec![ String::from("aaaa")
+    //                         , String::from("bbbb")
+    //                         , String::from("cccc")
+    //                         ]);
+    //         assert_eq!(&rope, "aaaabbbbcccc");
+    //     }
+    //
+    //     #[test]
+    //     fn string_nonempty () {
+    //         let mut rope = Rope::from("aaaa");
+    //         rope.extend(vec![String::from("bbbb"), String::from("cccc")]);
+    //         assert_eq!(&rope, "aaaabbbbcccc");
+    //     }
+    //
+    //
+    //     #[test]
+    //     fn rope_empty () {
+    //         let mut rope = Rope::from("");
+    //         rope.extend(vec![ Rope::from("aaaa")
+    //                         , Rope::from("bbbb")
+    //                         , Rope::from("cccc")
+    //                         ]);
+    //         assert_eq!(&rope, "aaaabbbbcccc");
+    //     }
+    //
+    //     #[test]
+    //     fn rope_nonempty () {
+    //         let mut rope = Rope::from("aaaa");
+    //         rope.extend(vec![Rope::from("bbbb"), Rope::from("cccc")]);
+    //         assert_eq!(&rope, "aaaabbbbcccc");
+    //     }
+    //
+    //     #[test]
+    //     fn str_slice_empty () {
+    //         let mut rope = Rope::from("");
+    //         rope.extend(vec![ "aaaa"
+    //                         , "bbbb"
+    //                         , "cccc"
+    //                         ]);
+    //         assert_eq!(&rope, "aaaabbbbcccc");
+    //     }
+    //
+    //     #[test]
+    //     fn str_slice_nonempty () {
+    //         let mut rope = Rope::from("aaaa");
+    //         rope.extend(vec!["bbbb", "cccc"]);
+    //         assert_eq!(&rope, "aaaabbbbcccc");
+    //     }
+    //
+    //     #[test]
+    //     fn chars_empty () {
+    //         let mut rope = Rope::from("");
+    //         rope.extend(vec!['a', 'b', 'c', 'd']);
+    //         assert_eq!(&rope, "abcd");
+    //     }
+    //
+    //     #[test]
+    //     fn chars_nonempty () {
+    //         let mut rope = Rope::from("a");
+    //         rope.extend(vec!['b', 'c', 'd']);
+    //         assert_eq!(&rope, "abcd");
+    //     }
+    // }
 
 
     mod FromIterator {
