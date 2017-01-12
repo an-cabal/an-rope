@@ -265,8 +265,7 @@ where M: Metric
     fn measure_weight(&self) -> M {
         match *self {
             Leaf(ref r) => r.measure_weight()
-          , Branch { ref left, ref right } =>
-                left.measure()
+          , Branch { ref left, .. } => left.measure()
         }
     }
 
