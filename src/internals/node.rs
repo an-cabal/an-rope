@@ -19,6 +19,9 @@ impl<T> Lazy<T>
 where T: Copy {
 
     #[inline]
+    pub fn get(&self) -> Option<T> { self.0.get() }
+
+    #[inline]
     pub fn get_or_else<F>(&self, f: F) -> T
     where F: FnOnce() -> T {
         if let Some(value) = self.0.get() {
@@ -54,6 +57,7 @@ where T: fmt::Debug
         }
     }
 }
+
 macro_rules! lazy_field {
     ($method: ident, $field: ident, $ty:ty) => {
         #[inline] fn $method(&self) -> $ty {
