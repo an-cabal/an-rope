@@ -277,7 +277,7 @@ impl Measured<Line> for str {
     #[inline]
     fn measure(&self) -> Line {
         let len = self.len();
-        Line(if self[len-1..len].is_line_ending() { 1 } else { 0 })
+        Line(if self[or_zero!(len, 1)..len].is_line_ending() { 1 } else { 0 })
     }
 
     #[inline] fn measure_weight(&self) -> Line { self.measure() }
@@ -295,7 +295,7 @@ impl Measured<Line> for String {
     #[inline]
     fn measure(&self) -> Line {
         let len = self.len();
-        Line(if self[len-1..len].is_line_ending() { 1 } else { 0 })
+        Line(if self[or_zero!(len, 1)..len].is_line_ending() { 1 } else { 0 })
     }
 
     #[inline] fn measure_weight(&self) -> Line { self.measure() }
