@@ -135,7 +135,7 @@ impl fmt::Display for Node {
 
 impl fmt::Debug for Node {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!( f, "Node {{{}{}{}\n\t{:#?} }}"
+        write!( f, "Node {{{}{}{}{:#?} }}"
               , self.len.get().map(|l| format!("{} chars, ", l))
                     .unwrap_or_else(|| { String::new() })
             //   , self.weight.get().map(|w| format!("weight: {:?}, ", w))
