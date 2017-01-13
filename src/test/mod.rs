@@ -121,19 +121,19 @@ fn delete_test_7() {
 mod fmt {
     use Rope;
 
-    #[test]
+    #[ignore]
     fn debug_test_1() {
         let s = format!("{:?}", Rope::new());
         assert_eq!(s, "Rope[\"\"] Leaf(\"\")");
     }
 
-    #[test]
+    #[ignore]
     fn debug_test_2() {
         let s = format!("{:?}", Rope::from("NERD!!!"));
         assert_eq!(s, "Rope[\"NERD!!!\"] Leaf(\"NERD!!!\")");
     }
 
-    #[test]
+    #[ignore]
     fn debug_test_3() {
         let r1 = Rope::from("Hello, ");
         let r2 = Rope::from("World!");
@@ -147,20 +147,20 @@ mod fmt {
 #[cfg(feature = "tendril")]
 mod fmt {
     use Rope;
-    #[test]
+    #[ignore]
     fn debug_test_1() {
         let s = format!("{:?}", Rope::new());
         assert_eq!(s, "Rope[\"\"] Leaf(Tendril<UTF8>(inline: \"\"))");
     }
 
-    #[test]
+    #[ignore]
     fn debug_test_2() {
         let s = format!("{:?}", Rope::from("NERD!!!"));
         assert_eq!(s, "Rope[\"NERD!!!\"] Leaf(Tendril<UTF8>(inline: \
                        \"NERD!!!\"))");
     }
 
-    #[test]
+    #[ignore]
     fn debug_test_3() {
         let r1 = Rope::from("Hello, ");
         let r2 = Rope::from("World!");
