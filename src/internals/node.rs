@@ -253,7 +253,13 @@ where M: Metric
     , Node: Measured<M>
 {
     fn to_byte_index(&self, index: M) -> Option<usize> {
-        unimplemented!()
+        match *self {
+            Leaf(ref r) => r.to_byte_index(index)
+          , Branch { ref left, ref right } =>
+                left.to_byte_index(index)
+                    .or_else(|| { right.to_byte_index(index)
+                                       .map(|i| i + left.len() ) })
+        }
     }
 
     fn measure(&self) -> M {
