@@ -9,10 +9,6 @@ use std::fmt;
 use std::convert;
 use std::borrow::{Borrow, ToOwned};
 
-macro_rules! or_zero {
-    ($a: expr, $b: expr) => { if $a > $b { $a - $b } else { 0 } }
-}
-
 #[cfg(test)] mod test;
 
 mod node;

@@ -37,6 +37,10 @@ use std::fmt;
 use std::string;
 use std::iter;
 
+macro_rules! or_zero {
+    ($a: expr, $b: expr) => { if $a > $b { $a - $b } else { 0 } }
+}
+
 #[cfg(feature = "tendril")] extern crate tendril;
 
 #[cfg(test)] #[macro_use] extern crate quickcheck;
