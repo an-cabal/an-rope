@@ -1134,7 +1134,7 @@ impl ops::Index<ops::Range<usize>> for Rope {
     type Output = str;
 
     // Index a substring
-    fn index(&self, i: ops::Range<usize>) -> &str {
+    fn index(&self, _i: ops::Range<usize>) -> &str {
         unimplemented!()
     }
 }
@@ -1142,7 +1142,7 @@ impl ops::Index<ops::Range<usize>> for Rope {
 impl ops::Index<ops::RangeTo<usize>> for Rope {
     type Output = str;
 
-    fn index(&self, i: ops::RangeTo<usize>) -> &str {
+    fn index(&self, _i: ops::RangeTo<usize>) -> &str {
         unimplemented!()
     }
 }
@@ -1150,25 +1150,25 @@ impl ops::Index<ops::RangeTo<usize>> for Rope {
 impl ops::Index<ops::RangeFrom<usize>> for Rope {
     type Output = str;
 
-    fn index(&self, i: ops::RangeFrom<usize>) -> &str {
+    fn index(&self, _i: ops::RangeFrom<usize>) -> &str {
         unimplemented!()
     }
 }
 
 impl ops::IndexMut<ops::Range<usize>> for Rope {
-    fn index_mut(&mut self, i: ops::Range<usize>) -> &mut str {
+    fn index_mut(&mut self, _i: ops::Range<usize>) -> &mut str {
         unimplemented!()
     }
 }
 
 impl ops::IndexMut<ops::RangeTo<usize>> for Rope {
-    fn index_mut(&mut self, i: ops::RangeTo<usize>) -> &mut str {
+    fn index_mut(&mut self, _i: ops::RangeTo<usize>) -> &mut str {
         unimplemented!()
     }
 }
 
 impl ops::IndexMut<ops::RangeFrom<usize>> for Rope {
-    fn index_mut(&mut self, i: ops::RangeFrom<usize>) -> &mut str {
+    fn index_mut(&mut self, _i: ops::RangeFrom<usize>) -> &mut str {
         unimplemented!()
     }
 }

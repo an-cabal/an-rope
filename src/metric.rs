@@ -206,7 +206,7 @@ impl Metric for Grapheme {
     #[inline] fn is_splittable() -> bool { false }
 
     /// Returns true if index `i` in `node` is a boundary along this `Metric`
-    fn is_boundary<M: Measured<Self>>(node: &M, i: usize) -> bool {
+    fn is_boundary<M: Measured<Self>>(_node: &M, _i: usize) -> bool {
         unimplemented!()
     }
 }
@@ -260,7 +260,7 @@ impl Metric for Line {
     #[inline] fn is_splittable() -> bool { true }
 
     /// Returns true if index `i` in `node` is a boundary along this `Metric`
-    fn is_boundary<M: Measured<Self>>(node: &M, i: usize) -> bool {
+    fn is_boundary<M: Measured<Self>>(_node: &M, _i: usize) -> bool {
         unimplemented!()
     }
 }
