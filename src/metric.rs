@@ -60,6 +60,11 @@ use std::ops::{Add, Sub};
 use std::default::Default;
 use std::fmt;
 
+
+use internals::IsLineEnding;
+use unicode_segmentation::UnicodeSegmentation;
+
+
 /// The class of monoids
 ///
 /// [Monoid]s are types with an accumulative binary operation that has
@@ -195,3 +200,148 @@ impl fmt::Debug for Line {
        write!(f, "line {}", self.0)
    }
 }
+
+impl Metric for Grapheme {
+
+    #[inline] fn is_splittable() -> bool { false }
+
+    /// Returns true if index `i` in `node` is a boundary along this `Metric`
+    fn is_boundary<M: Measured<Self>>(_node: &M, _i: usize) -> bool {
+        unimplemented!()
+    }
+}
+
+impl Measured<Grapheme> for str {
+    /// Convert the `Metric` into a byte index into the given `Node`
+    ///
+    /// # Returns
+    /// - `Some` with the byte index of the beginning of the `n`th  element
+    ///    in `node` measured by this `Metric`, if there is an `n`th element
+    /// - `None` if there is no `n`th element in `node`
+    fn to_byte_index(&self, index: Grapheme) -> Option<usize>  {
+        self.grapheme_indices(true)
+            .map(|(offset, _)| offset)
+            .nth(index.into())
+    }
+
+    #[inline]
+    fn measure(&self) -> Grapheme {
+        Grapheme(self.graphemes(true).count())
+    }
+
+    #[inline]
+    fn measure_weight(&self) -> Grapheme {
+        Grapheme(self.graphemes(true).count())
+    }
+}
+
+impl Measured<Grapheme> for String {
+    fn to_byte_index(&self, index: Grapheme) -> Option<usize>  {
+        self.grapheme_indices(true)
+            .map(|(offset, _)| offset)
+            .nth(index.into())
+    }
+
+    #[inline]
+    fn measure(&self) -> Grapheme {
+        Grapheme(self.graphemes(true).count())
+    }
+
+    #[inline]
+    fn measure_weight(&self) -> Grapheme {
+        Grapheme(self.graphemes(true).count())
+    }
+}
+
+
+
+impl Metric for Line {
+
+    #[inline] fn is_splittable() -> bool { true }
+
+    /// Returns true if index `i` in `node` is a boundary along this `Metric`
+    fn is_boundary<M: Measured<Self>>(_node: &M, _i: usize) -> bool {
+        unimplemented!()
+    }
+}
+
+impl Measured<Line> for str {
+    // This can only handle line endings at the end of a string.
+    fn to_byte_index(&self, index: Line) -> Option<usize>  {
+        match index.into() {
+            0 => Some(self.len())
+          , _ => None
+        }
+    }
+
+    #[inline]
+    fn measure(&self) -> Line {
+        let len = self.len();
+        Line(if self[or_zero!(len, 1)..len].is_line_ending() { 1 } else { 0 })
+    }
+
+    #[inline] fn measure_weight(&self) -> Line { self.measure() }
+}
+
+impl Measured<Line> for String {
+    // This can only handle line endings at the end of a string.
+    fn to_byte_index(&self, index: Line) -> Option<usize>  {
+        match index.into() {
+            0 => Some(self.len())
+          , _ => None
+        }
+    }
+
+    #[inline]
+    fn measure(&self) -> Line {
+        let len = self.len();
+        Line(if self[or_zero!(len, 1)..len].is_line_ending() { 1 } else { 0 })
+    }
+
+    #[inline] fn measure_weight(&self) -> Line { self.measure() }
+}
+
+/// usize is the "chars" metric
+impl Metric for usize {
+    #[inline] fn is_splittable() -> bool { true }
+
+    /// Returns true if index `i` in `node` is a boundary along this `Metric`
+    #[inline] fn is_boundary<M: Measured<Self>>(_node: &M, _i: usize) -> bool {
+        true
+    }
+}
+
+impl Measured<usize> for str {
+    #[inline] fn to_byte_index(&self, index: usize) -> Option<usize>  {
+        Some(index)
+    }
+    #[inline] fn measure(&self) -> usize { self.len() }
+    #[inline] fn measure_weight(&self) -> usize { self.len() }
+}
+
+
+impl Measured<usize> for String {
+    #[inline] fn to_byte_index(&self, index: usize) -> Option<usize>  {
+        Some(index)
+    }
+    #[inline] fn measure(&self) -> usize { self.len() }
+    #[inline] fn measure_weight(&self) -> usize { self.len() }
+}
+
+#[cfg(feature = "tendril")] use tendril::fmt::UTF8;
+#[cfg(feature = "tendril")] use tendril::Atomicity;
+#[cfg(feature = "tendril")] use tendril::Tendril;
+#[cfg(feature = "tendril")]
+impl<M, A> Measured<M> for Tendril<UTF8, A>
+where M: Metric
+    , A: Atomicity
+    , str: Measured<M>
+    {
+        #[inline] fn to_byte_index(&self, index: M) -> Option<usize> {
+            self.as_ref().to_byte_index(index)
+        }
+        #[inline] fn measure(&self) -> M { self.as_ref().measure() }
+        #[inline] fn measure_weight(&self) -> M {
+             self.as_ref().measure_weight()
+         }
+    }
