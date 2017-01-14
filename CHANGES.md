@@ -1,3 +1,41 @@
+<a name="0.2.0"></a>
+## 0.2.0 (2017-01-14)
+
+
+#### Breaking Changes
+
+* **rope:**  begin rewriting Rope to be persistent ([23055fc8](https://github.com/hawkw/an-editor/commit/23055fc82019567cc1727c8a62a2fa1d19fea476), breaks [#](https://github.com/hawkw/an-editor/issues/), [#](https://github.com/hawkw/an-editor/issues/))
+
+#### Bug Fixes
+
+* **atomic rope:**
+  *  continued removal of Rc<AtomicTendril> ([c21794ec](https://github.com/hawkw/an-editor/commit/c21794ecd10285611b129e6174483866c4f694e0))
+  *  fix atomic tendril ropes not using Arc ([b7f2c9b2](https://github.com/hawkw/an-editor/commit/b7f2c9b2798b6ad6e2be773026c90b178bb674b6))
+* **rope:**
+  *  disable move iters for now ([0cf80c69](https://github.com/hawkw/an-editor/commit/0cf80c697c29422a51c02801a7b587d228067ab6))
+  *  fix Rope.delete() on unstable ([2a199e14](https://github.com/hawkw/an-editor/commit/2a199e143f28cca6d8dc4108043b68bcfbbc5f19))
+  *  forcibly escort mutability from rope ([893c3b9f](https://github.com/hawkw/an-editor/commit/893c3b9fefbb7ab6f28bc34981dd517fe646b98a))
+* **rope internals:**
+  *  fix NodeLink ctor panicking on empty strings ([ec46f94a](https://github.com/hawkw/an-editor/commit/ec46f94a2f426d6346de9728caa628439aedf199))
+  *  construct new branches from different types ([023aa85c](https://github.com/hawkw/an-editor/commit/023aa85cecb8f5c1d763f9bc883800f10267577d))
+  *  fix incorrect feature flag syntax ([edeb6c7e](https://github.com/hawkw/an-editor/commit/edeb6c7eeb820e5e1dd7d24da5bbb45adfe4e7eb))
+* **tendril:**
+  *  fix issues in convert::From impls with tendrils ([3ab7e137](https://github.com/hawkw/an-editor/commit/3ab7e13740627b16deb0ce73b7bb7511ba8ef019))
+  *  tendril support builds again ([3e585d70](https://github.com/hawkw/an-editor/commit/3e585d7011f754c1e023346404c48efe5af9a253), closes [#63](https://github.com/hawkw/an-editor/issues/63))
+
+#### Performance
+
+* **rope metrics:**  evaluate grapheme length lazily ([7750a396](https://github.com/hawkw/an-editor/commit/7750a3966da6c891419b810773983ec8619c1e56))
+
+#### Features
+
+* **rope:**
+  * begin rewriting Rope to be persistent ([23055fc8](https://github.com/hawkw/an-editor/commit/23055fc82019567cc1727c8a62a2fa1d19fea476), breaks [#](https://github.com/hawkw/an-editor/issues/), [#](https://github.com/hawkw/an-editor/issues/))
+  *  RopeSlices are back now (sort of) ([b92848bc](https://github.com/hawkw/an-editor/commit/b92848bce4dae457e6ea3e7bb0180f17070d174b))
+  *  add feature flag for atomic ropes ([eec255e4](https://github.com/hawkw/an-editor/commit/eec255e4523aa5d1d6fa6b86d217018e0785144c))
+
+
+
 <a name="0.1.2"></a>
 ### 0.1.2 (2017-01-09)
 
