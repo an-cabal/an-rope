@@ -1,4 +1,4 @@
-use super::{Value, Node};
+use internals::{Value, Node};
 use self::Value::Leaf;
 use metric::Line;
 
