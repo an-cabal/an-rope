@@ -1,7 +1,7 @@
 [package]
 name = "an-rope"
 description = "an rope for large text documents."
-version = "0.2.0"
+version = "0.3.0"
 authors = [ "Eliza Weisman <hi@hawkweisman.me>"
           , "Chris McDonald <mail.chris.mcdonald@gmail.com>"
           , "Rachel McLaughlin <rleighmac@gmail.com>"]
