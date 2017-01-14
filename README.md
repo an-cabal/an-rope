@@ -7,9 +7,9 @@
 [![RustDoc documentation](https://docs.rs/an-rope/badge.svg)](https://docs.rs/an-rope)
 [![Master RustDoc](https://img.shields.io/badge/docs-master-blue.svg)](https://an-cabal.github.io/an-rope)
 
-An implementation of the Rope data structure for storing large text documents. This implementation is a component of the [`an-editor` project](https://github.com/an-cabal/an-editor).
+An immutable Rope data structure for storing large text documents. This implementation is a component of the [`an-editor` project](https://github.com/an-cabal/an-editor).
 
-A rope is an efficient data structure for large mutable strings. It's
+A rope is an efficient data structure for large strings. It's
 essentially a binary tree whose leaves are strings.
 
 For more information, see the following resources:
@@ -17,15 +17,6 @@ For more information, see the following resources:
 + http://scienceblogs.com/goodmath/2009/01/26/ropes-twining-together-strings/
 + https://www.ibm.com/developerworks/library/j-ropes/
 + http://citeseer.ist.psu.edu/viewdoc/download?doi=10.1.1.14.9450&rep=rep1&type=pdf
-
-Our `Rope` implementation aims to eventually function as a superset of
-Rust's [`String`](https://doc.rust-lang.org/1.3.0/std/string/struct.String.html),
-providing the same API plus additional methods. Therefore, code which uses
-`String` can easily be ported to use `Rope`.
-
-`Rope` provides two APIs for editing a `Rope`: a destructive,
-edit-in-place API whose methods match those of `String`, and a
-non-destructive, persistent API.
 
 ### compatibility
 

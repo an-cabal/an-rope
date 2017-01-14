@@ -1,6 +1,10 @@
 //! # An rope.
 //!
-//! A rope is an efficient data structure for large mutable strings. It's
+//! An immutable Rope data structure for storing large text documents. This
+//! implementation is a component of the [`an-editor`]
+//! project.
+//!
+//! A rope is an efficient data structure for large strings. It's
 //! essentially a binary tree whose leaves are strings.
 //!
 //! For more information, see the following resources:
@@ -8,6 +12,7 @@
 //! + http://scienceblogs.com/goodmath/2009/01/26/ropes-twining-together-strings/
 //! + https://www.ibm.com/developerworks/library/j-ropes/
 //! + http://citeseer.ist.psu.edu/viewdoc/download?doi=10.1.1.14.9450&rep=rep1&type=pdf
+//! [`an-editor`]: https://github.com/an-cabal/an-editor
 
 #![cfg_attr( feature = "unstable"
            , feature( const_fn
