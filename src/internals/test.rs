@@ -1,5 +1,5 @@
-use internals::{Value, Node};
-use self::Value::Leaf;
+use internals::Node;
+use internals::Value::Leaf;
 use metric::Line;
 
 #[test]
