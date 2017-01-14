@@ -301,6 +301,24 @@ where M: Metric
         #[inline] fn measure_weight(&self) -> M { self.0.measure_weight() }
     }
 
+#[cfg(feature = "tendril")] use tendril::fmt::UTF8;
+#[cfg(feature = "tendril")] use tendril::Atomicity;
+#[cfg(feature = "tendril")] use tendril::Tendril;
+#[cfg(feature = "tendril")]
+impl<M, A> Measured<M> for Tendril<UTF8, A>
+where M: Metric
+    , A: Atomicity
+    , str: Measured<M>
+    {
+        #[inline] fn to_byte_index(&self, index: M) -> Option<usize> {
+            self.as_ref().to_byte_index(index)
+        }
+        #[inline] fn measure(&self) -> M { self.as_ref().measure() }
+        #[inline] fn measure_weight(&self) -> M {
+             self.as_ref().measure_weight()
+         }
+    }
+
 
 #[cfg(feature = "rebalance")]
 const FIB_LOOKUP: [usize; 93] = [
