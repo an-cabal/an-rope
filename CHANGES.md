@@ -14,11 +14,13 @@
   *  factor out metrics & add caching ([2b471c16](https://github.com/hawkw/an-editor/commit/2b471c168a8cfe9806b1f38a147d06c5170b7d16), closes [#57](https://github.com/hawkw/an-editor/issues/57), [#71](https://github.com/hawkw/an-editor/issues/71), breaks [#](https://github.com/hawkw/an-editor/issues/))
 * **rope metrics:**
   *  avoid constructing unneeded iterator in Line ([ddf76be0](https://github.com/hawkw/an-editor/commit/ddf76be02b1e730ac29f7a1ca9f333d802e1a356))
+  
 #### Features
 
 * **node:**
   *  lazy fields can be gotten optionally ([6d59c224](https://github.com/hawkw/an-editor/commit/6d59c22450cbf1f9a29ce0e7200f41cf87134bd2))
   *  nicer fmt::Debug implementation for lazy fields ([dd0d8486](https://github.com/hawkw/an-editor/commit/dd0d8486aa28981859dfdb0b14f308a75d1a3a54))
+  
 #### Bug Fixes
 
 * **node:**
