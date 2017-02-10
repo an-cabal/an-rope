@@ -111,8 +111,17 @@ where M: Metric
 }
 
 impl fmt::Debug for Rope {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Rope[\"{}\"] {:?}", self.root, self.root)
+    }
+}
+
+impl fmt::Display for Rope {
+
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.root)
     }
 }
  #[cfg(feature = "unstable")]
