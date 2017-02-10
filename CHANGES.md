@@ -1,3 +1,13 @@
+<a name="0.3.1"></a>
+### 0.3.1 (2017-02-10)
+
+
+#### Features
+
+* **Rope:**  add fmt::Display to Rope ([63200aa9](https://github.com/hawkw/an-editor/commit/63200aa97e6bca8d348194bd28484df84dacc8e6))
+
+
+
 <a name="0.3.0"></a>
 ## 0.3.0 (2017-01-14)
 
