@@ -105,14 +105,14 @@ impl Node {
                 // if this node is a branch, and the weight is less than the
                 // index, where the span begins, then the first index of the
                 // span is on the right side
-                let span_i = or_zero!(i, left.len());
-                assert!(or_zero!(right.len(), span_i) >= span_len);
+                let span_i = i.saturating_sub(left.len());
+                assert!(right.len().saturating_sub(span_i) >= span_len);
                 right.spanning(span_i, span_len)
             }
           , Branch { ref left, .. }
             // if the left child is long enough to contain the entire span,
             // walk to the left child
-            if or_zero!(left.len(), i) >= span_len => left.spanning(i, span_len)
+            if left.len().saturating_sub(i) >= span_len => left.spanning(i, span_len)
          ,  Leaf(_) | Branch {..} =>
             // if this function has walked as far as a leaf node,
             // then that leaf must be the spanning node. return it;
