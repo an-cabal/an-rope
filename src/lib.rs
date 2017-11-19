@@ -751,7 +751,7 @@ impl Rope {
         pub fn lines<'a>(&'a self) -> impl Iterator<Item=RopeSlice<'a>> +'a  {
             {   // create a new block here so the macro will bind the `use` stmt
                 use internals::IsLineEnding;
-                let last_idx = self.len() - 1;
+                let last_idx = self.len().saturating_sub(1);
                 Box::new(self.char_indices()
                              .filter_map(move |(i, c)|
                                 if c.is_line_ending() { Some(i) }
