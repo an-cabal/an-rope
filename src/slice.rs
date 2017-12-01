@@ -439,7 +439,7 @@ impl<'a> RopeSlice<'a> {
         // is the last index in the Rope.
         let end = *range.end().unwrap_or(&node.len());
 
-        let slice_len = end - start;
+        let slice_len = end.saturating_sub(start);
 
         // find the lowest node that contains both the slice start index and
         // the end index
@@ -459,7 +459,7 @@ impl<'a> RopeSlice<'a> {
     #[cfg(not(feature = "unstable"))]
     pub fn new(node: &'a Node, range: Range<usize>) -> Self {
         let len = node.len();
-        let slice_len = range.end - range.start;
+        let slice_len = range.end.saturating_sub(range.start);
 
         // find the lowest node that contains both the slice start index and
         // the end index
