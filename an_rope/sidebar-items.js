@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["metric","Metrics for indexing `Rope`s."]],"struct":[["Rope","A Rope"],["RopeSlice","An immutable borrowed slice of a `Rope`."]],"trait":[["Split",""]]});
